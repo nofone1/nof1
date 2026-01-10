@@ -34,12 +34,12 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 /**
  * Hook to access authentication state and methods.
  */
-export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn"> {
+export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "signOut"> {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within AuthProvider");
   }
-  return { isLoaded: context.isLoaded, isSignedIn: context.isSignedIn };
+  return { isLoaded: context.isLoaded, isSignedIn: context.isSignedIn, signOut: context.signOut };
 }
 
 /**
@@ -108,19 +108,27 @@ export function useSignUp(): {
         // Mock - in production this would send an email
       },
       attemptEmailAddressVerification: async ({ code }) => {
-        // For mock: accept any 6-digit code
-        if (code.length === 6) {
-          const pending = await AsyncStorage.getItem("@nof1/pending_signup");
-          if (pending) {
-            const { email, password } = JSON.parse(pending);
-            const result = await context.signUp(email, password);
-            if (result.success) {
-              await AsyncStorage.removeItem("@nof1/pending_signup");
-              return { status: "complete", createdSessionId: "mock-session" };
-            }
-          }
+        // Validate code format (must be 6 digits)
+        if (code.length !== 6) {
+          throw new Error("Invalid verification code");
         }
-        throw new Error("Invalid verification code");
+
+        // Retrieve pending signup data
+        const pending = await AsyncStorage.getItem("@nof1/pending_signup");
+        if (!pending) {
+          throw new Error("Signup session expired. Please start over.");
+        }
+
+        // Attempt to complete signup
+        const { email, password } = JSON.parse(pending);
+        const result = await context.signUp(email, password);
+
+        if (!result.success) {
+          throw new Error(result.error || "Failed to complete signup");
+        }
+
+        await AsyncStorage.removeItem("@nof1/pending_signup");
+        return { status: "complete", createdSessionId: "mock-session" };
       },
     },
     setActive: async () => {},

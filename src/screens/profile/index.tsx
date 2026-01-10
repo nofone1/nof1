@@ -14,6 +14,7 @@ import type { MainTabScreenProps } from "@/types/navigation";
 
 export function ProfileScreen({}: MainTabScreenProps<"Profile">): React.JSX.Element {
   const { user } = useUser();
+  const { signOut } = useAuth();
   const { log } = useLogger("Profile");
 
   const handleSignOut = useCallback(() => {
@@ -25,18 +26,12 @@ export function ProfileScreen({}: MainTabScreenProps<"Profile">): React.JSX.Elem
         onPress: async () => {
           logAuthEvent("sign_out", user?.id, true);
           logger.clearContext();
-          // Sign out is handled by the auth context
-          const { signOut } = await import("@/services/auth/auth-context");
-          // We need to access the context properly - for now just clear storage
-          const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
-          await AsyncStorage.removeItem("@nof1/auth");
-          // Force reload by setting a flag
-          await AsyncStorage.setItem("@nof1/reload", "true");
-          Alert.alert("Signed Out", "Please restart the app to complete sign out.");
+          await signOut();
+          log.info("User signed out successfully");
         },
       },
     ]);
-  }, [user]);
+  }, [user, signOut, log]);
 
   const handleExportLogs = useCallback(async () => {
     const logs = await logger.getStoredLogs();
