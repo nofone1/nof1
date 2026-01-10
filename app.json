@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "N-of-1 Experiments",
+    "slug": "nof1-experiments",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "nof1",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0f172a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nof1.experiments"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a"
+      },
+      "package": "com.nof1.experiments"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": []
+  }
+}
