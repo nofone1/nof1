@@ -57,8 +57,6 @@ coverage/
 *.aab
 
 # Generated native code (Expo prebuild)
-native-android/
-native-ios/
 android/
 ios/
 
@@ -76,3 +74,16 @@ watchman-*.log
 # Yarn
 .yarn/
 .pnp.*
+
+# Native Android build artifacts
+native-android/.gradle/
+native-android/app/build/
+native-android/build/
+native-android/local.properties
+
+# Native iOS build artifacts
+native-ios/build/
+native-ios/*.xcworkspace/
+native-ios/Pods/
+native-ios/DemoApp.xcodeproj/xcuserdata/
+native-ios/DemoApp.xcodeproj/project.xcworkspace/

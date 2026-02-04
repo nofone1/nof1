@@ -1,0 +1,50 @@
+# Revyl Test Definition
+# Last synced: 2026-02-03T21:23:55-08:00
+
+_meta:
+    remote_id: 1b0ede03-5f60-4a29-b436-8b0d08ee39e7
+    remote_version: 2
+    local_version: 2
+    last_synced_at: "2026-02-03T21:23:55-08:00"
+test:
+    metadata:
+        name: experiments
+        platform: ios
+    build:
+        name: nof1 ios
+    blocks:
+        - id: login_step_1
+          type: instructions
+          step_type: instruction
+          step_description: |-
+            1. Enter email: test@nof1.app
+            2. Enter password: test123
+            3. Tap "Sign In" button
+        - id: login_validation_1
+          type: validation
+          step_type: validation
+          step_description: Sign in was successful and user is on the Home screen
+        - id: nav_create_exp_1
+          type: instructions
+          step_type: instruction
+          step_description: 1. Navigate to the Create Experiment screen (tap the "+" or "Create" button in the tab bar)
+        - id: nav_create_validation_1
+          type: validation
+          step_type: validation
+          step_description: The "New Experiment" screen is displayed with form fields visible
+        - id: fill_experiment_1
+          type: instructions
+          step_type: instruction
+          step_description: |-
+            1. In "Experiment Name" field, enter: Creatine Energy Test
+            2. In "Hypothesis" field, enter: Taking creatine daily will improve my afternoon energy levels
+            3. In "Supplement/Intervention Name" field, enter: Creatine Monohydrate
+            4. In "Dosage" field, enter: 5g
+            5. In "Frequency" field, enter: Once daily
+            6. Leave "Phase Duration" as default (7 days)
+            7. Leave "Total Cycles" as default (4)
+            8. Tap "Start Experiment" button
+        - id: experiment_created_validation_1
+          type: validation
+          step_type: validation
+          step_description: Experiment was created successfully and user is navigated back to the Home screen with the new "Creatine Energy Test" experiment visible in the list
