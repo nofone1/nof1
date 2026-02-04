@@ -177,7 +177,7 @@ The app uses mock authentication. Use these credentials:
 |------|--------|-----------------|
 | 1 | On Sign In screen, enter email: `invalid` | Email field populated |
 | 2 | Enter password: `test123` | Password field populated |
-| 3 | Tap "Sign In" button | Error message: "Please enter a valid email" |
+| 3 | Tap "Sign In" button | Error message: "Please enter a valid email" |test
 
 **Result:** ☐ Pass ☐ Fail
 
