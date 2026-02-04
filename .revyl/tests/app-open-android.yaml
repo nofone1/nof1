@@ -1,11 +1,12 @@
 # Revyl Test Definition
-# Last synced: 2026-02-03T16:13:39-08:00
+# Last synced: 2026-02-04T11:23:56-08:00
 
 _meta:
     remote_id: 898618b4-3ce6-49ec-af28-a0011497d880
     remote_version: 2
     local_version: 2
-    last_synced_at: "2026-02-03T16:13:39-08:00"
+    last_synced_at: "2026-02-04T11:23:56-08:00"
+    checksum: 63d05fab40e25a70c4904e2baeb708a92bbf21d344c19b219606cfd7953f0a2d
 test:
     metadata:
         name: app-open-android

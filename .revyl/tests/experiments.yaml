@@ -1,11 +1,12 @@
 # Revyl Test Definition
-# Last synced: 2026-02-03T21:23:55-08:00
+# Last synced: 2026-02-04T11:23:55-08:00
 
 _meta:
     remote_id: 1b0ede03-5f60-4a29-b436-8b0d08ee39e7
     remote_version: 2
     local_version: 2
-    last_synced_at: "2026-02-03T21:23:55-08:00"
+    last_synced_at: "2026-02-04T11:23:55-08:00"
+    checksum: d8dc5de1a150038272d1be916efeef4abcc814f703d26aeb069634939aea1b26
 test:
     metadata:
         name: experiments
