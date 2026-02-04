@@ -3,6 +3,7 @@ node_modules/
 
 # Expo
 .expo/
+.expo-shared/
 dist/
 web-build/
 
@@ -29,12 +30,16 @@ yarn-error.*
 # Local env files
 .env*.local
 .env
+.env.development
+.env.production
+.env.staging
 
 # TypeScript
 *.tsbuildinfo
 
 # Testing
 coverage/
+.jest/
 
 # IDE
 .idea/
@@ -44,3 +49,30 @@ coverage/
 
 # Misc
 *.log
+
+# Build artifacts
+*.tar.gz
+*.apk
+*.ipa
+*.aab
+
+# Generated native code (Expo prebuild)
+native-android/
+native-ios/
+android/
+ios/
+
+# iOS app bundles
+*.app
+
+# Android
+*.hprof
+buck-out/
+.buckconfig
+
+# Watchman
+watchman-*.log
+
+# Yarn
+.yarn/
+.pnp.*

@@ -12,7 +12,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.nof1.experiments"
+      "bundleIdentifier": "com.nof1.experiments",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,6 +26,13 @@
     "web": {
       "bundler": "metro"
     },
-    "plugins": []
+    "plugins": [
+      "expo-asset"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "81b500c4-6a29-4905-ba8e-ac11dfc7cff9"
+      }
+    }
   }
 }
