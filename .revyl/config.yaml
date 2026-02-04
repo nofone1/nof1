@@ -24,6 +24,12 @@ build:
             command: cd native-ios && xcodebuild -project DemoApp.xcodeproj -scheme DemoApp -configuration Debug -sdk iphonesimulator -derivedDataPath build
             output: native-ios/build/Build/Products/Debug-iphonesimulator/DemoApp.app
             build_var_id: 39baf78d-2c46-4905-9fbb-71dc2beb6a69
+        revyl-ios-skip-login:
+            command: npx eas build --local --platform ios --profile skip-login --non-interactive
+            output: build-*.tar.gz
+        revyl-android-skip-login:
+            command: npx eas build --local --platform android --profile skip-login --non-interactive
+            output: build-*.apk
 tests:
     app-open-android: 898618b4-3ce6-49ec-af28-a0011497d880
     app-open-ios: f9983fd5-60e3-4653-b031-d2db48dc18f7

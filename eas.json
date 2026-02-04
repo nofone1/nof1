@@ -19,7 +19,13 @@
         "buildType": "apk"
       }
     },
-    "production": {}
+    "production": {},
+    "skip-login": {
+      "extends": "development",
+      "env": {
+        "EXPO_PUBLIC_SKIP_AUTH": "true"
+      }
+    }
   },
   "submit": {
     "production": {}

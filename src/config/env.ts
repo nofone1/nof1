@@ -10,11 +10,13 @@
  * @property clerkPublishableKey - Clerk public key for authentication
  * @property isDevelopment - Whether running in development mode
  * @property apiBaseUrl - Base URL for backend API (future use)
+ * @property skipAuth - Whether to skip authentication and auto-login with test user
  */
 interface EnvironmentConfig {
   clerkPublishableKey: string;
   isDevelopment: boolean;
   apiBaseUrl: string;
+  skipAuth: boolean;
 }
 
 /**
@@ -59,7 +61,32 @@ export const env: EnvironmentConfig = {
    */
   apiBaseUrl:
     process.env.EXPO_PUBLIC_API_BASE_URL || "https://api.nof1experiments.com",
+
+  /**
+   * Skip authentication flag.
+   * When true, auto-logs in with TEST_USER and bypasses login screens.
+   * Set via EXPO_PUBLIC_SKIP_AUTH=true in build profile.
+   */
+  skipAuth: process.env.EXPO_PUBLIC_SKIP_AUTH === "true",
 };
+
+/**
+ * Test user for skip-auth build variant (auto-login).
+ * Used when skipAuth is enabled to automatically sign in.
+ */
+export const TEST_USER = {
+  email: "anam@revyl.ai",
+  password: "password123",
+} as const;
+
+/**
+ * Mock credential for manual login testing.
+ * Use this to sign in via the regular login flow.
+ */
+export const MOCK_CREDENTIAL = {
+  email: "anam@revyl.ai",
+  password: "test123",
+} as const;
 
 /**
  * Validates that required environment variables are set.

@@ -10,6 +10,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { logger } from "@/services/logging";
+import { env, TEST_USER, MOCK_CREDENTIAL } from "@/config/env";
 
 const AUTH_STORAGE_KEY = "@nof1/auth";
 
@@ -148,10 +149,23 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
   const [isLoaded, setIsLoaded] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  // Load persisted auth state
+  // Load persisted auth state or auto-login if skipAuth is enabled
   useEffect(() => {
     const loadAuth = async () => {
       try {
+        // Skip auth: auto-login with test user
+        if (env.skipAuth) {
+          const testUser: User = {
+            id: "test-user-skip-auth",
+            email: TEST_USER.email,
+            firstName: "Anam",
+          };
+          setUser(testUser);
+          logger.info("Skip auth enabled - auto-logged in as test user", { userId: testUser.id });
+          setIsLoaded(true);
+          return;
+        }
+
         const stored = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
         if (stored) {
           const userData = JSON.parse(stored);
@@ -168,6 +182,24 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
+    // Check for mock credential first (allows login with test123 password)
+    if (email === MOCK_CREDENTIAL.email && password === MOCK_CREDENTIAL.password) {
+      const testUser: User = {
+        id: "test-user-anam",
+        email: MOCK_CREDENTIAL.email,
+        firstName: "Anam",
+      };
+
+      try {
+        await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(testUser));
+        setUser(testUser);
+        logger.info("User signed in with mock credential", { userId: testUser.id });
+        return { success: true };
+      } catch (error) {
+        return { success: false, error: "Failed to sign in" };
+      }
+    }
+
     // Mock authentication - accept any valid email/password
     if (!email.includes("@") || password.length < 6) {
       return { success: false, error: "Invalid email or password" };
