@@ -1,0 +1,26 @@
+# Revyl Test Definition
+# Last synced: 2026-02-03T16:13:38-08:00
+
+_meta:
+    remote_id: 027b91de-4a21-4bca-acfe-32db2a628f51
+    remote_version: 15
+    local_version: 15
+    last_synced_at: "2026-02-03T16:13:38-08:00"
+test:
+    metadata:
+        name: login-flow
+        platform: ios
+    build:
+        name: nof1 ios
+    blocks:
+        - id: 995ea0e0i
+          type: instructions
+          step_type: instruction
+          step_description: |-
+            1. Enter email: test@nof1.app
+            2. Enter password: test123
+            3. Tap "Sign In" button
+        - id: hlcc7csg8
+          type: validation
+          step_type: validation
+          step_description: sign in was successful

@@ -1,0 +1,23 @@
+# Revyl Test Definition
+# Last synced: 2026-02-03T16:13:39-08:00
+
+_meta:
+    remote_id: 898618b4-3ce6-49ec-af28-a0011497d880
+    remote_version: 2
+    local_version: 2
+    last_synced_at: "2026-02-03T16:13:39-08:00"
+test:
+    metadata:
+        name: app-open-android
+        platform: android
+    build:
+        name: nof1 native-android
+    blocks:
+        - id: wait-for-app
+          type: instructions
+          step_type: instruction
+          step_description: Wait for the app to fully load and display the main screen
+        - id: validate-app-open
+          type: validation
+          step_type: validation
+          step_description: The app has opened successfully and is displaying content on screen
