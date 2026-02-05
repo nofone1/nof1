@@ -1,12 +1,12 @@
 # Revyl Test Definition
-# Last synced: 2026-02-04T11:23:55-08:00
+# Last synced: 2026-02-04T20:28:51-08:00
 
 _meta:
     remote_id: 027b91de-4a21-4bca-acfe-32db2a628f51
-    remote_version: 15
-    local_version: 15
-    last_synced_at: "2026-02-04T11:23:55-08:00"
-    checksum: 627ae0e737a3422fa97df8009ec3ed4c90ff09642cf7871b1a3d929d4f9d104a
+    remote_version: 28
+    local_version: 28
+    last_synced_at: "2026-02-04T20:28:51-08:00"
+    checksum: 484f34aed25bd60d8001d0564a940f6e5ae9015a2643daccbef46b5af5fe2e3c
 test:
     metadata:
         name: login-flow
@@ -25,3 +25,4 @@ test:
           type: validation
           step_type: validation
           step_description: sign in was successful
+   
