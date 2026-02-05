@@ -111,6 +111,7 @@ export function SignInScreen({
             fullWidth
             loading={isLoading}
             onPress={handleSignIn}
+            style={styles.signInButton}
           >
             Sign In
           </Button>
@@ -183,5 +184,8 @@ const styles = StyleSheet.create({
   link: {
     color: colors.primary[500],
     fontWeight: "600",
+  },
+  signInButton: {
+    backgroundColor: "#EF4444",
   },
 });
