@@ -40,6 +40,7 @@ tests:
     experiments-fundmaentals: 75a2948f-15da-4e16-bb1b-71be3b139d7b
     experiments-no-login: 6091930f-7f07-417f-a86c-060038597076
     login-flow: 027b91de-4a21-4bca-acfe-32db2a628f51
+    peptide-view: 4cdfcccd-b885-46fa-b78e-79e6046c35e7
     styshi: 8ff0bd1b-d42d-4c7b-967c-4f966d356116
 workflows:
     nof1-all-tests: d7c7604e-97c6-4daf-ad68-891403fdfec8
