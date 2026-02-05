@@ -2,7 +2,7 @@
  * Create Experiment screen.
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Input, Card } from "@/components/ui";
@@ -16,12 +16,18 @@ import {
 import { colors } from "@/theme";
 import type { MainTabScreenProps } from "@/types/navigation";
 import { EXPERIMENT_DEFAULTS, METRIC_PRESETS } from "@/utils/constants";
+import { usePeptideStore } from "@/stores/peptide-store";
 
 export function CreateExperimentScreen({
   navigation,
+  route,
 }: MainTabScreenProps<"CreateExperiment">): React.JSX.Element {
   const { create } = useExperiments(false);
   const { log } = useLogger("CreateExperiment");
+  const { getPeptideById } = usePeptideStore();
+
+  // Get peptideId from route params if provided
+  const peptideId = route.params?.peptideId;
 
   const [name, setName] = useState("");
   const [hypothesis, setHypothesis] = useState("");
@@ -32,6 +38,23 @@ export function CreateExperimentScreen({
   const [totalPhases, setTotalPhases] = useState(String(EXPERIMENT_DEFAULTS.TOTAL_PHASES));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPeptidePreFilled, setIsPeptidePreFilled] = useState(false);
+
+  // Pre-fill form with peptide data if peptideId is provided
+  useEffect(() => {
+    if (peptideId) {
+      const peptide = getPeptideById(peptideId);
+      if (peptide) {
+        setInterventionName(peptide.name);
+        setDosage(peptide.dosing.typicalDose);
+        setFrequency(peptide.dosing.frequency);
+        setName(`Testing ${peptide.name}`);
+        setHypothesis(`Testing the effects of ${peptide.name} on my health and wellbeing.`);
+        setIsPeptidePreFilled(true);
+        log.info("Pre-filled form with peptide data", { peptideId });
+      }
+    }
+  }, [peptideId, getPeptideById, log]);
 
   const validateForm = useCallback((): boolean => {
     if (!name.trim()) {
@@ -67,7 +90,7 @@ export function CreateExperimentScreen({
         intervention: {
           id: `int-${Date.now()}`,
           name: interventionName.trim(),
-          type: InterventionType.SUPPLEMENT,
+          type: isPeptidePreFilled ? InterventionType.PEPTIDE : InterventionType.SUPPLEMENT,
           dosage: dosage.trim(),
           frequency: frequency.trim(),
         },
@@ -122,6 +145,14 @@ export function CreateExperimentScreen({
           {error && (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
+          {isPeptidePreFilled && (
+            <View style={styles.peptideInfoBox}>
+              <Text style={styles.peptideInfoText}>
+                💊 Pre-filled with peptide data from the database
+              </Text>
             </View>
           )}
 
@@ -245,6 +276,18 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.accent.error,
+    fontSize: 14,
+  },
+  peptideInfoBox: {
+    backgroundColor: "rgba(139, 92, 246, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(139, 92, 246, 0.3)",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  peptideInfoText: {
+    color: colors.primary[400],
     fontSize: 14,
   },
   section: {

@@ -37,7 +37,12 @@ export type MainTabParamList = {
   /** Home screen with experiment list */
   Home: undefined;
   /** Create new experiment screen */
-  CreateExperiment: undefined;
+  CreateExperiment: {
+    /** Optional peptide ID to pre-fill intervention data */
+    peptideId?: string;
+  } | undefined;
+  /** Peptide database browse screen */
+  PeptideBrowse: undefined;
   /** User profile and settings */
   Profile: undefined;
 };
@@ -48,7 +53,12 @@ export type MainTabParamList = {
  */
 export type MainStackParamList = {
   /** Tab navigator container */
-  Tabs: undefined;
+  Tabs: {
+    /** Optional nested screen to navigate to */
+    screen?: keyof MainTabParamList;
+    /** Optional params for the nested screen */
+    params?: MainTabParamList[keyof MainTabParamList];
+  } | undefined;
   /** Experiment detail screen */
   ExperimentDetail: {
     /** ID of the experiment to display */
@@ -58,6 +68,11 @@ export type MainStackParamList = {
   AddEntry: {
     /** ID of the experiment to add entry to */
     experimentId: string;
+  };
+  /** Peptide detail screen */
+  PeptideDetail: {
+    /** ID of the peptide to display */
+    peptideId: string;
   };
 };
 

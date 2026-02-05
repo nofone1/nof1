@@ -1,0 +1,69 @@
+# Revyl Test Definition
+# Peptide Browse and Experiment Creation Flow
+
+test:
+    metadata:
+        name: peptide-browse
+        platform: ios
+    build:
+        name: nof1 ios
+    blocks:
+        - id: login_step_1
+          type: instructions
+          step_type: instruction
+          step_description: |-
+            1. Enter email: test@nof1.app
+            2. Enter password: test123
+            3. Tap "Sign In" button
+        - id: login_validation_1
+          type: validation
+          step_type: validation
+          step_description: Sign in was successful and user is on the Home screen
+        - id: nav_peptides_1
+          type: instructions
+          step_type: instruction
+          step_description: 1. Tap the "Peptides" tab in the bottom navigation bar (pill icon 💊)
+        - id: nav_peptides_validation_1
+          type: validation
+          step_type: validation
+          step_description: The "Peptide Database" screen is displayed showing a list of peptides including MOTS-c, Pinealon, Tesamorelin, and Retatrutide
+        - id: view_peptide_detail_1
+          type: instructions
+          step_type: instruction
+          step_description: 1. Tap on the "MOTS-c" peptide card to view its details
+        - id: view_peptide_detail_validation_1
+          type: validation
+          step_type: validation
+          step_description: |-
+            The MOTS-c detail screen is displayed showing:
+            - Name "MOTS-c" with "Extensively Studied" badge
+            - Dosing information (5-15mg, 1x daily or 3x weekly)
+            - Overview section with description
+            - Research protocols table
+            - "Use in Experiment" button at the bottom
+        - id: use_in_experiment_1
+          type: instructions
+          step_type: instruction
+          step_description: 1. Scroll down and tap the "Use in Experiment" button
+        - id: use_in_experiment_validation_1
+          type: validation
+          step_type: validation
+          step_description: |-
+            The "New Experiment" screen is displayed with:
+            - A purple info box indicating "Pre-filled with peptide data from the database"
+            - Experiment Name pre-filled with "Testing MOTS-c"
+            - Intervention Name pre-filled with "MOTS-c"
+            - Dosage pre-filled with "5-15mg"
+            - Frequency pre-filled with "1x daily or 3x weekly"
+        - id: create_experiment_1
+          type: instructions
+          step_type: instruction
+          step_description: |-
+            1. Update the Experiment Name to: MOTS-c Metabolic Test
+            2. Update the Hypothesis to: Taking MOTS-c will improve my insulin sensitivity and energy levels
+            3. Leave the pre-filled intervention details as is
+            4. Tap "Start Experiment" button
+        - id: create_experiment_validation_1
+          type: validation
+          step_type: validation
+          step_description: Experiment was created successfully and user is navigated back to the Home screen with the new "MOTS-c Metabolic Test" experiment visible in the list

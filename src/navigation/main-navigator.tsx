@@ -10,6 +10,7 @@ import type { MainStackParamList, MainTabParamList } from "@/types/navigation";
 import { HomeScreen } from "@/screens/home";
 import { CreateExperimentScreen } from "@/screens/experiment/create";
 import { ExperimentDetailScreen } from "@/screens/experiment/detail";
+import { PeptideBrowseScreen, PeptideDetailScreen } from "@/screens/peptide";
 import { ProfileScreen } from "@/screens/profile";
 import { colors } from "@/theme";
 
@@ -25,6 +26,7 @@ function TabIcon({ name, focused }: TabIconProps): React.JSX.Element {
   const iconMap: Record<string, string> = {
     Home: "🏠",
     CreateExperiment: "➕",
+    PeptideBrowse: "💊",
     Profile: "👤",
   };
 
@@ -55,6 +57,11 @@ function TabNavigator(): React.JSX.Element {
         options={{ tabBarLabel: "Experiments" }}
       />
       <Tab.Screen
+        name="PeptideBrowse"
+        component={PeptideBrowseScreen}
+        options={{ tabBarLabel: "Peptides" }}
+      />
+      <Tab.Screen
         name="CreateExperiment"
         component={CreateExperimentScreen}
         options={{ tabBarLabel: "New" }}
@@ -79,6 +86,7 @@ export function MainNavigator(): React.JSX.Element {
     >
       <Stack.Screen name="Tabs" component={TabNavigator} />
       <Stack.Screen name="ExperimentDetail" component={ExperimentDetailScreen} />
+      <Stack.Screen name="PeptideDetail" component={PeptideDetailScreen} />
     </Stack.Navigator>
   );
 }

@@ -1,0 +1,18 @@
+# Revyl Test Definition
+# Last synced: 2026-02-04T20:28:20-08:00
+
+_meta:
+    remote_id: 8ff0bd1b-d42d-4c7b-967c-4f966d356116
+    remote_version: 2
+    local_version: 2
+    last_synced_at: "2026-02-04T20:28:20-08:00"
+    checksum: 58b85c657aea707bd1325d363bb0bebe2bbbd364152538e7d810c768e0777862
+test:
+    metadata:
+        name: styshi
+        platform: ios
+    blocks:
+        - id: a3ig9ns1m
+          type: instructions
+          step_type: instruction
+          step_description: 'test the 90 /10 functionality of th eapp '
