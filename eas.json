@@ -19,7 +19,14 @@
         "buildType": "apk"
       }
     },
-    "production": {},
+    "production": {
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
     "skip-login": {
       "extends": "development",
       "env": {
@@ -28,6 +35,14 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "anam@revyl.ai",
+        "ascAppId": "6758900172"
+      },
+      "android": {
+        "track": "internal"
+      }
+    }
   }
 }

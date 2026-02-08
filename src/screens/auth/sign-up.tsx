@@ -85,7 +85,7 @@ export function SignUpScreen({
         await setActive({ session: result.createdSessionId });
         logAuthEvent("sign_up", result.createdSessionId ?? undefined, true);
       } else {
-        setError("Verification could not be completed.");
+        setError("Verification could nt be completed.");
       }
     } catch (err) {
       setError(getAuthErrorMessage(err));

@@ -7,21 +7,25 @@
     "scheme": "nof1",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "icon": "./assets/icon.png",
     "splash": {
       "backgroundColor": "#0f172a"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.nof1.experiments",
+      "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0f172a"
       },
-      "package": "com.nof1.experiments"
+      "package": "com.nof1.experiments",
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro"

@@ -1,5 +1,6 @@
 /**
- * Sign In screen.
+ * Sign In screen for N-of-1 app.
+ * Allows users to authenticate with email/password.
  */
 
 import React, { useState, useCallback } from "react";
@@ -19,6 +20,12 @@ import { useSignIn, getAuthErrorMessage, logAuthEvent } from "@/services/auth";
 import { colors } from "@/theme";
 import type { AuthStackScreenProps } from "@/types/navigation";
 
+/**
+ * Sign In screen component.
+ *
+ * @param navigation - Navigation prop for screen transitions.
+ * @returns The Sign In screen JSX element.
+ */
 export function SignInScreen({
   navigation,
 }: AuthStackScreenProps<"SignIn">): React.JSX.Element {
@@ -186,6 +193,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   signInButton: {
-    backgroundColor: "#EF4444",
+    backgroundColor: "#3B82F6",
   },
 });

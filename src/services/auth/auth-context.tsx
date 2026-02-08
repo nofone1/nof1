@@ -182,6 +182,24 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
+    // Bypass login for quick testing (1/1) - ONLY available in development builds
+    if (__DEV__ && email === "1" && password === "1") {
+      const bypassUser: User = {
+        id: "bypass-user",
+        email: "bypass@nof1.app",
+        firstName: "Test",
+      };
+
+      try {
+        await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(bypassUser));
+        setUser(bypassUser);
+        logger.info("User signed in with bypass credentials (DEV ONLY)", { userId: bypassUser.id });
+        return { success: true };
+      } catch (error) {
+        return { success: false, error: "Failed to sign in" };
+      }
+    }
+
     // Check for mock credential first (allows login with test123 password)
     if (email === MOCK_CREDENTIAL.email && password === MOCK_CREDENTIAL.password) {
       const testUser: User = {
