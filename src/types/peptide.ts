@@ -59,6 +59,14 @@ export enum PeptideCategory {
   GROWTH_HORMONE = "growth_hormone",
   /** Exercise and performance */
   EXERCISE = "exercise",
+  /** Sexual health and function */
+  SEXUAL_HEALTH = "sexual_health",
+  /** Immune system support */
+  IMMUNE_SUPPORT = "immune_support",
+  /** Mood and mental health */
+  MOOD = "mood",
+  /** Social bonding and behavior */
+  SOCIAL = "social",
 }
 
 /**
@@ -232,6 +240,10 @@ export function getCategoryDisplay(category: PeptideCategory): string {
     [PeptideCategory.DIABETES]: "Diabetes",
     [PeptideCategory.GROWTH_HORMONE]: "Growth Hormone",
     [PeptideCategory.EXERCISE]: "Exercise",
+    [PeptideCategory.SEXUAL_HEALTH]: "Sexual Health",
+    [PeptideCategory.IMMUNE_SUPPORT]: "Immune Support",
+    [PeptideCategory.MOOD]: "Mood",
+    [PeptideCategory.SOCIAL]: "Social",
   };
   return displayMap[category];
 }

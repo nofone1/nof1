@@ -34,15 +34,14 @@ export type AuthStackParamList = {
  * Defines the bottom tab navigation structure.
  */
 export type MainTabParamList = {
-  /** Home screen with experiment list */
-  Home: undefined;
-  /** Create new experiment screen */
-  CreateExperiment: {
-    /** Optional peptide ID to pre-fill intervention data */
-    peptideId?: string;
-  } | undefined;
+  /** Daily log screen - main home screen */
+  Daily: undefined;
   /** Peptide database browse screen */
-  PeptideBrowse: undefined;
+  Peptides: undefined;
+  /** Quick log entry screen */
+  Log: undefined;
+  /** Experiments list screen */
+  Experiments: undefined;
   /** User profile and settings */
   Profile: undefined;
 };
@@ -58,6 +57,11 @@ export type MainStackParamList = {
     screen?: keyof MainTabParamList;
     /** Optional params for the nested screen */
     params?: MainTabParamList[keyof MainTabParamList];
+  } | undefined;
+  /** Create new experiment screen */
+  CreateExperiment: {
+    /** Optional peptide ID to pre-fill intervention data */
+    peptideId?: string;
   } | undefined;
   /** Experiment detail screen */
   ExperimentDetail: {

@@ -37,10 +37,7 @@ export function PeptideDetailScreen({
 
   const handleUseInExperiment = useCallback(() => {
     if (selectedPeptide) {
-      navigation.navigate("Tabs", {
-        screen: "CreateExperiment",
-        params: { peptideId: selectedPeptide.id },
-      });
+      navigation.navigate("CreateExperiment", { peptideId: selectedPeptide.id });
     }
   }, [selectedPeptide, navigation]);
 

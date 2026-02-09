@@ -1,34 +1,92 @@
 /**
- * Reusable Input component with label and error state.
+ * Reusable Input component with label, error state, and focus animation.
+ * Features uppercase labels, minimal styling, and animated focus border.
+ *
+ * @param label - Input label (displayed in uppercase)
+ * @param error - Error message to display
+ * @param hint - Hint text below input
  */
 
-import React, { forwardRef } from "react";
+import React, { forwardRef, useState, useCallback } from "react";
 import { View, Text, TextInput, StyleSheet, type TextInputProps } from "react-native";
-import { colors } from "@/theme";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolateColor,
+} from "react-native-reanimated";
+import { colors, spacing, typography } from "@/theme";
 
 export interface InputProps extends TextInputProps {
+  /** Input label (displayed in uppercase) */
   label?: string;
+  /** Error message to display */
   error?: string;
+  /** Hint text below input */
   hint?: string;
 }
 
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+
+/**
+ * Input component with animated focus state and elegant styling.
+ *
+ * @example
+ * <Input
+ *   label="Email"
+ *   placeholder="Enter your email"
+ *   error={errors.email}
+ * />
+ */
 export const Input = forwardRef<TextInput, InputProps>(
-  ({ label, error, hint, style, ...props }, ref): React.JSX.Element => {
+  ({ label, error, hint, style, onFocus, onBlur, ...props }, ref): React.JSX.Element => {
+    const [isFocused, setIsFocused] = useState(false);
+    const focusProgress = useSharedValue(0);
     const hasError = !!error;
+
+    const handleFocus = useCallback(
+      (e: any) => {
+        setIsFocused(true);
+        focusProgress.value = withTiming(1, { duration: 200 });
+        onFocus?.(e);
+      },
+      [focusProgress, onFocus]
+    );
+
+    const handleBlur = useCallback(
+      (e: any) => {
+        setIsFocused(false);
+        focusProgress.value = withTiming(0, { duration: 200 });
+        onBlur?.(e);
+      },
+      [focusProgress, onBlur]
+    );
+
+    const animatedInputStyle = useAnimatedStyle(() => {
+      const borderColor = hasError
+        ? colors.accent.error
+        : interpolateColor(
+            focusProgress.value,
+            [0, 1],
+            ["rgba(255, 255, 255, 0.08)", colors.primary[500]]
+          );
+
+      return {
+        borderColor,
+      };
+    });
 
     return (
       <View style={styles.container}>
         {label && <Text style={styles.label}>{label}</Text>}
 
-        <TextInput
+        <AnimatedTextInput
           ref={ref}
-          style={[
-            styles.input,
-            hasError && styles.inputError,
-            style,
-          ]}
+          style={[styles.input, animatedInputStyle, style]}
           placeholderTextColor={colors.text.tertiary}
           selectionColor={colors.primary[500]}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           {...props}
         />
 
@@ -46,32 +104,29 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   label: {
-    fontSize: 14,
-    fontWeight: "500",
+    ...typography.caption,
     color: colors.text.secondary,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: colors.surface.default,
+    backgroundColor: colors.background.tertiary,
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md + 2,
     fontSize: 16,
-    color: colors.white,
-    borderWidth: 2,
-    borderColor: colors.transparent,
-  },
-  inputError: {
-    borderColor: colors.accent.error,
+    fontWeight: "400",
+    letterSpacing: 0.2,
+    color: colors.text.primary,
+    borderWidth: 1.5,
   },
   error: {
-    fontSize: 14,
+    ...typography.small,
     color: colors.accent.error,
-    marginTop: 6,
+    marginTop: spacing.sm,
   },
   hint: {
-    fontSize: 14,
+    ...typography.small,
     color: colors.text.tertiary,
-    marginTop: 6,
+    marginTop: spacing.sm,
   },
 });

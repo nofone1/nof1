@@ -1,24 +1,33 @@
 /**
  * Experiment Detail screen.
+ * Features elegant typography, Feather icons, and refined card styling.
  */
 
 import React, { useEffect, useCallback, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Card, Loading } from "@/components/ui";
+import { Button, Card, Loading, Badge, Icon, AnimatedPressable } from "@/components/ui";
 import { useExperiments, useLogger } from "@/hooks";
-import { colors } from "@/theme";
+import { colors, spacing, typography } from "@/theme";
 import type { MainStackScreenProps } from "@/types/navigation";
 import { ExperimentStatus } from "@/types/experiment";
+import type { BadgeVariant } from "@/components/ui/badge";
 
-const statusConfig: Record<ExperimentStatus, { color: string; label: string }> = {
-  draft: { color: colors.text.tertiary, label: "Draft" },
-  active: { color: colors.accent.success, label: "Active" },
-  paused: { color: colors.accent.warning, label: "Paused" },
-  completed: { color: colors.primary[500], label: "Completed" },
-  cancelled: { color: colors.accent.error, label: "Cancelled" },
+const statusConfig: Record<ExperimentStatus, { variant: BadgeVariant; label: string }> = {
+  draft: { variant: "default", label: "Draft" },
+  active: { variant: "success", label: "Active" },
+  paused: { variant: "warning", label: "Paused" },
+  completed: { variant: "primary", label: "Completed" },
+  cancelled: { variant: "error", label: "Cancelled" },
 };
 
+/**
+ * Experiment Detail screen component.
+ *
+ * @param route - Route params containing experimentId
+ * @param navigation - Navigation prop for screen transitions
+ * @returns The Experiment Detail screen JSX element
+ */
 export function ExperimentDetailScreen({
   route,
   navigation,
@@ -86,25 +95,30 @@ export function ExperimentDetailScreen({
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
+        {/* Back button */}
+        <AnimatedPressable style={styles.backButton} onPress={() => navigation.goBack()} haptic="light">
+          <Icon name="arrow-left" size={20} color={colors.primary[500]} />
+          <Text style={styles.backText}>Back</Text>
+        </AnimatedPressable>
 
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>{experiment.name}</Text>
-            <View style={[styles.badge, { backgroundColor: status.color }]}>
-              <Text style={styles.badgeText}>{status.label}</Text>
-            </View>
+            <Text style={styles.title} numberOfLines={2}>{experiment.name}</Text>
+            <Badge variant={status.variant}>{status.label}</Badge>
           </View>
           <Text style={styles.subtitle}>
-            {experiment.intervention.name} • {experiment.intervention.dosage}
+            {experiment.intervention.name} · {experiment.intervention.dosage}
           </Text>
         </View>
 
+        {/* Quick Log */}
         {(isActive || isPaused) && (
-          <Card variant="elevated" style={styles.section}>
-            <Text style={styles.sectionTitle}>📝 Quick Log</Text>
+          <Card variant="elevated" style={styles.section} animated animationDelay={0}>
+            <View style={styles.sectionHeader}>
+              <Icon name="edit-3" size={18} color={colors.primary[500]} />
+              <Text style={styles.sectionTitle}>Quick Log</Text>
+            </View>
             <Text style={styles.sectionSubtitle}>Record today's observations</Text>
             <View style={styles.spacer} />
             <Button variant="primary" fullWidth loading={isLoggingEntry} onPress={handleQuickLog}>
@@ -113,24 +127,31 @@ export function ExperimentDetailScreen({
           </Card>
         )}
 
-        <Card style={styles.section}>
+        {/* Hypothesis */}
+        <Card style={styles.section} animated animationDelay={80}>
           <Text style={styles.label}>Hypothesis</Text>
           <Text style={styles.value}>{experiment.hypothesis}</Text>
         </Card>
 
+        {/* Stats */}
         <View style={styles.statsRow}>
-          <Card style={styles.statCard}>
+          <Card style={styles.statCard} animated animationDelay={160}>
             <Text style={styles.statValue}>{experiment.entries.length}</Text>
             <Text style={styles.statLabel}>Entries</Text>
           </Card>
-          <Card style={styles.statCard}>
+          <View style={styles.statSpacer} />
+          <Card style={styles.statCard} animated animationDelay={200}>
             <Text style={styles.statValue}>{experiment.metrics.length}</Text>
             <Text style={styles.statLabel}>Metrics</Text>
           </Card>
         </View>
 
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>📅 Schedule</Text>
+        {/* Schedule */}
+        <Card style={styles.section} animated animationDelay={240}>
+          <View style={styles.sectionHeader}>
+            <Icon name="calendar" size={18} color={colors.primary[500]} />
+            <Text style={styles.sectionTitle}>Schedule</Text>
+          </View>
           <View style={styles.scheduleRow}>
             <Text style={styles.scheduleLabel}>Phase Duration</Text>
             <Text style={styles.scheduleValue}>{experiment.schedule.phaseDurationDays} days</Text>
@@ -147,6 +168,7 @@ export function ExperimentDetailScreen({
           </View>
         </Card>
 
+        {/* Actions */}
         {(isActive || isPaused) && (
           <View style={styles.actions}>
             <Button variant="secondary" fullWidth onPress={handleTogglePause}>
@@ -159,9 +181,10 @@ export function ExperimentDetailScreen({
           </View>
         )}
 
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+        {/* Delete */}
+        <AnimatedPressable style={styles.deleteButton} onPress={handleDelete} haptic="medium">
           <Text style={styles.deleteText}>Delete Experiment</Text>
-        </TouchableOpacity>
+        </AnimatedPressable>
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -175,118 +198,117 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.primary,
   },
   content: {
-    paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
   },
   backButton: {
-    marginBottom: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.xl,
+    gap: spacing.sm,
   },
   backText: {
+    ...typography.bodyMedium,
     color: colors.primary[500],
-    fontSize: 18,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   titleRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: spacing.sm,
+    gap: spacing.md,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: colors.white,
+    ...typography.heading2,
+    color: colors.text.primary,
     flex: 1,
-    marginRight: 12,
-  },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.white,
   },
   subtitle: {
-    fontSize: 16,
+    ...typography.body,
     color: colors.text.secondary,
   },
   section: {
-    marginBottom: 16,
+    marginBottom: spacing.base,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: colors.white,
-    marginBottom: 8,
+    ...typography.caption,
+    color: colors.text.primary,
   },
   sectionSubtitle: {
-    fontSize: 14,
+    ...typography.small,
     color: colors.text.secondary,
   },
   label: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginBottom: 4,
+    ...typography.caption,
+    color: colors.text.tertiary,
+    marginBottom: spacing.xs,
   },
   value: {
-    fontSize: 16,
-    color: colors.white,
+    ...typography.body,
+    color: colors.text.primary,
   },
   statsRow: {
     flexDirection: "row",
-    marginBottom: 16,
+    marginBottom: spacing.base,
   },
   statCard: {
     flex: 1,
-    marginRight: 8,
+  },
+  statSpacer: {
+    width: spacing.md,
   },
   statValue: {
-    fontSize: 32,
-    fontWeight: "700",
+    ...typography.displayMedium,
     color: colors.primary[500],
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   statLabel: {
-    fontSize: 14,
-    color: colors.text.secondary,
+    ...typography.caption,
+    color: colors.text.tertiary,
   },
   scheduleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.default,
   },
   scheduleLabel: {
-    fontSize: 14,
+    ...typography.small,
     color: colors.text.secondary,
   },
   scheduleValue: {
-    fontSize: 14,
-    color: colors.white,
+    ...typography.small,
+    color: colors.text.primary,
   },
   actions: {
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   spacer: {
-    height: 16,
+    height: spacing.base,
   },
   spacerSmall: {
-    height: 12,
+    height: spacing.md,
   },
   deleteButton: {
-    marginTop: 32,
-    paddingVertical: 12,
+    marginTop: spacing["2xl"],
+    paddingVertical: spacing.md,
     alignItems: "center",
   },
   deleteText: {
+    ...typography.bodyMedium,
     color: colors.accent.error,
-    fontSize: 16,
   },
   bottomSpacer: {
-    height: 32,
+    height: spacing["2xl"],
   },
 });

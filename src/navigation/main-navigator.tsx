@@ -1,80 +1,117 @@
 /**
  * Main app navigator with bottom tabs.
+ * Features Feather icons, light tab bar, and teal active state.
  */
 
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import type { MainStackParamList, MainTabParamList } from "@/types/navigation";
-import { HomeScreen } from "@/screens/home";
+import { DailyLogScreen } from "@/screens/daily";
+import { QuickLogScreen } from "@/screens/log";
+import { ExperimentsScreen } from "@/screens/experiments";
 import { CreateExperimentScreen } from "@/screens/experiment/create";
 import { ExperimentDetailScreen } from "@/screens/experiment/detail";
 import { PeptideBrowseScreen, PeptideDetailScreen } from "@/screens/peptide";
 import { ProfileScreen } from "@/screens/profile";
-import { colors } from "@/theme";
+import { colors, spacing } from "@/theme";
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
+type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
+
 interface TabIconProps {
-  name: string;
+  name: FeatherIconName;
   focused: boolean;
 }
 
+/**
+ * Tab icon component using Feather icons.
+ *
+ * @param name - Feather icon name
+ * @param focused - Whether the tab is currently active
+ * @returns The tab icon JSX element
+ */
 function TabIcon({ name, focused }: TabIconProps): React.JSX.Element {
-  const iconMap: Record<string, string> = {
-    Home: "🏠",
-    CreateExperiment: "➕",
-    PeptideBrowse: "💊",
-    Profile: "👤",
-  };
-
   return (
     <View style={styles.tabIcon}>
-      <Text style={[styles.tabIconText, focused && styles.tabIconFocused]}>
-        {iconMap[name] || "●"}
-      </Text>
+      <Feather
+        name={name}
+        size={22}
+        color={focused ? colors.primary[500] : colors.text.tertiary}
+      />
     </View>
   );
 }
 
+/**
+ * Bottom tab navigator component.
+ *
+ * @returns The tab navigator JSX element
+ */
 function TabNavigator(): React.JSX.Element {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: colors.primary[500],
         tabBarInactiveTintColor: colors.text.tertiary,
         tabBarLabelStyle: styles.tabBarLabel,
-        tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused} />,
-      })}
+      }}
     >
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{ tabBarLabel: "Experiments" }}
+        name="Daily"
+        component={DailyLogScreen}
+        options={{
+          tabBarLabel: "Today",
+          tabBarIcon: ({ focused }) => <TabIcon name="sun" focused={focused} />,
+        }}
       />
       <Tab.Screen
-        name="PeptideBrowse"
+        name="Peptides"
         component={PeptideBrowseScreen}
-        options={{ tabBarLabel: "Peptides" }}
+        options={{
+          tabBarLabel: "Peptides",
+          tabBarIcon: ({ focused }) => <TabIcon name="book-open" focused={focused} />,
+        }}
       />
       <Tab.Screen
-        name="CreateExperiment"
-        component={CreateExperimentScreen}
-        options={{ tabBarLabel: "New" }}
+        name="Log"
+        component={QuickLogScreen}
+        options={{
+          tabBarLabel: "Log",
+          tabBarIcon: ({ focused }) => <TabIcon name="plus-circle" focused={focused} />,
+        }}
+      />
+      <Tab.Screen
+        name="Experiments"
+        component={ExperimentsScreen}
+        options={{
+          tabBarLabel: "Experiments",
+          tabBarIcon: ({ focused }) => <TabIcon name="activity" focused={focused} />,
+        }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ tabBarLabel: "Profile" }}
+        options={{
+          tabBarLabel: "Profile",
+          tabBarIcon: ({ focused }) => <TabIcon name="user" focused={focused} />,
+        }}
       />
     </Tab.Navigator>
   );
 }
 
+/**
+ * Main stack navigator component.
+ *
+ * @returns The main navigator JSX element
+ */
 export function MainNavigator(): React.JSX.Element {
   return (
     <Stack.Navigator
@@ -85,6 +122,7 @@ export function MainNavigator(): React.JSX.Element {
       }}
     >
       <Stack.Screen name="Tabs" component={TabNavigator} />
+      <Stack.Screen name="CreateExperiment" component={CreateExperimentScreen} />
       <Stack.Screen name="ExperimentDetail" component={ExperimentDetailScreen} />
       <Stack.Screen name="PeptideDetail" component={PeptideDetailScreen} />
     </Stack.Navigator>
@@ -93,26 +131,23 @@ export function MainNavigator(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.surface.default,
-    borderTopColor: colors.border.default,
+    backgroundColor: colors.background.secondary,
     borderTopWidth: 1,
-    paddingTop: 8,
-    paddingBottom: 8,
-    height: 70,
+    borderTopColor: colors.border.default,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
+    height: 85,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   tabBarLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "500",
+    marginTop: 4,
+    marginBottom: 0,
   },
   tabIcon: {
     alignItems: "center",
     justifyContent: "center",
-  },
-  tabIconText: {
-    fontSize: 20,
-    opacity: 0.5,
-  },
-  tabIconFocused: {
-    opacity: 1,
   },
 });

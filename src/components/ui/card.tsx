@@ -1,39 +1,86 @@
 /**
  * Reusable Card component for content containers.
+ * Features soft shadows, fade-in animation, and generous padding.
+ *
+ * @param variant - Card style variant (default, elevated, outlined)
+ * @param onPress - Optional press handler (makes card tappable)
+ * @param animated - Enable fade-in animation on mount
+ * @param children - Card content
  */
 
-import React from "react";
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  type ViewProps,
-  type TouchableOpacityProps,
-} from "react-native";
-import { colors } from "@/theme";
+import React, { useEffect } from "react";
+import { View, StyleSheet, type ViewProps } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+} from "react-native-reanimated";
+import { AnimatedPressable } from "./animated-pressable";
+import { colors, spacing } from "@/theme";
 
 export type CardVariant = "default" | "elevated" | "outlined";
 
 export interface CardProps extends ViewProps {
+  /** Card style variant */
   variant?: CardVariant;
-  onPress?: TouchableOpacityProps["onPress"];
+  /** Press handler (makes card tappable) */
+  onPress?: () => void;
+  /** Enable fade-in animation on mount */
+  animated?: boolean;
+  /** Animation delay in ms */
+  animationDelay?: number;
+  /** Card content */
   children: React.ReactNode;
 }
 
+/**
+ * Card component with soft shadows and optional animations.
+ *
+ * @example
+ * <Card variant="elevated" onPress={handlePress}>
+ *   <Text>Card content</Text>
+ * </Card>
+ */
 export function Card({
   variant = "default",
   onPress,
+  animated = false,
+  animationDelay = 0,
   children,
   style,
   ...props
 }: CardProps): React.JSX.Element {
+  const opacity = useSharedValue(animated ? 0 : 1);
+  const translateY = useSharedValue(animated ? 8 : 0);
+
+  useEffect(() => {
+    if (animated) {
+      opacity.value = withDelay(animationDelay, withTiming(1, { duration: 400 }));
+      translateY.value = withDelay(animationDelay, withTiming(0, { duration: 400 }));
+    }
+  }, [animated, animationDelay, opacity, translateY]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
   const cardStyles = [styles.base, styles[variant], style];
 
   if (onPress) {
     return (
-      <TouchableOpacity style={cardStyles} onPress={onPress} activeOpacity={0.8} {...props}>
+      <AnimatedPressable onPress={onPress} style={[cardStyles, animatedStyle]} haptic="light">
         {children}
-      </TouchableOpacity>
+      </AnimatedPressable>
+    );
+  }
+
+  if (animated) {
+    return (
+      <Animated.View style={[cardStyles, animatedStyle]} {...props}>
+        {children}
+      </Animated.View>
     );
   }
 
@@ -44,7 +91,14 @@ export function Card({
   );
 }
 
-export function CardHeader({ children, style, ...props }: ViewProps & { children: React.ReactNode }): React.JSX.Element {
+/**
+ * Card header section with bottom margin.
+ */
+export function CardHeader({
+  children,
+  style,
+  ...props
+}: ViewProps & { children: React.ReactNode }): React.JSX.Element {
   return (
     <View style={[styles.header, style]} {...props}>
       {children}
@@ -52,7 +106,14 @@ export function CardHeader({ children, style, ...props }: ViewProps & { children
   );
 }
 
-export function CardContent({ children, style, ...props }: ViewProps & { children: React.ReactNode }): React.JSX.Element {
+/**
+ * Card content section.
+ */
+export function CardContent({
+  children,
+  style,
+  ...props
+}: ViewProps & { children: React.ReactNode }): React.JSX.Element {
   return (
     <View style={style} {...props}>
       {children}
@@ -60,7 +121,14 @@ export function CardContent({ children, style, ...props }: ViewProps & { childre
   );
 }
 
-export function CardFooter({ children, style, ...props }: ViewProps & { children: React.ReactNode }): React.JSX.Element {
+/**
+ * Card footer section with top border.
+ */
+export function CardFooter({
+  children,
+  style,
+  ...props
+}: ViewProps & { children: React.ReactNode }): React.JSX.Element {
   return (
     <View style={[styles.footer, style]} {...props}>
       {children}
@@ -71,30 +139,29 @@ export function CardFooter({ children, style, ...props }: ViewProps & { children
 const styles = StyleSheet.create({
   base: {
     borderRadius: 16,
-    padding: 16,
+    padding: spacing.lg,
+    backgroundColor: colors.surface.default,
+    borderWidth: 1,
+    borderColor: colors.border.default,
   },
   default: {
     backgroundColor: colors.surface.default,
   },
   elevated: {
     backgroundColor: colors.surface.elevated,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    borderColor: colors.border.light,
   },
   outlined: {
     backgroundColor: colors.transparent,
-    borderWidth: 2,
-    borderColor: colors.surface.elevated,
+    borderWidth: 1,
+    borderColor: colors.border.default,
   },
   header: {
-    marginBottom: 12,
+    marginBottom: spacing.base,
   },
   footer: {
-    marginTop: 16,
-    paddingTop: 16,
+    marginTop: spacing.lg,
+    paddingTop: spacing.base,
     borderTopWidth: 1,
     borderTopColor: colors.border.default,
   },

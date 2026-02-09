@@ -1,17 +1,56 @@
 /**
  * Profile screen.
+ * Features gold avatar ring, Feather icons, and refined menu styling.
  */
 
 import React, { useCallback } from "react";
-import { View, Text, ScrollView, Alert, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, Icon, AnimatedPressable } from "@/components/ui";
 import { useLogger } from "@/hooks/use-logger";
 import { useAuth, useUser, logAuthEvent } from "@/services/auth";
 import { logger } from "@/services/logging";
-import { colors } from "@/theme";
+import { colors, spacing, typography } from "@/theme";
 import type { MainTabScreenProps } from "@/types/navigation";
 
+interface MenuItemProps {
+  label: string;
+  hint?: string;
+  onPress?: () => void;
+  isLast?: boolean;
+  isWarning?: boolean;
+}
+
+/**
+ * Menu item component for profile sections.
+ */
+function MenuItem({ label, hint, onPress, isLast, isWarning }: MenuItemProps): React.JSX.Element {
+  const content = (
+    <View style={[styles.menuItem, isLast && styles.menuItemLast]}>
+      <View style={styles.menuItemContent}>
+        <Text style={[styles.menuText, isWarning && styles.menuTextWarning]}>{label}</Text>
+        {hint && <Text style={styles.menuHint}>{hint}</Text>}
+      </View>
+      {onPress && <Icon name="chevron-right" size={18} color={colors.text.muted} />}
+    </View>
+  );
+
+  if (onPress) {
+    return (
+      <AnimatedPressable onPress={onPress} haptic="light">
+        {content}
+      </AnimatedPressable>
+    );
+  }
+
+  return content;
+}
+
+/**
+ * Profile screen component.
+ *
+ * @returns The Profile screen JSX element
+ */
 export function ProfileScreen({}: MainTabScreenProps<"Profile">): React.JSX.Element {
   const { user } = useUser();
   const { signOut } = useAuth();
@@ -52,6 +91,8 @@ export function ProfileScreen({}: MainTabScreenProps<"Profile">): React.JSX.Elem
     ]);
   }, []);
 
+  const userInitial = user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "?";
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -60,69 +101,46 @@ export function ProfileScreen({}: MainTabScreenProps<"Profile">): React.JSX.Elem
           <Text style={styles.subtitle}>Manage your account and settings</Text>
         </View>
 
-        <Card variant="elevated" style={styles.userCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "?"}
-            </Text>
+        {/* User Card */}
+        <Card variant="elevated" style={styles.userCard} animated animationDelay={0}>
+          <View style={styles.avatarRing}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{userInitial}</Text>
+            </View>
           </View>
           {user?.firstName && (
             <Text style={styles.userName}>
               {user.firstName} {user.lastName}
             </Text>
           )}
-          <Text style={styles.userEmail}>
-            {user?.email || "No email"}
-          </Text>
+          <Text style={styles.userEmail}>{user?.email || "No email"}</Text>
         </Card>
 
+        {/* Account Section */}
         <Text style={styles.sectionHeader}>Account</Text>
-        <Card style={styles.menuCard}>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Edit Profile</Text>
-            <Text style={styles.menuHint}>Coming soon</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Notifications</Text>
-            <Text style={styles.menuHint}>Coming soon</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.menuItem, styles.menuItemLast]}>
-            <Text style={styles.menuText}>Subscription</Text>
-            <Text style={styles.menuHint}>Free Plan</Text>
-          </TouchableOpacity>
+        <Card style={styles.menuCard} animated animationDelay={80}>
+          <MenuItem label="Edit Profile" hint="Coming soon" />
+          <MenuItem label="Notifications" hint="Coming soon" />
+          <MenuItem label="Subscription" hint="Free Plan" isLast />
         </Card>
 
+        {/* Data Section */}
         <Text style={styles.sectionHeader}>Data</Text>
-        <Card style={styles.menuCard}>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Export Experiments</Text>
-            <Text style={styles.menuHint}>Download your data</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem} onPress={handleExportLogs}>
-            <Text style={styles.menuText}>Export Logs</Text>
-            <Text style={styles.menuHint}>For debugging</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.menuItem, styles.menuItemLast]} onPress={handleClearLogs}>
-            <Text style={styles.menuTextWarning}>Clear Logs</Text>
-            <Text style={styles.menuHint}>Remove stored logs</Text>
-          </TouchableOpacity>
+        <Card style={styles.menuCard} animated animationDelay={160}>
+          <MenuItem label="Export Experiments" hint="Download your data" onPress={() => {}} />
+          <MenuItem label="Export Logs" hint="For debugging" onPress={handleExportLogs} />
+          <MenuItem label="Clear Logs" hint="Remove stored logs" onPress={handleClearLogs} isLast isWarning />
         </Card>
 
+        {/* About Section */}
         <Text style={styles.sectionHeader}>About</Text>
-        <Card style={styles.menuCard}>
-          <View style={styles.menuItem}>
-            <Text style={styles.menuText}>Version</Text>
-            <Text style={styles.menuHint}>1.0.0</Text>
-          </View>
-          <View style={styles.menuItem}>
-            <Text style={styles.menuText}>Auth</Text>
-            <Text style={styles.menuHint}>Mock (Add Clerk for production)</Text>
-          </View>
-          <TouchableOpacity style={[styles.menuItem, styles.menuItemLast]}>
-            <Text style={styles.menuText}>Terms of Service</Text>
-          </TouchableOpacity>
+        <Card style={styles.menuCard} animated animationDelay={240}>
+          <MenuItem label="Version" hint="1.0.0" />
+          <MenuItem label="Auth" hint="Mock (Add Clerk for production)" />
+          <MenuItem label="Terms of Service" onPress={() => {}} isLast />
         </Card>
 
+        {/* Sign Out */}
         <View style={styles.signOutContainer}>
           <Button variant="outline" fullWidth onPress={handleSignOut}>
             Sign Out
@@ -141,87 +159,97 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.primary,
   },
   content: {
-    paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
   },
   header: {
-    marginBottom: 32,
+    marginBottom: spacing["2xl"],
   },
   title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: colors.white,
-    marginBottom: 8,
+    ...typography.heading1,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
+    ...typography.body,
     color: colors.text.secondary,
   },
   userCard: {
     alignItems: "center",
-    paddingVertical: 24,
-    marginBottom: 24,
+    paddingVertical: spacing.xl,
+    marginBottom: spacing.xl,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primary[500],
+  avatarRing: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderWidth: 2,
+    borderColor: colors.primary[500],
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: spacing.base,
+  },
+  avatar: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: "rgba(91, 138, 114, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   avatarText: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: colors.white,
+    ...typography.displayMedium,
+    color: colors.primary[500],
   },
   userName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: colors.white,
-    marginBottom: 4,
+    ...typography.heading3,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
   },
   userEmail: {
-    fontSize: 14,
+    ...typography.small,
     color: colors.text.secondary,
   },
   sectionHeader: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: colors.white,
-    marginBottom: 12,
+    ...typography.caption,
+    color: colors.text.tertiary,
+    marginBottom: spacing.md,
   },
   menuCard: {
-    marginBottom: 24,
+    marginBottom: spacing.xl,
     padding: 0,
   },
   menuItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border.default,
   },
   menuItemLast: {
     borderBottomWidth: 0,
   },
+  menuItemContent: {
+    flex: 1,
+  },
   menuText: {
-    fontSize: 16,
-    color: colors.white,
+    ...typography.bodyMedium,
+    color: colors.text.primary,
   },
   menuTextWarning: {
-    fontSize: 16,
     color: colors.accent.warning,
   },
   menuHint: {
-    fontSize: 14,
+    ...typography.small,
     color: colors.text.tertiary,
     marginTop: 2,
   },
   signOutContainer: {
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   bottomSpacer: {
-    height: 96,
+    height: 120,
   },
 });

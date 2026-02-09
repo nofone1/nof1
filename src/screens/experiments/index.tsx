@@ -1,15 +1,12 @@
 /**
- * Home screen displaying list of experiments.
- * Features refined typography, generous spacing, and elegant empty state.
- * 
- * @deprecated This screen has been replaced by DailyLogScreen as the home screen.
- * Experiments are now accessible via the Experiments tab.
+ * Experiments screen displaying list of N-of-1 experiments.
+ * Refactored from the original home screen to be a dedicated tab.
  */
 
 import React, { useCallback } from "react";
 import { View, Text, FlatList, RefreshControl, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Loading, Icon } from "@/components/ui";
+import { Button, Loading, Icon, Card } from "@/components/ui";
 import { ExperimentCard } from "@/components/experiment";
 import { useExperiments } from "@/hooks";
 import { useLogger } from "@/hooks/use-logger";
@@ -18,17 +15,16 @@ import type { MainTabScreenProps } from "@/types/navigation";
 import type { Experiment } from "@/types/experiment";
 
 /**
- * Home screen component displaying the user's experiments.
- * @deprecated Use ExperimentsScreen instead.
+ * Experiments screen component displaying the user's N-of-1 experiments.
  *
- * @param navigation - Navigation prop for screen transitions.
- * @returns The Home screen JSX element.
+ * @param navigation - Navigation prop for screen transitions
+ * @returns The Experiments screen JSX element
  */
-export function HomeScreen({
+export function ExperimentsScreen({
   navigation,
-}: MainTabScreenProps<"Daily">): React.JSX.Element {
+}: MainTabScreenProps<"Experiments">): React.JSX.Element {
   const { experiments, isLoading, refresh } = useExperiments();
-  const { log } = useLogger("Home");
+  const { log } = useLogger("Experiments");
 
   const handleExperimentPress = useCallback(
     (experimentId: string) => {
@@ -61,10 +57,11 @@ export function HomeScreen({
         </View>
         <Text style={styles.emptyTitle}>No experiments yet</Text>
         <Text style={styles.emptySubtitle}>
-          Start your first N-of-1 experiment to discover what works for you.
+          N-of-1 experiments help you systematically test what works for you.
+          Track interventions with on/off phases to see real effects.
         </Text>
         <Button variant="primary" size="lg" onPress={handleCreateExperiment}>
-          Create Your First Experiment
+          Start Your First Experiment
         </Button>
       </View>
     ),
@@ -74,15 +71,39 @@ export function HomeScreen({
   const renderListHeader = useCallback(
     () => (
       <View style={styles.listHeader}>
-        <Text style={styles.headerTitle}>Your Experiments</Text>
+        <Text style={styles.headerTitle}>Experiments</Text>
         <Text style={styles.headerSubtitle}>
           {experiments.length === 0
-            ? "Start tracking what works for you"
+            ? "Run controlled self-experiments"
             : `${experiments.filter((e) => e.status === "active").length} active experiments`}
         </Text>
+
+        {/* Info Card */}
+        <Card style={styles.infoCard}>
+          <View style={styles.infoHeader}>
+            <Icon name="info" size={18} color={colors.accent.info} />
+            <Text style={styles.infoTitle}>What are N-of-1 experiments?</Text>
+          </View>
+          <Text style={styles.infoText}>
+            N-of-1 experiments are personal trials where you alternate between
+            taking an intervention and not taking it. By tracking metrics during
+            both phases, you can see if something actually works for you.
+          </Text>
+        </Card>
+
+        {experiments.length > 0 && (
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onPress={handleCreateExperiment}
+          >
+            New Experiment
+          </Button>
+        )}
       </View>
     ),
-    [experiments]
+    [experiments, handleCreateExperiment]
   );
 
   if (isLoading && experiments.length === 0) {
@@ -138,6 +159,28 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     ...typography.body,
     color: colors.text.secondary,
+    marginBottom: spacing.lg,
+  },
+  infoCard: {
+    backgroundColor: "rgba(59, 130, 246, 0.08)",
+    borderColor: "rgba(59, 130, 246, 0.2)",
+    borderWidth: 1,
+    marginBottom: spacing.lg,
+  },
+  infoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  infoTitle: {
+    ...typography.bodyMedium,
+    color: colors.accent.info,
+  },
+  infoText: {
+    ...typography.small,
+    color: colors.text.secondary,
+    lineHeight: 20,
   },
   emptyState: {
     flex: 1,
@@ -166,6 +209,7 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: "center",
     marginBottom: spacing["2xl"],
-    maxWidth: 280,
+    maxWidth: 300,
+    lineHeight: 22,
   },
 });

@@ -1,11 +1,12 @@
 /**
  * Create Experiment screen.
+ * Features Feather icons, elegant typography, and refined form styling.
  */
 
 import React, { useState, useCallback, useEffect } from "react";
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Input, Card } from "@/components/ui";
+import { Button, Input, Card, Icon, PeptidePicker } from "@/components/ui";
 import { useExperiments, useLogger } from "@/hooks";
 import {
   ExperimentStatus,
@@ -13,15 +14,23 @@ import {
   MetricType,
   type CreateExperimentInput,
 } from "@/types/experiment";
-import { colors } from "@/theme";
-import type { MainTabScreenProps } from "@/types/navigation";
+import { colors, spacing, typography } from "@/theme";
+import type { MainStackScreenProps } from "@/types/navigation";
+import type { Peptide } from "@/types/peptide";
 import { EXPERIMENT_DEFAULTS, METRIC_PRESETS } from "@/utils/constants";
 import { usePeptideStore } from "@/stores/peptide-store";
 
+/**
+ * Create Experiment screen component.
+ *
+ * @param navigation - Navigation prop for screen transitions
+ * @param route - Route params potentially containing peptideId
+ * @returns The Create Experiment screen JSX element
+ */
 export function CreateExperimentScreen({
   navigation,
   route,
-}: MainTabScreenProps<"CreateExperiment">): React.JSX.Element {
+}: MainStackScreenProps<"CreateExperiment">): React.JSX.Element {
   const { create } = useExperiments(false);
   const { log } = useLogger("CreateExperiment");
   const { getPeptideById } = usePeptideStore();
@@ -39,22 +48,49 @@ export function CreateExperimentScreen({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPeptidePreFilled, setIsPeptidePreFilled] = useState(false);
+  const [selectedPeptideId, setSelectedPeptideId] = useState<string | null>(null);
 
   // Pre-fill form with peptide data if peptideId is provided
   useEffect(() => {
     if (peptideId) {
       const peptide = getPeptideById(peptideId);
       if (peptide) {
+        setSelectedPeptideId(peptide.id);
         setInterventionName(peptide.name);
         setDosage(peptide.dosing.typicalDose);
         setFrequency(peptide.dosing.frequency);
         setName(`Testing ${peptide.name}`);
         setHypothesis(`Testing the effects of ${peptide.name} on my health and wellbeing.`);
         setIsPeptidePreFilled(true);
-        log.info("Pre-filled form with peptide data", { peptideId });
+        log.info("Pre-filled form with peptide data", { extra: { peptideId } });
       }
     }
   }, [peptideId, getPeptideById, log]);
+
+  /**
+   * Handles peptide selection from the picker.
+   * Auto-fills form fields when a peptide is selected, clears them for custom entry.
+   *
+   * @param peptide - The selected peptide, or null for custom entry
+   */
+  const handlePeptideSelect = useCallback((peptide: Peptide | null) => {
+    if (peptide) {
+      setSelectedPeptideId(peptide.id);
+      setInterventionName(peptide.name);
+      setDosage(peptide.dosing.typicalDose);
+      setFrequency(peptide.dosing.frequency);
+      setIsPeptidePreFilled(true);
+      log.info("Selected peptide from picker", { extra: { peptideId: peptide.id } });
+    } else {
+      // Custom entry selected
+      setSelectedPeptideId("custom");
+      setInterventionName("");
+      setDosage("");
+      setFrequency("Once daily");
+      setIsPeptidePreFilled(false);
+      log.info("Selected custom entry");
+    }
+  }, [log]);
 
   const validateForm = useCallback((): boolean => {
     if (!name.trim()) {
@@ -114,14 +150,14 @@ export function CreateExperimentScreen({
       };
 
       await create(input);
-      navigation.navigate("Home");
+      navigation.navigate("Tabs", { screen: "Experiments" });
     } catch (err) {
       log.error("Failed to create experiment", {}, err instanceof Error ? err : undefined);
       setError("Failed to create experiment. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  }, [validateForm, name, hypothesis, interventionName, dosage, frequency, phaseDuration, totalPhases, create, navigation, log]);
+  }, [validateForm, name, hypothesis, interventionName, dosage, frequency, phaseDuration, totalPhases, create, navigation, log, isPeptidePreFilled]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -150,14 +186,19 @@ export function CreateExperimentScreen({
 
           {isPeptidePreFilled && (
             <View style={styles.peptideInfoBox}>
+              <Icon name="info" size={16} color={colors.primary[400]} style={styles.infoIcon} />
               <Text style={styles.peptideInfoText}>
-                💊 Pre-filled with peptide data from the database
+                Pre-filled with peptide data from the database
               </Text>
             </View>
           )}
 
-          <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>📝 Basic Information</Text>
+          {/* Basic Information */}
+          <Card style={styles.section} animated animationDelay={0}>
+            <View style={styles.sectionHeader}>
+              <Icon name="file-text" size={18} color={colors.primary[500]} />
+              <Text style={styles.sectionTitle}>Basic Information</Text>
+            </View>
             <View style={styles.spacer} />
             <Input
               label="Experiment Name"
@@ -177,16 +218,29 @@ export function CreateExperimentScreen({
             />
           </Card>
 
-          <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>💊 What You're Testing</Text>
+          {/* Intervention */}
+          <Card style={styles.section} animated animationDelay={80}>
+            <View style={styles.sectionHeader}>
+              <Icon name="package" size={18} color={colors.primary[500]} />
+              <Text style={styles.sectionTitle}>What You're Testing</Text>
+            </View>
             <View style={styles.spacer} />
-            <Input
-              label="Supplement/Intervention Name"
-              placeholder="e.g., Creatine Monohydrate"
-              value={interventionName}
-              onChangeText={setInterventionName}
+            <PeptidePicker
+              selectedPeptideId={selectedPeptideId}
+              onSelect={handlePeptideSelect}
+              showCustomOption={true}
             />
-            <View style={styles.spacer} />
+            {selectedPeptideId === "custom" && (
+              <>
+                <Input
+                  label="Supplement/Intervention Name"
+                  placeholder="e.g., Creatine Monohydrate"
+                  value={interventionName}
+                  onChangeText={setInterventionName}
+                />
+                <View style={styles.spacer} />
+              </>
+            )}
             <Input
               label="Dosage"
               placeholder="e.g., 5g"
@@ -202,8 +256,12 @@ export function CreateExperimentScreen({
             />
           </Card>
 
-          <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>📅 Schedule</Text>
+          {/* Schedule */}
+          <Card style={styles.section} animated animationDelay={160}>
+            <View style={styles.sectionHeader}>
+              <Icon name="calendar" size={18} color={colors.primary[500]} />
+              <Text style={styles.sectionTitle}>Schedule</Text>
+            </View>
             <View style={styles.spacer} />
             <Input
               label="Phase Duration (days)"
@@ -250,58 +308,63 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
   },
   header: {
-    marginBottom: 32,
+    marginBottom: spacing["2xl"],
   },
   title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: colors.white,
-    marginBottom: 8,
+    ...typography.heading1,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
+    ...typography.body,
     color: colors.text.secondary,
   },
   errorBox: {
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(239, 68, 68, 0.3)",
+    backgroundColor: "rgba(196, 91, 91, 0.08)",
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    padding: spacing.base,
+    marginBottom: spacing.xl,
   },
   errorText: {
+    ...typography.small,
     color: colors.accent.error,
-    fontSize: 14,
   },
   peptideInfoBox: {
-    backgroundColor: "rgba(139, 92, 246, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(139, 92, 246, 0.3)",
+    backgroundColor: "rgba(91, 138, 114, 0.08)",
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    padding: spacing.base,
+    marginBottom: spacing.xl,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  infoIcon: {
+    marginRight: spacing.sm,
   },
   peptideInfoText: {
+    ...typography.small,
     color: colors.primary[400],
-    fontSize: 14,
+    flex: 1,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: colors.white,
+    ...typography.caption,
+    color: colors.text.primary,
   },
   spacer: {
-    height: 16,
+    height: spacing.base,
   },
   bottomSpacer: {
-    height: 96,
+    height: 120,
   },
 });

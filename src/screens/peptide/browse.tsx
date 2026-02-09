@@ -20,7 +20,7 @@ import type { Peptide } from "@/types/peptide";
  */
 export function PeptideBrowseScreen({
   navigation,
-}: MainTabScreenProps<"PeptideBrowse">): React.JSX.Element {
+}: MainTabScreenProps<"Peptides">): React.JSX.Element {
   const { peptides, loadPeptides } = usePeptideStore();
 
   useEffect(() => {

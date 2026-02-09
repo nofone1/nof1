@@ -1,5 +1,7 @@
 /**
- * Sign Up screen.
+ * Sign Up screen for N-of-1 app.
+ * Allows users to create an account with email verification.
+ * Features clean light mode design with soft teal accents.
  */
 
 import React, { useState, useCallback } from "react";
@@ -9,16 +11,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Input } from "@/components/ui";
+import { Button, Input, AnimatedPressable } from "@/components/ui";
 import { useLogger } from "@/hooks/use-logger";
 import { useSignUp, getAuthErrorMessage, logAuthEvent } from "@/services/auth";
-import { colors } from "@/theme";
+import { colors, spacing, typography } from "@/theme";
 import type { AuthStackScreenProps } from "@/types/navigation";
 
+/**
+ * Sign Up screen component with email verification flow.
+ *
+ * @param navigation - Navigation prop for screen transitions.
+ * @returns The Sign Up screen JSX element.
+ */
 export function SignUpScreen({
   navigation,
 }: AuthStackScreenProps<"SignUp">): React.JSX.Element {
@@ -85,7 +92,7 @@ export function SignUpScreen({
         await setActive({ session: result.createdSessionId });
         logAuthEvent("sign_up", result.createdSessionId ?? undefined, true);
       } else {
-        setError("Verification could nt be completed.");
+        setError("Verification could not be completed.");
       }
     } catch (err) {
       setError(getAuthErrorMessage(err));
@@ -104,6 +111,7 @@ export function SignUpScreen({
           style={styles.flex}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
             <Text style={styles.title}>
@@ -186,9 +194,9 @@ export function SignUpScreen({
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate("SignIn")}>
+            <AnimatedPressable onPress={() => navigation.navigate("SignIn")} haptic="light">
               <Text style={styles.link}>Sign In</Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -207,53 +215,52 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     justifyContent: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingHorizontal: spacing["2xl"],
+    paddingVertical: spacing["3xl"],
   },
   header: {
-    marginBottom: 40,
+    marginBottom: spacing["4xl"],
   },
   title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: colors.white,
-    marginBottom: 8,
+    ...typography.heading1,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 18,
+    ...typography.body,
     color: colors.text.secondary,
   },
   errorBox: {
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(239, 68, 68, 0.3)",
+    backgroundColor: "rgba(196, 91, 91, 0.08)",
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    padding: spacing.base,
+    marginBottom: spacing.xl,
   },
   errorText: {
+    ...typography.small,
     color: colors.accent.error,
-    fontSize: 14,
   },
   form: {
-    marginBottom: 32,
+    marginBottom: spacing["2xl"],
   },
   spacer: {
-    height: 16,
+    height: spacing.lg,
   },
   spacerLarge: {
-    height: 24,
+    height: spacing.xl,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 24,
+    alignItems: "center",
+    marginTop: spacing["2xl"],
   },
   footerText: {
+    ...typography.body,
     color: colors.text.secondary,
   },
   link: {
+    ...typography.bodyMedium,
     color: colors.primary[500],
-    fontWeight: "600",
   },
 });
