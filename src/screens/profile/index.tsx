@@ -51,7 +51,7 @@ function MenuItem({ label, hint, onPress, isLast, isWarning }: MenuItemProps): R
  *
  * @returns The Profile screen JSX element
  */
-export function ProfileScreen({}: MainTabScreenProps<"Profile">): React.JSX.Element {
+export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): React.JSX.Element {
   const { user } = useUser();
   const { signOut } = useAuth();
   const { log } = useLogger("Profile");
@@ -124,9 +124,16 @@ export function ProfileScreen({}: MainTabScreenProps<"Profile">): React.JSX.Elem
           <MenuItem label="Subscription" hint="Free Plan" isLast />
         </Card>
 
+        {/* Features Section */}
+        <Text style={styles.sectionHeader}>Features</Text>
+        <Card style={styles.menuCard} animated animationDelay={160}>
+          <MenuItem label="My Experiments" hint="N-of-1 trials & analysis" onPress={() => navigation.navigate("Experiments")} />
+          <MenuItem label="Health Connections" hint="Apple Health, Google Fit" onPress={() => navigation.navigate("HealthConnections")} isLast />
+        </Card>
+
         {/* Data Section */}
         <Text style={styles.sectionHeader}>Data</Text>
-        <Card style={styles.menuCard} animated animationDelay={160}>
+        <Card style={styles.menuCard} animated animationDelay={240}>
           <MenuItem label="Export Experiments" hint="Download your data" onPress={() => {}} />
           <MenuItem label="Export Logs" hint="For debugging" onPress={handleExportLogs} />
           <MenuItem label="Clear Logs" hint="Remove stored logs" onPress={handleClearLogs} isLast isWarning />
@@ -134,7 +141,7 @@ export function ProfileScreen({}: MainTabScreenProps<"Profile">): React.JSX.Elem
 
         {/* About Section */}
         <Text style={styles.sectionHeader}>About</Text>
-        <Card style={styles.menuCard} animated animationDelay={240}>
+        <Card style={styles.menuCard} animated animationDelay={320}>
           <MenuItem label="Version" hint="1.0.0" />
           <MenuItem label="Auth" hint="Mock (Add Clerk for production)" />
           <MenuItem label="Terms of Service" onPress={() => {}} isLast />

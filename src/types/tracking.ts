@@ -6,6 +6,34 @@
 import { MetricType } from "./experiment";
 
 /**
+ * Injection site locations for tracking dose administration.
+ */
+export enum InjectionSite {
+  ABDOMEN_LEFT = "abdomen_left",
+  ABDOMEN_RIGHT = "abdomen_right",
+  THIGH_LEFT = "thigh_left",
+  THIGH_RIGHT = "thigh_right",
+  ARM_LEFT = "arm_left",
+  ARM_RIGHT = "arm_right",
+  GLUTE_LEFT = "glute_left",
+  GLUTE_RIGHT = "glute_right",
+}
+
+/**
+ * Display labels for injection sites.
+ */
+export const INJECTION_SITE_LABELS: Record<InjectionSite, string> = {
+  [InjectionSite.ABDOMEN_LEFT]: "Abdomen (L)",
+  [InjectionSite.ABDOMEN_RIGHT]: "Abdomen (R)",
+  [InjectionSite.THIGH_LEFT]: "Thigh (L)",
+  [InjectionSite.THIGH_RIGHT]: "Thigh (R)",
+  [InjectionSite.ARM_LEFT]: "Arm (L)",
+  [InjectionSite.ARM_RIGHT]: "Arm (R)",
+  [InjectionSite.GLUTE_LEFT]: "Glute (L)",
+  [InjectionSite.GLUTE_RIGHT]: "Glute (R)",
+};
+
+/**
  * Represents a logged dose entry.
  * @property id - Unique identifier for the dose entry
  * @property peptideId - Reference to peptide from database (null for custom entries)
@@ -21,6 +49,7 @@ export interface DoseEntry {
   dosage: string;
   timestamp: Date;
   notes?: string;
+  injectionSite?: InjectionSite;
 }
 
 /**
@@ -41,6 +70,20 @@ export enum QuickMetricType {
   ANXIETY = "anxiety",
   /** Pain level (1-10 scale) */
   PAIN = "pain",
+  /** Body weight */
+  WEIGHT = "weight",
+  /** Headache severity (1-10 scale) */
+  HEADACHE = "headache",
+  /** Nausea severity (1-10 scale) */
+  NAUSEA = "nausea",
+  /** Injection site pain (1-10 scale) */
+  INJECTION_SITE_PAIN = "injection_site_pain",
+  /** Fatigue level (1-10 scale) */
+  FATIGUE = "fatigue",
+  /** Appetite level (1-10 scale) */
+  APPETITE = "appetite",
+  /** Libido level (1-10 scale) */
+  LIBIDO = "libido",
   /** Custom metric */
   CUSTOM = "custom",
 }
@@ -56,6 +99,13 @@ export const QUICK_METRIC_INFO: Record<QuickMetricType, { label: string; icon: s
   [QuickMetricType.STRESS]: { label: "Stress", icon: "activity", lowLabel: "Calm", highLabel: "Stressed" },
   [QuickMetricType.ANXIETY]: { label: "Anxiety", icon: "heart", lowLabel: "Calm", highLabel: "Anxious" },
   [QuickMetricType.PAIN]: { label: "Pain", icon: "alert-circle", lowLabel: "None", highLabel: "Severe" },
+  [QuickMetricType.WEIGHT]: { label: "Weight", icon: "trending-down", lowLabel: "", highLabel: "" },
+  [QuickMetricType.HEADACHE]: { label: "Headache", icon: "cloud", lowLabel: "None", highLabel: "Severe" },
+  [QuickMetricType.NAUSEA]: { label: "Nausea", icon: "frown", lowLabel: "None", highLabel: "Severe" },
+  [QuickMetricType.INJECTION_SITE_PAIN]: { label: "Inj. Site Pain", icon: "crosshair", lowLabel: "None", highLabel: "Severe" },
+  [QuickMetricType.FATIGUE]: { label: "Fatigue", icon: "battery", lowLabel: "None", highLabel: "Exhausted" },
+  [QuickMetricType.APPETITE]: { label: "Appetite", icon: "coffee", lowLabel: "None", highLabel: "Ravenous" },
+  [QuickMetricType.LIBIDO]: { label: "Libido", icon: "heart", lowLabel: "Low", highLabel: "High" },
   [QuickMetricType.CUSTOM]: { label: "Custom", icon: "edit-3", lowLabel: "Low", highLabel: "High" },
 };
 
@@ -75,6 +125,8 @@ export interface MetricEntry {
   value: number;
   timestamp: Date;
   notes?: string;
+  unit?: string;
+  numericValue?: number;
 }
 
 /**

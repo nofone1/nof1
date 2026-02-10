@@ -3,19 +3,119 @@
  * Features tabbed interface for logging doses or metrics.
  */
 
-import React, { useState, useCallback } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
+import React, { useState, useCallback, useRef } from "react";
+import { View, Text, ScrollView, StyleSheet, Pressable, PanResponder, LayoutChangeEvent } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Slider from "@react-native-community/slider";
-import { Card, Button, Input, Icon, PeptidePicker } from "@/components/ui";
+import { Card, Button, Input, Icon, PeptidePicker, BodyMap } from "@/components/ui";
 import { useTrackingStore } from "@/stores/tracking-store";
 import { useLogger } from "@/hooks/use-logger";
 import { colors, spacing, typography } from "@/theme";
 import type { MainTabScreenProps } from "@/types/navigation";
 import type { Peptide } from "@/types/peptide";
-import { QuickMetricType, QUICK_METRIC_INFO } from "@/types/tracking";
+import { QuickMetricType, QUICK_METRIC_INFO, type InjectionSite } from "@/types/tracking";
+import { AdministrationRoute } from "@/types/peptide";
+import { usePeptideStore } from "@/stores/peptide-store";
 
 type LogTab = "dose" | "metric";
+
+interface SimpleSliderProps {
+  minimumValue: number;
+  maximumValue: number;
+  step: number;
+  value: number;
+  onValueChange: (value: number) => void;
+  minimumTrackTintColor: string;
+  maximumTrackTintColor: string;
+  thumbTintColor: string;
+  style?: any;
+}
+
+function SimpleSlider({
+  minimumValue,
+  maximumValue,
+  step,
+  value,
+  onValueChange,
+  minimumTrackTintColor,
+  maximumTrackTintColor,
+  thumbTintColor,
+  style,
+}: SimpleSliderProps): React.JSX.Element {
+  const trackWidth = useRef(0);
+  const trackX = useRef(0);
+  const onValueChangeRef = useRef(onValueChange);
+  onValueChangeRef.current = onValueChange;
+
+  const range = maximumValue - minimumValue;
+
+  const valueFromX = useCallback((x: number) => {
+    const ratio = Math.max(0, Math.min(1, x / trackWidth.current));
+    const raw = minimumValue + ratio * range;
+    return Math.round((raw - minimumValue) / step) * step + minimumValue;
+  }, [minimumValue, range, step]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (evt) => {
+        onValueChangeRef.current(valueFromX(evt.nativeEvent.locationX));
+      },
+      onPanResponderMove: (evt) => {
+        onValueChangeRef.current(valueFromX(evt.nativeEvent.pageX - trackX.current));
+      },
+    })
+  ).current;
+
+  const handleLayout = (e: LayoutChangeEvent) => {
+    trackWidth.current = e.nativeEvent.layout.width;
+    (e.target as any)?.measureInWindow?.((x: number) => {
+      if (x != null) trackX.current = x;
+    });
+  };
+
+  const fraction = (value - minimumValue) / range;
+
+  return (
+    <View style={[sliderStyles.container, style]} onLayout={handleLayout} {...panResponder.panHandlers}>
+      <View style={sliderStyles.track}>
+        <View style={[sliderStyles.trackFill, { flex: fraction, backgroundColor: minimumTrackTintColor }]} />
+        <View style={[sliderStyles.trackEmpty, { flex: 1 - fraction, backgroundColor: maximumTrackTintColor }]} />
+      </View>
+      <View style={[sliderStyles.thumb, { left: `${fraction * 100}%`, backgroundColor: thumbTintColor }]} />
+    </View>
+  );
+}
+
+const THUMB_SIZE = 24;
+const TRACK_HEIGHT = 4;
+
+const sliderStyles = StyleSheet.create({
+  container: {
+    height: 40,
+    justifyContent: "center",
+  },
+  track: {
+    flexDirection: "row",
+    height: TRACK_HEIGHT,
+    borderRadius: TRACK_HEIGHT / 2,
+    overflow: "hidden",
+  },
+  trackFill: {
+    height: TRACK_HEIGHT,
+  },
+  trackEmpty: {
+    height: TRACK_HEIGHT,
+  },
+  thumb: {
+    position: "absolute",
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: THUMB_SIZE / 2,
+    marginLeft: -THUMB_SIZE / 2,
+    top: (40 - THUMB_SIZE) / 2,
+  },
+});
 
 /**
  * Quick Log screen component for adding entries.
@@ -27,6 +127,7 @@ export function QuickLogScreen({
   navigation,
 }: MainTabScreenProps<"Log">): React.JSX.Element {
   const { logDose, logMetric, addToStack } = useTrackingStore();
+  const { getPeptideById } = usePeptideStore();
   const { log } = useLogger("QuickLog");
 
   const [activeTab, setActiveTab] = useState<LogTab>("dose");
@@ -39,6 +140,8 @@ export function QuickLogScreen({
   const [dosage, setDosage] = useState("");
   const [doseNotes, setDoseNotes] = useState("");
   const [addToStackChecked, setAddToStackChecked] = useState(false);
+  const [injectionSite, setInjectionSite] = useState<InjectionSite | undefined>(undefined);
+  const [isInjectable, setIsInjectable] = useState(false);
 
   // Metric form state
   const [selectedMetricType, setSelectedMetricType] = useState<QuickMetricType>(QuickMetricType.ENERGY);
@@ -50,11 +153,14 @@ export function QuickLogScreen({
       setSelectedPeptideId(peptide.id);
       setDoseName(peptide.name);
       setDosage(peptide.dosing.typicalDose);
+      setIsInjectable(peptide.administrationRoutes.includes(AdministrationRoute.INJECTABLE));
     } else {
       setSelectedPeptideId("custom");
       setDoseName("");
       setDosage("");
+      setIsInjectable(false);
     }
+    setInjectionSite(undefined);
   }, []);
 
   const handleLogDose = useCallback(async () => {
@@ -67,6 +173,7 @@ export function QuickLogScreen({
         name: doseName.trim(),
         dosage: dosage.trim(),
         notes: doseNotes.trim() || undefined,
+        injectionSite,
       });
 
       if (addToStackChecked && selectedPeptideId !== "custom") {
@@ -87,6 +194,8 @@ export function QuickLogScreen({
       setDosage("");
       setDoseNotes("");
       setAddToStackChecked(false);
+      setInjectionSite(undefined);
+      setIsInjectable(false);
 
       // Navigate to Daily tab after brief delay
       setTimeout(() => {
@@ -98,7 +207,7 @@ export function QuickLogScreen({
     } finally {
       setIsLoading(false);
     }
-  }, [doseName, dosage, doseNotes, selectedPeptideId, addToStackChecked, logDose, addToStack, log, navigation]);
+  }, [doseName, dosage, doseNotes, selectedPeptideId, addToStackChecked, injectionSite, logDose, addToStack, log, navigation]);
 
   const handleLogMetric = useCallback(async () => {
     setIsLoading(true);
@@ -223,6 +332,16 @@ export function QuickLogScreen({
               numberOfLines={2}
             />
 
+            {isInjectable && (
+              <>
+                <View style={styles.spacerLarge} />
+                <BodyMap
+                  selectedSite={injectionSite}
+                  onSelectSite={setInjectionSite}
+                />
+              </>
+            )}
+
             {selectedPeptideId && selectedPeptideId !== "custom" && (
               <Pressable
                 style={styles.checkboxRow}
@@ -291,7 +410,7 @@ export function QuickLogScreen({
                 {QUICK_METRIC_INFO[selectedMetricType].lowLabel}
               </Text>
               <View style={styles.sliderWrapper}>
-                <Slider
+                <SimpleSlider
                   style={styles.slider}
                   minimumValue={1}
                   maximumValue={10}

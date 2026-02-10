@@ -40,8 +40,8 @@ export type MainTabParamList = {
   Peptides: undefined;
   /** Quick log entry screen */
   Log: undefined;
-  /** Experiments list screen */
-  Experiments: undefined;
+  /** Protocols list screen */
+  Protocols: undefined;
   /** User profile and settings */
   Profile: undefined;
 };
@@ -78,6 +78,12 @@ export type MainStackParamList = {
     /** ID of the peptide to display */
     peptideId: string;
   };
+  /** Experiments list screen */
+  Experiments: undefined;
+  /** Create protocol screen */
+  CreateProtocol: undefined;
+  /** Health connections management */
+  HealthConnections: undefined;
 };
 
 /**

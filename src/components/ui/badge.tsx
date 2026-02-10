@@ -17,7 +17,8 @@ export type BadgeVariant =
   | "success"
   | "warning"
   | "error"
-  | "info";
+  | "info"
+  | "purple";
 
 export type BadgeSize = "sm" | "md" | "lg";
 
@@ -54,6 +55,10 @@ const variantStyles: Record<BadgeVariant, { bg: string; text: string }> = {
   info: {
     bg: "rgba(107, 140, 174, 0.15)",
     text: colors.accent.info,
+  },
+  purple: {
+    bg: "rgba(139, 92, 246, 0.15)",
+    text: colors.purple[400],
   },
 };
 

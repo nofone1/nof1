@@ -141,15 +141,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: spacing.lg,
     backgroundColor: colors.surface.default,
-    borderWidth: 1,
-    borderColor: colors.border.default,
+    borderWidth: 0,
   },
   default: {
     backgroundColor: colors.surface.default,
   },
   elevated: {
     backgroundColor: colors.surface.elevated,
-    borderColor: colors.border.light,
   },
   outlined: {
     backgroundColor: colors.transparent,
@@ -163,6 +161,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     paddingTop: spacing.base,
     borderTopWidth: 1,
-    borderTopColor: colors.border.default,
+    borderTopColor: colors.border.light,
   },
 });

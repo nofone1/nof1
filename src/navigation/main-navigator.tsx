@@ -11,11 +11,14 @@ import { Feather } from "@expo/vector-icons";
 import type { MainStackParamList, MainTabParamList } from "@/types/navigation";
 import { DailyLogScreen } from "@/screens/daily";
 import { QuickLogScreen } from "@/screens/log";
+import { ProtocolsScreen } from "@/screens/protocol";
 import { ExperimentsScreen } from "@/screens/experiments";
 import { CreateExperimentScreen } from "@/screens/experiment/create";
 import { ExperimentDetailScreen } from "@/screens/experiment/detail";
 import { PeptideBrowseScreen, PeptideDetailScreen } from "@/screens/peptide";
+import { CreateProtocolScreen } from "@/screens/protocol/create";
 import { ProfileScreen } from "@/screens/profile";
+import { HealthConnectionsScreen } from "@/screens/profile/health-connections";
 import { colors, spacing } from "@/theme";
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -88,11 +91,11 @@ function TabNavigator(): React.JSX.Element {
         }}
       />
       <Tab.Screen
-        name="Experiments"
-        component={ExperimentsScreen}
+        name="Protocols"
+        component={ProtocolsScreen}
         options={{
-          tabBarLabel: "Experiments",
-          tabBarIcon: ({ focused }) => <TabIcon name="activity" focused={focused} />,
+          tabBarLabel: "Protocols",
+          tabBarIcon: ({ focused }) => <TabIcon name="clipboard" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -125,6 +128,9 @@ export function MainNavigator(): React.JSX.Element {
       <Stack.Screen name="CreateExperiment" component={CreateExperimentScreen} />
       <Stack.Screen name="ExperimentDetail" component={ExperimentDetailScreen} />
       <Stack.Screen name="PeptideDetail" component={PeptideDetailScreen} />
+      <Stack.Screen name="Experiments" component={ExperimentsScreen} />
+      <Stack.Screen name="CreateProtocol" component={CreateProtocolScreen} />
+      <Stack.Screen name="HealthConnections" component={HealthConnectionsScreen} />
     </Stack.Navigator>
   );
 }
@@ -133,7 +139,7 @@ const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: colors.background.secondary,
     borderTopWidth: 1,
-    borderTopColor: colors.border.default,
+    borderTopColor: colors.border.light,
     paddingTop: spacing.sm,
     paddingBottom: spacing.xl,
     height: 85,

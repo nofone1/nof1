@@ -6,12 +6,12 @@
 import React, { useCallback } from "react";
 import { View, Text, FlatList, RefreshControl, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Loading, Icon, Card } from "@/components/ui";
+import { Button, Loading, Icon, Card, AnimatedPressable } from "@/components/ui";
 import { ExperimentCard } from "@/components/experiment";
 import { useExperiments } from "@/hooks";
 import { useLogger } from "@/hooks/use-logger";
 import { colors, spacing, typography } from "@/theme";
-import type { MainTabScreenProps } from "@/types/navigation";
+import type { MainStackScreenProps } from "@/types/navigation";
 import type { Experiment } from "@/types/experiment";
 
 /**
@@ -22,7 +22,7 @@ import type { Experiment } from "@/types/experiment";
  */
 export function ExperimentsScreen({
   navigation,
-}: MainTabScreenProps<"Experiments">): React.JSX.Element {
+}: MainStackScreenProps<"Experiments">): React.JSX.Element {
   const { experiments, isLoading, refresh } = useExperiments();
   const { log } = useLogger("Experiments");
 
@@ -71,6 +71,15 @@ export function ExperimentsScreen({
   const renderListHeader = useCallback(
     () => (
       <View style={styles.listHeader}>
+        <AnimatedPressable
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          haptic="light"
+        >
+          <Icon name="arrow-left" size={20} color={colors.primary[500]} />
+          <Text style={styles.backText}>Back</Text>
+        </AnimatedPressable>
+
         <Text style={styles.headerTitle}>Experiments</Text>
         <Text style={styles.headerSubtitle}>
           {experiments.length === 0
@@ -147,6 +156,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
     paddingBottom: 120,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.xl,
+    gap: spacing.sm,
+  },
+  backText: {
+    ...typography.bodyMedium,
+    color: colors.primary[500],
   },
   listHeader: {
     marginBottom: spacing["2xl"],

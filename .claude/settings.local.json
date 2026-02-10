@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.behance.net)",
+      "WebFetch(domain:www.producthunt.com)",
+      "WebFetch(domain:www.reddit.com)",
+      "WebFetch(domain:www.nngroup.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:www.appshopper.com)",
+      "mcp__ide__getDiagnostics",
+      "WebFetch(domain:pep-pedia.org)",
+      "WebFetch(domain:docs.tryterra.co)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

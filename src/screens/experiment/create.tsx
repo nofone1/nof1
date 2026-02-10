@@ -6,7 +6,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Input, Card, Icon, PeptidePicker } from "@/components/ui";
+import { Button, Input, Card, Icon, AnimatedPressable, PeptidePicker } from "@/components/ui";
 import { useExperiments, useLogger } from "@/hooks";
 import {
   ExperimentStatus,
@@ -150,7 +150,7 @@ export function CreateExperimentScreen({
       };
 
       await create(input);
-      navigation.navigate("Tabs", { screen: "Experiments" });
+      navigation.navigate("Experiments");
     } catch (err) {
       log.error("Failed to create experiment", {}, err instanceof Error ? err : undefined);
       setError("Failed to create experiment. Please try again.");
@@ -171,6 +171,11 @@ export function CreateExperimentScreen({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <AnimatedPressable style={styles.backButton} onPress={() => navigation.goBack()} haptic="light">
+            <Icon name="arrow-left" size={20} color={colors.primary[500]} />
+            <Text style={styles.backText}>Back</Text>
+          </AnimatedPressable>
+
           <View style={styles.header}>
             <Text style={styles.title}>New Experiment</Text>
             <Text style={styles.subtitle}>
@@ -310,6 +315,16 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xl,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.xl,
+    gap: spacing.sm,
+  },
+  backText: {
+    ...typography.bodyMedium,
+    color: colors.primary[500],
   },
   header: {
     marginBottom: spacing["2xl"],

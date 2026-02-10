@@ -5,7 +5,8 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Card } from "@/components/ui/card";
-import { colors } from "@/theme";
+import { Badge } from "@/components/ui/badge";
+import { colors, spacing, typography } from "@/theme";
 import type { Peptide } from "@/types/peptide";
 import {
   getResearchLevelDisplay,
@@ -63,9 +64,9 @@ export function PeptideCard({ peptide, onPress }: PeptideCardProps): React.JSX.E
 
       <View style={styles.categoriesContainer}>
         {displayCategories.map((category) => (
-          <View key={category} style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>{getCategoryDisplay(category)}</Text>
-          </View>
+          <Badge key={category} variant="purple" size="sm">
+            {getCategoryDisplay(category)}
+          </Badge>
         ))}
       </View>
 
@@ -88,7 +89,7 @@ export function PeptideCard({ peptide, onPress }: PeptideCardProps): React.JSX.E
         <View style={[styles.researchBadge, { backgroundColor: researchLevelColor }]}>
           <Text style={styles.researchBadgeText}>{researchLevelText}</Text>
         </View>
-        <Text style={styles.learnMore}>Learn More →</Text>
+        <Text style={styles.learnMore}>Learn More</Text>
       </View>
     </Card>
   );
@@ -96,12 +97,12 @@ export function PeptideCard({ peptide, onPress }: PeptideCardProps): React.JSX.E
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 16,
+    marginBottom: spacing.base,
   },
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   shortCodeBadge: {
     width: 48,
@@ -110,65 +111,51 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[500],
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   shortCodeText: {
-    fontSize: 14,
-    fontWeight: "700",
+    ...typography.small,
+    fontWeight: "600",
     color: colors.white,
   },
   titleContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.white,
-    marginBottom: 4,
+    ...typography.subtitle,
+    fontWeight: "500",
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
   },
   subtitle: {
-    fontSize: 13,
+    ...typography.small,
     color: colors.text.secondary,
-    lineHeight: 18,
   },
   categoriesContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 16,
-    gap: 8,
-  },
-  categoryBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: "rgba(139, 92, 246, 0.15)",
-  },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: colors.primary[400],
+    marginBottom: spacing.base,
+    gap: spacing.sm,
   },
   dosingContainer: {
     flexDirection: "row",
     backgroundColor: colors.background.primary,
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
+    padding: spacing.md,
+    marginBottom: spacing.base,
   },
   dosingItem: {
     flex: 1,
     alignItems: "center",
   },
   dosingLabel: {
-    fontSize: 11,
+    ...typography.captionSmall,
     color: colors.text.tertiary,
-    marginBottom: 4,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    marginBottom: spacing.xs,
   },
   dosingValue: {
-    fontSize: 13,
-    fontWeight: "600",
+    ...typography.small,
+    fontWeight: "500",
     color: colors.text.primary,
     textAlign: "center",
   },
@@ -176,22 +163,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 12,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.border.default,
+    borderTopColor: colors.border.light,
   },
   researchBadge: {
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: 8,
   },
   researchBadgeText: {
-    fontSize: 12,
+    ...typography.captionSmall,
     fontWeight: "600",
     color: colors.white,
   },
   learnMore: {
-    fontSize: 14,
+    ...typography.small,
     fontWeight: "500",
     color: colors.primary[400],
   },

@@ -39,3 +39,6 @@ export { Icon, type IconProps, type IconName, iconSizes } from "./icon";
 
 // Peptide picker component
 export { PeptidePicker, type PeptidePickerProps } from "./peptide-picker";
+
+// Body map component
+export { BodyMap } from "./body-map";

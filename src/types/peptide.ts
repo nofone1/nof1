@@ -67,6 +67,22 @@ export enum PeptideCategory {
   MOOD = "mood",
   /** Social bonding and behavior */
   SOCIAL = "social",
+  /** Sleep and circadian rhythm */
+  SLEEP = "sleep",
+  /** Hair growth and follicle health */
+  HAIR_GROWTH = "hair_growth",
+  /** Skin health and beauty */
+  SKIN_HEALTH = "skin_health",
+  /** Gut health and GI support */
+  GUT_HEALTH = "gut_health",
+  /** Anti-inflammatory */
+  ANTI_INFLAMMATORY = "anti_inflammatory",
+  /** Joint health and cartilage */
+  JOINT_HEALTH = "joint_health",
+  /** Hormonal regulation and HRT */
+  HORMONAL = "hormonal",
+  /** Energy and mitochondrial */
+  ENERGY = "energy",
 }
 
 /**
@@ -169,6 +185,71 @@ export interface TimelineEntry {
 }
 
 /**
+ * Represents pharmacokinetic properties of a peptide.
+ * @property peakTime - Time to reach peak concentration (e.g., "1 hr")
+ * @property halfLife - Elimination half-life (e.g., "4 hrs")
+ * @property clearanceTime - Time for full clearance (e.g., "20 hrs")
+ * @property halfLifeHours - Numeric half-life in hours for calculations
+ */
+export interface Pharmacokinetics {
+  peakTime: string;
+  halfLife: string;
+  clearanceTime: string;
+  halfLifeHours: number;
+}
+
+/**
+ * Represents an interaction between two peptides.
+ * @property peptideId - ID of the interacting peptide
+ * @property peptideName - Display name of the interacting peptide
+ * @property type - Interaction type (synergistic, compatible, or caution)
+ * @property description - Description of the interaction
+ */
+export interface PeptideInteraction {
+  peptideId: string;
+  peptideName: string;
+  type: "synergistic" | "compatible" | "caution";
+  description: string;
+}
+
+/**
+ * Represents a published research study about a peptide.
+ * @property title - Study title
+ * @property authors - Authors string
+ * @property year - Publication year
+ * @property journal - Journal name
+ * @property doi - DOI link
+ * @property summary - Brief summary of findings
+ */
+export interface ResearchStudy {
+  title: string;
+  authors: string;
+  year: number;
+  journal: string;
+  doi: string;
+  summary: string;
+}
+
+/**
+ * Represents reconstitution instructions for a peptide.
+ * @property defaultPeptideMg - Default peptide amount in mg
+ * @property defaultVialMl - Default vial size in mL
+ * @property solvent - Solvent type (e.g., "Bacteriostatic Water")
+ * @property steps - Step-by-step reconstitution instructions
+ * @property qualityIndicators - Visual quality checks
+ */
+export interface ReconstitutionInfo {
+  defaultPeptideMg: number;
+  defaultVialMl: number;
+  solvent: string;
+  steps: string[];
+  qualityIndicators: {
+    good: string[];
+    bad: string[];
+  };
+}
+
+/**
  * Represents a complete peptide entry in the database.
  * @property id - Unique identifier for the peptide
  * @property name - Display name (e.g., "MOTS-c")
@@ -204,6 +285,10 @@ export interface Peptide {
   safetyNotes: string[];
   storage: StorageInfo;
   timeline: TimelineEntry[];
+  pharmacokinetics?: Pharmacokinetics;
+  interactions?: PeptideInteraction[];
+  studies?: ResearchStudy[];
+  reconstitution?: ReconstitutionInfo;
 }
 
 /**
@@ -244,6 +329,14 @@ export function getCategoryDisplay(category: PeptideCategory): string {
     [PeptideCategory.IMMUNE_SUPPORT]: "Immune Support",
     [PeptideCategory.MOOD]: "Mood",
     [PeptideCategory.SOCIAL]: "Social",
+    [PeptideCategory.SLEEP]: "Sleep",
+    [PeptideCategory.HAIR_GROWTH]: "Hair Growth",
+    [PeptideCategory.SKIN_HEALTH]: "Skin Health",
+    [PeptideCategory.GUT_HEALTH]: "Gut Health",
+    [PeptideCategory.ANTI_INFLAMMATORY]: "Anti-Inflammatory",
+    [PeptideCategory.JOINT_HEALTH]: "Joint Health",
+    [PeptideCategory.HORMONAL]: "Hormonal",
+    [PeptideCategory.ENERGY]: "Energy",
   };
   return displayMap[category];
 }

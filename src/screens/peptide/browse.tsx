@@ -2,26 +2,57 @@
  * Peptide browse screen displaying list of peptides.
  */
 
-import React, { useCallback, useEffect } from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import React, { useCallback, useEffect, useMemo } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  Pressable,
+  StyleSheet,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PeptideCard } from "@/components/peptide";
-import { usePeptideStore } from "@/stores/peptide-store";
-import { colors } from "@/theme";
+import { FilterChips } from "@/components/peptide/filter-chips";
+import { Icon } from "@/components/ui";
+import { usePeptideStore, useHasActiveFilters } from "@/stores/peptide-store";
+import { colors, spacing, typography } from "@/theme";
 import type { MainTabScreenProps } from "@/types/navigation";
 import type { Peptide } from "@/types/peptide";
+import {
+  PeptideCategory,
+  ResearchLevel,
+  getCategoryDisplay,
+  getResearchLevelDisplay,
+} from "@/types/peptide";
 
-/**
- * Peptide browse screen component.
- * Displays a list of peptides with their key information.
- *
- * @param props - Navigation props
- * @returns The rendered browse screen
- */
+const CATEGORY_ITEMS = Object.values(PeptideCategory).map((value) => ({
+  label: getCategoryDisplay(value),
+  value,
+}));
+
+const RESEARCH_LEVEL_ITEMS = Object.values(ResearchLevel).map((value) => ({
+  label: getResearchLevelDisplay(value),
+  value,
+}));
+
 export function PeptideBrowseScreen({
   navigation,
 }: MainTabScreenProps<"Peptides">): React.JSX.Element {
-  const { peptides, loadPeptides } = usePeptideStore();
+  const {
+    peptides,
+    allPeptides,
+    searchQuery,
+    categoryFilter,
+    researchLevelFilter,
+    loadPeptides,
+    setSearchQuery,
+    setCategoryFilter,
+    setResearchLevelFilter,
+    clearFilters,
+  } = usePeptideStore();
+
+  const hasActiveFilters = useHasActiveFilters();
 
   useEffect(() => {
     loadPeptides();
@@ -41,22 +72,82 @@ export function PeptideBrowseScreen({
     [handlePeptidePress]
   );
 
+  const subtitleText = useMemo(() => {
+    if (hasActiveFilters) {
+      return `${peptides.length} of ${allPeptides.length} peptides`;
+    }
+    return `${allPeptides.length} peptides available for research`;
+  }, [hasActiveFilters, peptides.length, allPeptides.length]);
+
   const renderListHeader = useCallback(
     () => (
       <View style={styles.listHeader}>
         <Text style={styles.headerTitle}>Peptide Database</Text>
-        <Text style={styles.headerSubtitle}>
-          {peptides.length} peptides available for research
-        </Text>
+        <Text style={styles.headerSubtitle}>{subtitleText}</Text>
+
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={18} color={colors.text.tertiary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search peptides..."
+            placeholderTextColor={colors.text.tertiary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            selectionColor={colors.primary[500]}
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          {searchQuery.length > 0 && (
+            <Pressable
+              onPress={() => setSearchQuery("")}
+              hitSlop={8}
+            >
+              <Icon name="x" size={16} color={colors.text.tertiary} />
+            </Pressable>
+          )}
+        </View>
+
+        <FilterChips
+          label="CATEGORY"
+          items={CATEGORY_ITEMS}
+          selected={categoryFilter}
+          onSelect={(val) => setCategoryFilter(val as PeptideCategory | null)}
+        />
+
+        <FilterChips
+          label="RESEARCH LEVEL"
+          items={RESEARCH_LEVEL_ITEMS}
+          selected={researchLevelFilter}
+          onSelect={(val) => setResearchLevelFilter(val as ResearchLevel | null)}
+        />
+
+        {hasActiveFilters && (
+          <Pressable onPress={clearFilters} style={styles.clearButton}>
+            <Icon name="x-circle" size={14} color={colors.primary[400]} />
+            <Text style={styles.clearButtonText}>Clear filters</Text>
+          </Pressable>
+        )}
       </View>
     ),
-    [peptides.length]
+    [
+      subtitleText,
+      searchQuery,
+      setSearchQuery,
+      categoryFilter,
+      setCategoryFilter,
+      researchLevelFilter,
+      setResearchLevelFilter,
+      hasActiveFilters,
+      clearFilters,
+    ]
   );
 
   const renderEmptyState = useCallback(
     () => (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyIcon}>💊</Text>
+        <View style={styles.emptyIconContainer}>
+          <Icon name="book-open" size={48} color={colors.primary[500]} />
+        </View>
         <Text style={styles.emptyTitle}>No peptides found</Text>
         <Text style={styles.emptySubtitle}>
           Try adjusting your search or filters.
@@ -76,6 +167,7 @@ export function PeptideBrowseScreen({
         ListEmptyComponent={renderEmptyState}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       />
     </SafeAreaView>
   );
@@ -88,45 +180,79 @@ const styles = StyleSheet.create({
   },
   listContent: {
     flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
     paddingBottom: 100,
   },
   listHeader: {
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: colors.white,
-    marginBottom: 4,
+    ...typography.heading1,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
   },
   headerSubtitle: {
-    fontSize: 16,
+    ...typography.body,
     color: colors.text.secondary,
+    marginBottom: spacing.base,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.background.tertiary,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.base,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.06)",
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.text.primary,
+    marginLeft: spacing.sm,
+    paddingVertical: 0,
+  },
+  clearButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+  },
+  clearButtonText: {
+    ...typography.small,
+    fontWeight: "500",
+    color: colors.primary[400],
   },
   emptyState: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 64,
-    paddingHorizontal: 32,
+    paddingVertical: spacing["5xl"],
+    paddingHorizontal: spacing["2xl"],
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
+  emptyIconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: "rgba(91, 138, 114, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.xl,
   },
   emptyTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: colors.white,
+    ...typography.heading2,
+    color: colors.text.primary,
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   emptySubtitle: {
-    fontSize: 16,
+    ...typography.body,
     color: colors.text.secondary,
     textAlign: "center",
-    marginBottom: 32,
+    marginBottom: spacing["2xl"],
   },
 });

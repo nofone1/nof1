@@ -4,15 +4,19 @@
  */
 
 import React, { useCallback, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet, RefreshControl } from "react-native";
+import { View, Text, ScrollView, StyleSheet, RefreshControl, Alert, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, Button, Icon, Loading } from "@/components/ui";
+import { ConcentrationDashboard } from "@/components/tracking/concentration-dashboard";
+import { usePeptideStore } from "@/stores/peptide-store";
+import { useHealthStore } from "@/stores/health-store";
+import type { Pharmacokinetics } from "@/types/peptide";
 import { useTrackingStore, useTodaysDoses, useTodaysMetrics, useActiveStack } from "@/stores/tracking-store";
 import { useLogger } from "@/hooks/use-logger";
 import { colors, spacing, typography } from "@/theme";
 import type { MainTabScreenProps } from "@/types/navigation";
 import type { DoseEntry, MetricEntry, StackItem } from "@/types/tracking";
-import { QUICK_METRIC_INFO, QuickMetricType } from "@/types/tracking";
+import { QUICK_METRIC_INFO, QuickMetricType, INJECTION_SITE_LABELS } from "@/types/tracking";
 
 /**
  * Formats a date for display.
@@ -49,15 +53,36 @@ function formatTime(date: Date): string {
 export function DailyLogScreen({
   navigation,
 }: MainTabScreenProps<"Daily">): React.JSX.Element {
-  const { loadTrackingData, isLoading, logDose } = useTrackingStore();
+  const { loadTrackingData, isLoading, logDose, doses, deleteDose, deleteMetric } = useTrackingStore();
   const todaysDoses = useTodaysDoses();
   const todaysMetrics = useTodaysMetrics();
   const activeStack = useActiveStack();
+  const { allPeptides, loadPeptides } = usePeptideStore();
+  const { isConnected, todayActivity, todaySleep } = useHealthStore();
   const { log } = useLogger("DailyLog");
+
+  // Build pharmacokinetics map for concentration tracking
+  const pharmacokineticsMap = React.useMemo(() => {
+    const map = new Map<string, Pharmacokinetics>();
+    for (const peptide of allPeptides) {
+      if (peptide.pharmacokinetics) {
+        map.set(peptide.id, peptide.pharmacokinetics);
+      }
+    }
+    return map;
+  }, [allPeptides]);
+
+  // Get last 7 days of doses for concentration calculation
+  const recentDoses = React.useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return doses.filter((d) => new Date(d.timestamp) >= sevenDaysAgo);
+  }, [doses]);
 
   useEffect(() => {
     loadTrackingData();
-  }, [loadTrackingData]);
+    loadPeptides();
+  }, [loadTrackingData, loadPeptides]);
 
   const handleRefresh = useCallback(() => {
     loadTrackingData();
@@ -82,6 +107,20 @@ export function DailyLogScreen({
     },
     [logDose, log]
   );
+
+  const handleDeleteDose = useCallback((id: string) => {
+    Alert.alert("Delete Entry", "Delete this dose entry?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deleteDose(id) },
+    ]);
+  }, [deleteDose]);
+
+  const handleDeleteMetric = useCallback((id: string) => {
+    Alert.alert("Delete Entry", "Delete this metric entry?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deleteMetric(id) },
+    ]);
+  }, [deleteMetric]);
 
   const handleViewPeptides = useCallback(() => {
     navigation.navigate("Peptides");
@@ -124,6 +163,46 @@ export function DailyLogScreen({
           </Button>
         </View>
 
+        {/* Health Snapshot */}
+        {isConnected && (todayActivity || todaySleep) && (
+          <Card style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <Icon name="heart" size={18} color={colors.accent.error} />
+                <Text style={styles.sectionTitle}>Health Snapshot</Text>
+              </View>
+            </View>
+            <View style={styles.healthGrid}>
+              {todayActivity?.steps != null && (
+                <View style={styles.healthItem}>
+                  <Text style={styles.healthValue}>{todayActivity.steps.toLocaleString()}</Text>
+                  <Text style={styles.healthLabel}>Steps</Text>
+                </View>
+              )}
+              {todayActivity?.heartRateResting != null && (
+                <View style={styles.healthItem}>
+                  <Text style={styles.healthValue}>{todayActivity.heartRateResting}</Text>
+                  <Text style={styles.healthLabel}>Resting HR</Text>
+                </View>
+              )}
+              {todaySleep?.totalSleepMinutes != null && (
+                <View style={styles.healthItem}>
+                  <Text style={styles.healthValue}>
+                    {Math.floor(todaySleep.totalSleepMinutes / 60)}h {todaySleep.totalSleepMinutes % 60}m
+                  </Text>
+                  <Text style={styles.healthLabel}>Sleep</Text>
+                </View>
+              )}
+              {todaySleep?.hrv != null && (
+                <View style={styles.healthItem}>
+                  <Text style={styles.healthValue}>{Math.round(todaySleep.hrv)}</Text>
+                  <Text style={styles.healthLabel}>HRV</Text>
+                </View>
+              )}
+            </View>
+          </Card>
+        )}
+
         {/* My Stack Section */}
         <Card style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -161,6 +240,14 @@ export function DailyLogScreen({
           )}
         </Card>
 
+        {/* Concentration Dashboard */}
+        {recentDoses.length > 0 && pharmacokineticsMap.size > 0 && (
+          <ConcentrationDashboard
+            doses={recentDoses}
+            pharmacokineticsMap={pharmacokineticsMap}
+          />
+        )}
+
         {/* Today's Log Section */}
         <Card style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -182,10 +269,10 @@ export function DailyLogScreen({
           ) : (
             <View style={styles.logList}>
               {todaysDoses.map((dose) => (
-                <DoseEntryRow key={dose.id} dose={dose} />
+                <DoseEntryRow key={dose.id} dose={dose} onDelete={() => handleDeleteDose(dose.id)} />
               ))}
               {todaysMetrics.map((metric) => (
-                <MetricEntryRow key={metric.id} metric={metric} />
+                <MetricEntryRow key={metric.id} metric={metric} onDelete={() => handleDeleteMetric(metric.id)} />
               ))}
             </View>
           )}
@@ -232,20 +319,27 @@ function StackItemRow({ item, isLoggedToday, onLog }: StackItemRowProps): React.
  */
 interface DoseEntryRowProps {
   dose: DoseEntry;
+  onDelete: () => void;
 }
 
-function DoseEntryRow({ dose }: DoseEntryRowProps): React.JSX.Element {
+function DoseEntryRow({ dose, onDelete }: DoseEntryRowProps): React.JSX.Element {
+  const siteLabel = dose.injectionSite ? INJECTION_SITE_LABELS[dose.injectionSite] : null;
   return (
-    <View style={styles.logEntry}>
+    <Pressable onLongPress={onDelete} style={styles.logEntry}>
       <View style={styles.logEntryIcon}>
         <Icon name="droplet" size={16} color={colors.primary[400]} />
       </View>
       <View style={styles.logEntryInfo}>
         <Text style={styles.logEntryName}>{dose.name}</Text>
-        <Text style={styles.logEntryDetail}>{dose.dosage}</Text>
+        <Text style={styles.logEntryDetail}>
+          {dose.dosage}{siteLabel ? ` · ${siteLabel}` : ""}
+        </Text>
       </View>
       <Text style={styles.logEntryTime}>{formatTime(dose.timestamp)}</Text>
-    </View>
+      <Pressable onPress={onDelete} style={styles.deleteButton} hitSlop={8}>
+        <Icon name="trash-2" size={16} color={colors.text.tertiary} />
+      </Pressable>
+    </Pressable>
   );
 }
 
@@ -254,16 +348,17 @@ function DoseEntryRow({ dose }: DoseEntryRowProps): React.JSX.Element {
  */
 interface MetricEntryRowProps {
   metric: MetricEntry;
+  onDelete: () => void;
 }
 
-function MetricEntryRow({ metric }: MetricEntryRowProps): React.JSX.Element {
+function MetricEntryRow({ metric, onDelete }: MetricEntryRowProps): React.JSX.Element {
   const metricInfo = QUICK_METRIC_INFO[metric.metricType];
   const displayName = metric.metricType === QuickMetricType.CUSTOM
     ? metric.customName ?? "Custom"
     : metricInfo.label;
 
   return (
-    <View style={styles.logEntry}>
+    <Pressable onLongPress={onDelete} style={styles.logEntry}>
       <View style={styles.logEntryIcon}>
         <Icon name={metricInfo.icon as any} size={16} color={colors.accent.info} />
       </View>
@@ -272,7 +367,10 @@ function MetricEntryRow({ metric }: MetricEntryRowProps): React.JSX.Element {
         <Text style={styles.logEntryDetail}>{metric.value}/10</Text>
       </View>
       <Text style={styles.logEntryTime}>{formatTime(metric.timestamp)}</Text>
-    </View>
+      <Pressable onPress={onDelete} style={styles.deleteButton} hitSlop={8}>
+        <Icon name="trash-2" size={16} color={colors.text.tertiary} />
+      </Pressable>
+    </Pressable>
   );
 }
 
@@ -402,6 +500,27 @@ const styles = StyleSheet.create({
   },
   logEntryTime: {
     ...typography.small,
+    color: colors.text.tertiary,
+  },
+  deleteButton: {
+    marginLeft: spacing.sm,
+    padding: spacing.xs,
+  },
+  healthGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  healthItem: {
+    width: "50%",
+    paddingVertical: spacing.sm,
+  },
+  healthValue: {
+    ...typography.heading3,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  healthLabel: {
+    ...typography.captionSmall,
     color: colors.text.tertiary,
   },
   bottomSpacer: {
