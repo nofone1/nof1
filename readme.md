@@ -136,6 +136,11 @@ irvine/
 
 The app uses **Clerk authentication** with secure token storage via `expo-secure-store`.
 
+### Development-only credential shortcut
+
+- In development builds, you can sign in with **`test@gmail.com`** and **`peptideking`** to bypass Clerk for local QA workflows.
+- This is intentionally limited to development mode and should not be treated as production authentication behavior.
+
 ## Backend and Data
 
 Core product data is stored in **Convex** (experiments, protocols, dose logs, metrics, stack items).

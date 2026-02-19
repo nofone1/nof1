@@ -37,9 +37,24 @@ const DEV_SKIP_USER: User = {
   lastName: "User",
 };
 
+const DEV_BYPASS_USER: User = {
+  id: "dev-bypass-user",
+  email: "test@gmail.com",
+  firstName: "Test",
+  lastName: "User",
+};
+
+// Dev-only convenience bypass for local testing of auth flow.
+// Active in development builds only and intentionally hardcoded.
 const DEV_SKIP_SESSION_ID = "dev-skip-session";
+const DEV_BYPASS_SESSION_ID = "dev-bypass-session";
+const DEV_BYPASS_EMAIL = "test@gmail.com";
+const DEV_BYPASS_PASSWORD = "peptideking";
+
+type LocalAuthMode = "skip-auth" | "dev-bypass" | "none";
 
 let skipAuthSignedInState = env.skipAuth;
+let skipAuthMode: LocalAuthMode = env.skipAuth ? "skip-auth" : "none";
 const skipAuthListeners = new Set<() => void>();
 
 function subscribeSkipAuth(listener: () => void): () => void {
@@ -53,12 +68,19 @@ function getSkipAuthSnapshot(): boolean {
   return skipAuthSignedInState;
 }
 
-function setSkipAuthSignedInState(nextState: boolean): void {
-  if (skipAuthSignedInState === nextState) {
+function setSkipAuthSignedInState(
+  nextState: boolean,
+  nextMode: LocalAuthMode = "none"
+): void {
+  if (
+    skipAuthSignedInState === nextState &&
+    skipAuthMode === (nextState ? nextMode : "none")
+  ) {
     return;
   }
 
   skipAuthSignedInState = nextState;
+  skipAuthMode = nextState ? nextMode : "none";
   skipAuthListeners.forEach((listener) => listener());
 }
 
@@ -66,12 +88,33 @@ function useSkipAuthSignedInState(): boolean {
   return useSyncExternalStore(subscribeSkipAuth, getSkipAuthSnapshot, getSkipAuthSnapshot);
 }
 
+function getSkipAuthModeSnapshot(): LocalAuthMode {
+  return skipAuthMode;
+}
+
+function useSkipAuthMode(): LocalAuthMode {
+  return useSyncExternalStore(
+    subscribeSkipAuth,
+    getSkipAuthModeSnapshot,
+    getSkipAuthModeSnapshot
+  );
+}
+
+function isDevBypassCredential(identifier: string, password: string): boolean {
+  return (
+    env.isDevelopment &&
+    // Keep this login shortcut explicit and intentionally scoped to dev only.
+    identifier === DEV_BYPASS_EMAIL &&
+    password === DEV_BYPASS_PASSWORD
+  );
+}
+
 export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "signOut"> {
   const { isLoaded, isSignedIn } = useClerkAuth();
   const { signOut } = useClerk();
   const isSkipAuthSignedIn = useSkipAuthSignedInState();
 
-  if (env.skipAuth) {
+  if (env.skipAuth || isSkipAuthSignedIn) {
     return {
       isLoaded: true,
       isSignedIn: isSkipAuthSignedIn,
@@ -92,8 +135,13 @@ export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "s
 export function useUser(): { user: User | null } {
   const { user } = useClerkUser();
   const isSkipAuthSignedIn = useSkipAuthSignedInState();
+  const skipAuthMode = useSkipAuthMode();
 
-  if (env.skipAuth) {
+  if (env.skipAuth || isSkipAuthSignedIn) {
+    if (skipAuthMode === "dev-bypass") {
+      return { user: isSkipAuthSignedIn ? DEV_BYPASS_USER : null };
+    }
+
     return { user: isSkipAuthSignedIn ? DEV_SKIP_USER : null };
   }
 
@@ -144,7 +192,7 @@ export function useSignIn(): {
         },
       },
       setActive: async ({ session }) => {
-        setSkipAuthSignedInState(Boolean(session));
+        setSkipAuthSignedInState(Boolean(session), "skip-auth");
       },
       isLoaded: true,
     };
@@ -153,6 +201,14 @@ export function useSignIn(): {
   return {
     signIn: {
       create: async ({ identifier, password }) => {
+        if (isDevBypassCredential(identifier.trim(), password)) {
+          logger.info("Dev auth bypass sign in used");
+          return {
+            status: "complete",
+            createdSessionId: DEV_BYPASS_SESSION_ID,
+          };
+        }
+
         if (!isLoaded || !signIn) {
           throw new Error("Authentication is still loading");
         }
@@ -166,6 +222,11 @@ export function useSignIn(): {
     },
     setActive: async ({ session }) => {
       if (!isLoaded || !setActive) {
+        return;
+      }
+
+      if (session === DEV_BYPASS_SESSION_ID) {
+        setSkipAuthSignedInState(true, "dev-bypass");
         return;
       }
 
@@ -202,7 +263,7 @@ export function useSignUp(): {
         },
       },
       setActive: async ({ session }) => {
-        setSkipAuthSignedInState(Boolean(session));
+        setSkipAuthSignedInState(Boolean(session), "skip-auth");
       },
       isLoaded: true,
     };
@@ -255,9 +316,10 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
   const { isLoaded, isSignedIn, userId, getToken } = useClerkAuth();
   const migratedUserRef = useRef<string | null>(null);
   const isSkipAuthSignedIn = useSkipAuthSignedInState();
+  const skipAuthMode = useSkipAuthMode();
 
   useEffect(() => {
-    if (env.skipAuth) {
+    if (env.skipAuth || isSkipAuthSignedIn) {
       logger.info("EXPO_PUBLIC_SKIP_AUTH enabled: Convex auth token forwarding is disabled.");
       setConvexTokenGetter(async () => null);
 
@@ -288,12 +350,15 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
     return () => {
       setConvexTokenGetter(null);
     };
-  }, [getToken, isSignedIn, userId]);
+  }, [getToken, isSignedIn, userId, isSkipAuthSignedIn]);
 
   useEffect(() => {
-    if (env.skipAuth) {
+    if (env.skipAuth || isSkipAuthSignedIn) {
       if (isSkipAuthSignedIn) {
-        logger.setContext({ userId: DEV_SKIP_USER.id });
+        logger.setContext({
+          userId:
+            skipAuthMode === "dev-bypass" ? DEV_BYPASS_USER.id : DEV_SKIP_USER.id,
+        });
       } else {
         logger.clearContext();
       }
@@ -306,10 +371,10 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
     }
 
     logger.clearContext();
-  }, [isSkipAuthSignedIn, userId]);
+  }, [isSkipAuthSignedIn, userId, skipAuthMode]);
 
   useEffect(() => {
-    if (env.skipAuth) {
+    if (env.skipAuth || isSkipAuthSignedIn) {
       return;
     }
 
