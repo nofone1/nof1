@@ -4,3 +4,7 @@ credentials.json
 
 # Local overrides (optional)
 config.local.yaml
+
+# Machine-local runtime files
+device-sessions.json
+remote.json

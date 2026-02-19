@@ -1,18 +1,20 @@
 /**
- * Mock authentication context.
- * Replace with Clerk integration for production.
- * 
- * To add Clerk later:
- * 1. npm install @clerk/clerk-expo expo-auth-session expo-web-browser
- * 2. Replace this mock with ClerkProvider
+ * Clerk-backed authentication adapter.
+ * Preserves the app's existing auth hook API.
  */
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useRef, useSyncExternalStore } from "react";
+import {
+  useAuth as useClerkAuth,
+  useClerk,
+  useSignIn as useClerkSignIn,
+  useSignUp as useClerkSignUp,
+  useUser as useClerkUser,
+} from "@clerk/clerk-expo";
+import { env } from "@/config/env";
 import { logger } from "@/services/logging";
-import { env, TEST_USER, MOCK_CREDENTIAL } from "@/config/env";
-
-const AUTH_STORAGE_KEY = "@nof1/auth";
+import { setConvexTokenGetter } from "@/services/backend/convex-client";
+import { migrateLocalCoreDataIfNeeded } from "@/services/backend/local-migration";
 
 interface User {
   id: string;
@@ -25,115 +27,223 @@ interface AuthContextValue {
   isLoaded: boolean;
   isSignedIn: boolean;
   user: User | null;
-  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signUp: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+const DEV_SKIP_USER: User = {
+  id: "dev-user",
+  email: "dev@local.nof1",
+  firstName: "Dev",
+  lastName: "User",
+};
 
-/**
- * Hook to access authentication state and methods.
- */
+const DEV_SKIP_SESSION_ID = "dev-skip-session";
+
+let skipAuthSignedInState = env.skipAuth;
+const skipAuthListeners = new Set<() => void>();
+
+function subscribeSkipAuth(listener: () => void): () => void {
+  skipAuthListeners.add(listener);
+  return () => {
+    skipAuthListeners.delete(listener);
+  };
+}
+
+function getSkipAuthSnapshot(): boolean {
+  return skipAuthSignedInState;
+}
+
+function setSkipAuthSignedInState(nextState: boolean): void {
+  if (skipAuthSignedInState === nextState) {
+    return;
+  }
+
+  skipAuthSignedInState = nextState;
+  skipAuthListeners.forEach((listener) => listener());
+}
+
+function useSkipAuthSignedInState(): boolean {
+  return useSyncExternalStore(subscribeSkipAuth, getSkipAuthSnapshot, getSkipAuthSnapshot);
+}
+
 export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "signOut"> {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
+  const { isLoaded, isSignedIn } = useClerkAuth();
+  const { signOut } = useClerk();
+  const isSkipAuthSignedIn = useSkipAuthSignedInState();
+
+  if (env.skipAuth) {
+    return {
+      isLoaded: true,
+      isSignedIn: isSkipAuthSignedIn,
+      signOut: async () => {
+        logger.info("Skip-auth sign out");
+        setSkipAuthSignedInState(false);
+      },
+    };
   }
-  return { isLoaded: context.isLoaded, isSignedIn: context.isSignedIn, signOut: context.signOut };
+
+  return {
+    isLoaded,
+    isSignedIn: Boolean(isSignedIn),
+    signOut,
+  };
 }
 
-/**
- * Hook to access current user.
- */
 export function useUser(): { user: User | null } {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useUser must be used within AuthProvider");
+  const { user } = useClerkUser();
+  const isSkipAuthSignedIn = useSkipAuthSignedInState();
+
+  if (env.skipAuth) {
+    return { user: isSkipAuthSignedIn ? DEV_SKIP_USER : null };
   }
-  return { user: context.user };
+
+  if (!user) {
+    return { user: null };
+  }
+
+  const email =
+    user.primaryEmailAddress?.emailAddress ||
+    user.emailAddresses[0]?.emailAddress ||
+    "";
+
+  if (!email) {
+    return { user: null };
+  }
+
+  return {
+    user: {
+      id: user.id,
+      email,
+      firstName: user.firstName ?? undefined,
+      lastName: user.lastName ?? undefined,
+    },
+  };
 }
 
-/**
- * Hook to access sign in method.
- */
 export function useSignIn(): {
-  signIn: { create: (params: { identifier: string; password: string }) => Promise<{ status: string; createdSessionId: string | null }> };
+  signIn: {
+    create: (params: {
+      identifier: string;
+      password: string;
+    }) => Promise<{ status: string; createdSessionId: string | null }>;
+  };
   setActive: (params: { session: string | null }) => Promise<void>;
   isLoaded: boolean;
 } {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useSignIn must be used within AuthProvider");
+  const { isLoaded, signIn, setActive } = useClerkSignIn();
+
+  if (env.skipAuth) {
+    return {
+      signIn: {
+        create: async () => {
+          logger.info("Skip-auth sign in");
+          return {
+            status: "complete",
+            createdSessionId: DEV_SKIP_SESSION_ID,
+          };
+        },
+      },
+      setActive: async ({ session }) => {
+        setSkipAuthSignedInState(Boolean(session));
+      },
+      isLoaded: true,
+    };
   }
 
   return {
     signIn: {
       create: async ({ identifier, password }) => {
-        const result = await context.signIn(identifier, password);
-        if (result.success) {
-          return { status: "complete", createdSessionId: "mock-session" };
+        if (!isLoaded || !signIn) {
+          throw new Error("Authentication is still loading");
         }
-        throw new Error(result.error || "Sign in failed");
+
+        const result = await signIn.create({ identifier, password });
+        return {
+          status: result.status ?? "",
+          createdSessionId: result.createdSessionId,
+        };
       },
     },
-    setActive: async () => {},
-    isLoaded: context.isLoaded,
+    setActive: async ({ session }) => {
+      if (!isLoaded || !setActive) {
+        return;
+      }
+
+      await setActive({ session: session ?? undefined });
+    },
+    isLoaded,
   };
 }
 
-/**
- * Hook to access sign up method.
- */
 export function useSignUp(): {
   signUp: {
     create: (params: { emailAddress: string; password: string }) => Promise<void>;
-    prepareEmailAddressVerification: (params: { strategy: string }) => Promise<void>;
-    attemptEmailAddressVerification: (params: { code: string }) => Promise<{ status: string; createdSessionId: string | null }>;
+    prepareEmailAddressVerification: (params: { strategy: "email_code" }) => Promise<void>;
+    attemptEmailAddressVerification: (params: {
+      code: string;
+    }) => Promise<{ status: string; createdSessionId: string | null }>;
   };
   setActive: (params: { session: string | null }) => Promise<void>;
   isLoaded: boolean;
 } {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useSignUp must be used within AuthProvider");
+  const { isLoaded, signUp, setActive } = useClerkSignUp();
+
+  if (env.skipAuth) {
+    return {
+      signUp: {
+        create: async () => undefined,
+        prepareEmailAddressVerification: async () => undefined,
+        attemptEmailAddressVerification: async () => {
+          logger.info("Skip-auth sign up verification");
+          return {
+            status: "complete",
+            createdSessionId: DEV_SKIP_SESSION_ID,
+          };
+        },
+      },
+      setActive: async ({ session }) => {
+        setSkipAuthSignedInState(Boolean(session));
+      },
+      isLoaded: true,
+    };
   }
 
   return {
     signUp: {
       create: async ({ emailAddress, password }) => {
-        // Store pending signup
-        await AsyncStorage.setItem("@nof1/pending_signup", JSON.stringify({ email: emailAddress, password }));
+        if (!isLoaded || !signUp) {
+          throw new Error("Authentication is still loading");
+        }
+
+        await signUp.create({ emailAddress, password });
       },
-      prepareEmailAddressVerification: async () => {
-        // Mock - in production this would send an email
+      prepareEmailAddressVerification: async ({ strategy }) => {
+        if (!isLoaded || !signUp) {
+          throw new Error("Authentication is still loading");
+        }
+
+        await signUp.prepareEmailAddressVerification({ strategy });
       },
       attemptEmailAddressVerification: async ({ code }) => {
-        // Validate code format (must be 6 digits)
-        if (code.length !== 6) {
-          throw new Error("Invalid verification code");
+        if (!isLoaded || !signUp) {
+          throw new Error("Authentication is still loading");
         }
 
-        // Retrieve pending signup data
-        const pending = await AsyncStorage.getItem("@nof1/pending_signup");
-        if (!pending) {
-          throw new Error("Signup session expired. Please start over.");
-        }
-
-        // Attempt to complete signup
-        const { email, password } = JSON.parse(pending);
-        const result = await context.signUp(email, password);
-
-        if (!result.success) {
-          throw new Error(result.error || "Failed to complete signup");
-        }
-
-        await AsyncStorage.removeItem("@nof1/pending_signup");
-        return { status: "complete", createdSessionId: "mock-session" };
+        const result = await signUp.attemptEmailAddressVerification({ code });
+        return {
+          status: result.status ?? "",
+          createdSessionId: result.createdSessionId,
+        };
       },
     },
-    setActive: async () => {},
-    isLoaded: context.isLoaded,
+    setActive: async ({ session }) => {
+      if (!isLoaded || !setActive) {
+        return;
+      }
+
+      await setActive({ session: session ?? undefined });
+    },
+    isLoaded,
   };
 }
 
@@ -141,127 +251,85 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-/**
- * Authentication provider component.
- * Wraps app with auth context.
- */
 export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { isLoaded, isSignedIn, userId, getToken } = useClerkAuth();
+  const migratedUserRef = useRef<string | null>(null);
+  const isSkipAuthSignedIn = useSkipAuthSignedInState();
 
-  // Load persisted auth state or auto-login if skipAuth is enabled
   useEffect(() => {
-    const loadAuth = async () => {
-      try {
-        // Skip auth: auto-login with test user
-        if (env.skipAuth) {
-          const testUser: User = {
-            id: "test-user-skip-auth",
-            email: TEST_USER.email,
-            firstName: "Anam",
-          };
-          setUser(testUser);
-          logger.info("Skip auth enabled - auto-logged in as test user", { userId: testUser.id });
-          setIsLoaded(true);
-          return;
-        }
+    if (env.skipAuth) {
+      logger.info("EXPO_PUBLIC_SKIP_AUTH enabled: Convex auth token forwarding is disabled.");
+      setConvexTokenGetter(async () => null);
 
-        const stored = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
-        if (stored) {
-          const userData = JSON.parse(stored);
-          setUser(userData);
-          logger.info("Auth state restored", { userId: userData.id });
-        }
-      } catch (error) {
-        logger.error("Failed to load auth state", {}, error instanceof Error ? error : undefined);
-      } finally {
-        setIsLoaded(true);
-      }
-    };
-    loadAuth();
-  }, []);
-
-  const signIn = useCallback(async (email: string, password: string) => {
-    // Bypass login for quick testing (1/1) - ONLY available in development builds
-    if (__DEV__ && email === "1" && password === "1") {
-      const bypassUser: User = {
-        id: "bypass-user",
-        email: "bypass@nof1.app",
-        firstName: "Test",
+      return () => {
+        setConvexTokenGetter(null);
       };
+    }
+
+    setConvexTokenGetter(async () => {
+      if (!isSignedIn) {
+        return null;
+      }
 
       try {
-        await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(bypassUser));
-        setUser(bypassUser);
-        logger.info("User signed in with bypass credentials (DEV ONLY)", { userId: bypassUser.id });
-        return { success: true };
+        const token = await getToken({ template: "convex" });
+        return token ?? null;
       } catch (error) {
-        return { success: false, error: "Failed to sign in" };
+        logger.warn("Failed to fetch Clerk token for Convex", {
+          userId: userId ?? undefined,
+          extra: {
+            error: error instanceof Error ? error.message : String(error),
+          },
+        });
+        return null;
       }
-    }
+    });
 
-    // Check for mock credential first (allows login with test123 password)
-    if (email === MOCK_CREDENTIAL.email && password === MOCK_CREDENTIAL.password) {
-      const testUser: User = {
-        id: "test-user-anam",
-        email: MOCK_CREDENTIAL.email,
-        firstName: "Anam",
-      };
-
-      try {
-        await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(testUser));
-        setUser(testUser);
-        logger.info("User signed in with mock credential", { userId: testUser.id });
-        return { success: true };
-      } catch (error) {
-        return { success: false, error: "Failed to sign in" };
-      }
-    }
-
-    // Mock authentication - accept any valid email/password
-    if (!email.includes("@") || password.length < 6) {
-      return { success: false, error: "Invalid email or password" };
-    }
-
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      email,
-      firstName: email.split("@")[0],
+    return () => {
+      setConvexTokenGetter(null);
     };
+  }, [getToken, isSignedIn, userId]);
 
-    try {
-      await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser));
-      setUser(newUser);
-      logger.info("User signed in", { userId: newUser.id });
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: "Failed to sign in" };
+  useEffect(() => {
+    if (env.skipAuth) {
+      if (isSkipAuthSignedIn) {
+        logger.setContext({ userId: DEV_SKIP_USER.id });
+      } else {
+        logger.clearContext();
+      }
+      return;
     }
-  }, []);
 
-  const signUp = useCallback(async (email: string, password: string) => {
-    // Same as sign in for mock
-    return signIn(email, password);
-  }, [signIn]);
-
-  const signOut = useCallback(async () => {
-    try {
-      await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
-      setUser(null);
-      logger.info("User signed out");
-    } catch (error) {
-      logger.error("Failed to sign out", {}, error instanceof Error ? error : undefined);
+    if (userId) {
+      logger.setContext({ userId });
+      return;
     }
-  }, []);
 
-  const value: AuthContextValue = {
-    isLoaded,
-    isSignedIn: !!user,
-    user,
-    signIn,
-    signUp,
-    signOut,
-  };
+    logger.clearContext();
+  }, [isSkipAuthSignedIn, userId]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  useEffect(() => {
+    if (env.skipAuth) {
+      return;
+    }
+
+    if (!isLoaded || !isSignedIn || !userId) {
+      return;
+    }
+
+    if (migratedUserRef.current === userId) {
+      return;
+    }
+
+    migratedUserRef.current = userId;
+    migrateLocalCoreDataIfNeeded(userId).catch((error) => {
+      logger.error(
+        "Local data migration failed",
+        { userId },
+        error instanceof Error ? error : new Error(String(error))
+      );
+    });
+  }, [isLoaded, isSignedIn, userId]);
+
+  return <>{children}</>;
 }

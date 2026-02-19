@@ -145,13 +145,7 @@ Before running a full test pass, reset the app to a clean state:
 
 ## Test Credentials
 
-The app uses mock authentication. Use these credentials:
-
-| Email | Password |
-|-------|----------|
-| `test@nof1.app` | `test123` |
-
-> **Note:** Any email containing `@` with a password of 6+ characters will work.
+Use a real Clerk test account created in your Clerk dashboard for the active environment (development/staging/production).
 
 ---
 

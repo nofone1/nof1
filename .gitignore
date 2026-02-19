@@ -87,3 +87,7 @@ native-ios/*.xcworkspace/
 native-ios/Pods/
 native-ios/DemoApp.xcodeproj/xcuserdata/
 native-ios/DemoApp.xcodeproj/project.xcworkspace/
+
+# Revyl local runtime state (machine-specific)
+.revyl/device-sessions.json
+.revyl/remote.json

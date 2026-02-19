@@ -32,7 +32,14 @@
     },
     "plugins": [
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      "expo-secure-store",
+      [
+        "./plugins/withIosDeploymentTarget",
+        {
+          "target": "18.5"
+        }
+      ]
     ],
     "extra": {
       "eas": {

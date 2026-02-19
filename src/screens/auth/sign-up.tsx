@@ -119,7 +119,7 @@ export function SignUpScreen({
             </Text>
             <Text style={styles.subtitle}>
               {pendingVerification
-                ? "Enter any 6-digit code (mock auth)"
+                ? "Enter the 6-digit code sent to your email"
                 : "Start tracking your N-of-1 experiments"}
             </Text>
           </View>

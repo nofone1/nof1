@@ -143,7 +143,7 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
         <Text style={styles.sectionHeader}>About</Text>
         <Card style={styles.menuCard} animated animationDelay={320}>
           <MenuItem label="Version" hint="1.0.0" />
-          <MenuItem label="Auth" hint="Mock (Add Clerk for production)" />
+          <MenuItem label="Auth" hint="Clerk" />
           <MenuItem label="Terms of Service" onPress={() => {}} isLast />
         </Card>
 

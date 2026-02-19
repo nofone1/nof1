@@ -10,6 +10,9 @@
         "simulator": true
       }
     },
+    "development-simulator": {
+      "extends": "development"
+    },
     "preview": {
       "distribution": "internal",
       "ios": {
