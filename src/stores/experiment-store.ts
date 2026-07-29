@@ -1,21 +1,3 @@
-/**
- * Zustand store for experiment state management.
- * Handles CRUD operations for experiments with local persistence.
- *
- * @example
- * ```tsx
- * function HomeScreen() {
- *   const { experiments, isLoading, loadExperiments } = useExperimentStore();
- *
- *   useEffect(() => {
- *     loadExperiments();
- *   }, []);
- *
- *   return <ExperimentList experiments={experiments} />;
- * }
- * ```
- */
-
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type {
@@ -27,24 +9,18 @@ import type {
 } from "@/types/experiment";
 import { logger } from "@/services/logging";
 import { STORAGE_KEYS } from "@/utils/constants";
+import {
+  convexMutation,
+  convexQuery,
+  isConvexConfigured,
+} from "@/services/backend/convex-client";
 
-/**
- * Generates a unique identifier.
- * @returns A unique string ID
- */
 const generateId = (): string => {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 10);
   return `${timestamp}-${random}`;
 };
 
-/**
- * Experiment store state interface.
- * @property experiments - Array of all experiments
- * @property currentExperiment - Currently selected experiment
- * @property isLoading - Whether experiments are being loaded
- * @property error - Error message if operation failed
- */
 interface ExperimentState {
   experiments: Experiment[];
   currentExperiment: Experiment | null;
@@ -52,17 +28,6 @@ interface ExperimentState {
   error: string | null;
 }
 
-/**
- * Experiment store actions interface.
- * @property loadExperiments - Loads experiments from storage
- * @property createExperiment - Creates a new experiment
- * @property updateExperiment - Updates an existing experiment
- * @property deleteExperiment - Deletes an experiment
- * @property setCurrentExperiment - Sets the currently selected experiment
- * @property addEntry - Adds an entry to an experiment
- * @property updateStatus - Updates an experiment's status
- * @property clearError - Clears the error state
- */
 interface ExperimentActions {
   loadExperiments: () => Promise<void>;
   createExperiment: (input: CreateExperimentInput) => Promise<Experiment>;
@@ -74,116 +39,154 @@ interface ExperimentActions {
   clearError: () => void;
 }
 
-/**
- * Combined store type.
- */
 type ExperimentStore = ExperimentState & ExperimentActions;
 
-/**
- * Persists experiments to async storage.
- * @param experiments - Array of experiments to persist
- */
-async function persistExperiments(experiments: Experiment[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(
-      STORAGE_KEYS.EXPERIMENTS,
-      JSON.stringify(experiments)
-    );
-    logger.debug("Experiments persisted to storage", {
-      extra: { count: experiments.length },
-    });
-  } catch (error) {
-    logger.error(
-      "Failed to persist experiments",
-      {},
-      error instanceof Error ? error : new Error(String(error))
-    );
-    throw error;
+function toDate(value: unknown): Date {
+  if (value instanceof Date) {
+    return value;
   }
+
+  return new Date(String(value));
 }
 
-/**
- * Zustand store for experiment management.
- *
- * Features:
- * - Local persistence with AsyncStorage
- * - Optimistic updates for better UX
- * - Comprehensive error handling
- * - Logging for observability
- *
- * @example
- * ```tsx
- * // Access store in component
- * const experiments = useExperimentStore((state) => state.experiments);
- * const createExperiment = useExperimentStore((state) => state.createExperiment);
- *
- * // Or use multiple selectors
- * const { experiments, isLoading, loadExperiments } = useExperimentStore();
- * ```
- */
+function toIso(value: unknown): string {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (typeof value === "string") {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString();
+    }
+  }
+
+  return new Date().toISOString();
+}
+
+function parseExperiment(raw: Record<string, any>): Experiment {
+  return {
+    ...(raw as Experiment),
+    createdAt: toDate(raw.createdAt),
+    updatedAt: toDate(raw.updatedAt),
+    schedule: {
+      ...raw.schedule,
+      startDate: toDate(raw.schedule?.startDate),
+      endDate: raw.schedule?.endDate ? toDate(raw.schedule.endDate) : undefined,
+    },
+    entries: Array.isArray(raw.entries)
+      ? raw.entries.map((entry: Record<string, any>) => ({
+          ...(entry as ExperimentEntry),
+          date: toDate(entry.date),
+          createdAt: toDate(entry.createdAt),
+        }))
+      : [],
+  };
+}
+
+function serializeExperimentInput(input: CreateExperimentInput): Record<string, unknown> {
+  return {
+    ...input,
+    schedule: {
+      ...input.schedule,
+      startDate: toIso(input.schedule.startDate),
+      endDate: input.schedule.endDate ? toIso(input.schedule.endDate) : undefined,
+    },
+    entries: [],
+  };
+}
+
+function serializeUpdates(updates: Partial<Experiment>): Record<string, unknown> {
+  const serialized: Record<string, unknown> = { ...updates };
+
+  if (updates.schedule) {
+    serialized.schedule = {
+      ...updates.schedule,
+      startDate: updates.schedule.startDate
+        ? toIso(updates.schedule.startDate)
+        : undefined,
+      endDate: updates.schedule.endDate ? toIso(updates.schedule.endDate) : undefined,
+    };
+  }
+
+  if (updates.entries) {
+    serialized.entries = updates.entries.map((entry) => ({
+      ...entry,
+      date: toIso(entry.date),
+      createdAt: toIso(entry.createdAt),
+    }));
+  }
+
+  if (updates.createdAt) {
+    serialized.createdAt = toIso(updates.createdAt);
+  }
+
+  if (updates.updatedAt) {
+    serialized.updatedAt = toIso(updates.updatedAt);
+  }
+
+  return serialized;
+}
+
+function serializeEntry(entry: CreateEntryInput): Record<string, unknown> {
+  return {
+    ...entry,
+    date: toIso(entry.date),
+  };
+}
+
+async function loadLocalExperiments(): Promise<Experiment[]> {
+  const stored = await AsyncStorage.getItem(STORAGE_KEYS.EXPERIMENTS);
+  const experiments: Experiment[] = stored ? JSON.parse(stored) : [];
+  return experiments.map((experiment) => parseExperiment(experiment as any));
+}
+
+async function persistLocalExperiments(experiments: Experiment[]): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_KEYS.EXPERIMENTS, JSON.stringify(experiments));
+}
+
 export const useExperimentStore = create<ExperimentStore>((set, get) => ({
-  // Initial state
   experiments: [],
   currentExperiment: null,
   isLoading: false,
   error: null,
 
-  /**
-   * Loads experiments from async storage.
-   * Should be called on app startup.
-   */
   loadExperiments: async () => {
     set({ isLoading: true, error: null });
-    logger.info("Loading experiments from storage");
 
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEYS.EXPERIMENTS);
-      const experiments: Experiment[] = stored ? JSON.parse(stored) : [];
+      if (isConvexConfigured()) {
+        const experiments = await convexQuery<Record<string, any>[]>("experiments:list");
+        const parsed = experiments.map((experiment) => parseExperiment(experiment));
+        set({ experiments: parsed, isLoading: false });
+        return;
+      }
 
-      // Parse date strings back to Date objects
-      const parsedExperiments = experiments.map((exp) => ({
-        ...exp,
-        createdAt: new Date(exp.createdAt),
-        updatedAt: new Date(exp.updatedAt),
-        schedule: {
-          ...exp.schedule,
-          startDate: new Date(exp.schedule.startDate),
-          endDate: exp.schedule.endDate
-            ? new Date(exp.schedule.endDate)
-            : undefined,
-        },
-        entries: exp.entries.map((entry) => ({
-          ...entry,
-          date: new Date(entry.date),
-          createdAt: new Date(entry.createdAt),
-        })),
-      }));
-
-      set({ experiments: parsedExperiments, isLoading: false });
-      logger.info("Experiments loaded successfully", {
-        extra: { count: parsedExperiments.length },
-      });
+      const local = await loadLocalExperiments();
+      set({ experiments: local, isLoading: false });
     } catch (error) {
-      const errorMessage = "Failed to load experiments";
       logger.error(
-        errorMessage,
+        "Failed to load experiments",
         {},
         error instanceof Error ? error : new Error(String(error))
       );
-      set({ error: errorMessage, isLoading: false });
+      set({ error: "Failed to load experiments", isLoading: false });
     }
   },
 
-  /**
-   * Creates a new experiment.
-   * @param input - Experiment data without auto-generated fields
-   * @returns The created experiment
-   */
   createExperiment: async (input: CreateExperimentInput) => {
-    logger.info("Creating new experiment", { extra: { name: input.name } });
+    if (isConvexConfigured()) {
+      const created = await convexMutation<Record<string, any>>("experiments:create", {
+        input: serializeExperimentInput(input),
+      });
+      const parsed = parseExperiment(created);
+      const updated = [parsed, ...get().experiments];
+      set({ experiments: updated });
+      return parsed;
+    }
 
     const now = new Date();
-    const newExperiment: Experiment = {
+    const experiment: Experiment = {
       ...input,
       id: generateId(),
       entries: [],
@@ -191,210 +194,129 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
       updatedAt: now,
     };
 
-    try {
-      const { experiments } = get();
-      const updatedExperiments = [...experiments, newExperiment];
-
-      // Optimistic update
-      set({ experiments: updatedExperiments });
-
-      // Persist to storage
-      await persistExperiments(updatedExperiments);
-
-      logger.info("Experiment created successfully", {
-        experimentId: newExperiment.id,
-      });
-
-      return newExperiment;
-    } catch (error) {
-      // Rollback on error
-      const { experiments } = get();
-      set({
-        experiments: experiments.filter((e) => e.id !== newExperiment.id),
-        error: "Failed to create experiment",
-      });
-      throw error;
-    }
+    const updated = [experiment, ...get().experiments];
+    set({ experiments: updated });
+    await persistLocalExperiments(updated);
+    return experiment;
   },
 
-  /**
-   * Updates an existing experiment.
-   * @param id - Experiment ID to update
-   * @param updates - Partial experiment data to merge
-   */
   updateExperiment: async (id: string, updates: Partial<Experiment>) => {
-    logger.info("Updating experiment", { experimentId: id });
+    if (isConvexConfigured()) {
+      const result = await convexMutation<Record<string, any>>("experiments:update", {
+        id,
+        updates: serializeUpdates(updates),
+      });
 
-    const { experiments } = get();
-    const index = experiments.findIndex((e) => e.id === id);
+      const parsed = parseExperiment(result);
+      const experiments = get().experiments.map((experiment) =>
+        experiment.id === id ? parsed : experiment
+      );
 
-    if (index === -1) {
-      const error = "Experiment not found";
-      logger.warn(error, { experimentId: id });
-      set({ error });
+      set({
+        experiments,
+        currentExperiment:
+          get().currentExperiment?.id === id ? parsed : get().currentExperiment,
+      });
       return;
     }
 
-    const updatedExperiment: Experiment = {
-      ...experiments[index],
-      ...updates,
-      updatedAt: new Date(),
-    };
+    const experiments = get().experiments.map((experiment) =>
+      experiment.id === id
+        ? {
+            ...experiment,
+            ...updates,
+            updatedAt: new Date(),
+          }
+        : experiment
+    );
 
-    const updatedExperiments = [...experiments];
-    updatedExperiments[index] = updatedExperiment;
-
-    try {
-      set({ experiments: updatedExperiments });
-      await persistExperiments(updatedExperiments);
-
-      // Update currentExperiment if it's the one being updated
-      const { currentExperiment } = get();
-      if (currentExperiment?.id === id) {
-        set({ currentExperiment: updatedExperiment });
-      }
-
-      logger.info("Experiment updated successfully", { experimentId: id });
-    } catch (error) {
-      set({ experiments, error: "Failed to update experiment" });
-      throw error;
-    }
+    set({ experiments });
+    await persistLocalExperiments(experiments);
   },
 
-  /**
-   * Deletes an experiment.
-   * @param id - Experiment ID to delete
-   */
   deleteExperiment: async (id: string) => {
-    logger.info("Deleting experiment", { experimentId: id });
-
-    const { experiments, currentExperiment } = get();
-    const updatedExperiments = experiments.filter((e) => e.id !== id);
-
-    try {
+    if (isConvexConfigured()) {
+      await convexMutation("experiments:remove", { id });
+      const experiments = get().experiments.filter((experiment) => experiment.id !== id);
       set({
-        experiments: updatedExperiments,
+        experiments,
         currentExperiment:
-          currentExperiment?.id === id ? null : currentExperiment,
+          get().currentExperiment?.id === id ? null : get().currentExperiment,
       });
-      await persistExperiments(updatedExperiments);
-
-      logger.info("Experiment deleted successfully", { experimentId: id });
-    } catch (error) {
-      set({ experiments, error: "Failed to delete experiment" });
-      throw error;
+      return;
     }
+
+    const experiments = get().experiments.filter((experiment) => experiment.id !== id);
+    set({
+      experiments,
+      currentExperiment:
+        get().currentExperiment?.id === id ? null : get().currentExperiment,
+    });
+    await persistLocalExperiments(experiments);
   },
 
-  /**
-   * Sets the currently selected experiment.
-   * @param id - Experiment ID or null to clear selection
-   */
   setCurrentExperiment: (id: string | null) => {
-    if (id === null) {
+    if (!id) {
       set({ currentExperiment: null });
       return;
     }
 
-    const { experiments } = get();
-    const experiment = experiments.find((e) => e.id === id);
-
-    if (experiment) {
-      set({ currentExperiment: experiment });
-      logger.debug("Current experiment set", { experimentId: id });
-    } else {
-      logger.warn("Experiment not found for selection", { experimentId: id });
-    }
+    const experiment = get().experiments.find((item) => item.id === id) ?? null;
+    set({ currentExperiment: experiment });
   },
 
-  /**
-   * Adds an entry to an experiment.
-   * @param experimentId - ID of the experiment to add entry to
-   * @param entry - Entry data without auto-generated fields
-   */
   addEntry: async (experimentId: string, entry: CreateEntryInput) => {
-    logger.info("Adding entry to experiment", { experimentId });
-
-    const { experiments } = get();
-    const index = experiments.findIndex((e) => e.id === experimentId);
-
-    if (index === -1) {
-      set({ error: "Experiment not found" });
+    if (isConvexConfigured()) {
+      await convexMutation("experiments:addEntry", {
+        experimentId,
+        entry: serializeEntry(entry),
+      });
+      await get().loadExperiments();
+      const selected = get().currentExperiment;
+      if (selected?.id === experimentId) {
+        const refreshed = get().experiments.find((item) => item.id === experimentId) ?? null;
+        set({ currentExperiment: refreshed });
+      }
       return;
     }
 
-    const newEntry: ExperimentEntry = {
-      ...entry,
-      id: generateId(),
-      createdAt: new Date(),
-    };
-
-    const updatedExperiment: Experiment = {
-      ...experiments[index],
-      entries: [...experiments[index].entries, newEntry],
-      updatedAt: new Date(),
-    };
-
-    const updatedExperiments = [...experiments];
-    updatedExperiments[index] = updatedExperiment;
-
-    try {
-      set({ experiments: updatedExperiments });
-      await persistExperiments(updatedExperiments);
-
-      // Update currentExperiment if necessary
-      const { currentExperiment } = get();
-      if (currentExperiment?.id === experimentId) {
-        set({ currentExperiment: updatedExperiment });
+    const experiments = get().experiments.map((experiment) => {
+      if (experiment.id !== experimentId) {
+        return experiment;
       }
 
-      logger.info("Entry added successfully", {
-        experimentId,
-        extra: { entryId: newEntry.id },
-      });
-    } catch (error) {
-      set({ experiments, error: "Failed to add entry" });
-      throw error;
-    }
+      const newEntry: ExperimentEntry = {
+        ...entry,
+        id: generateId(),
+        createdAt: new Date(),
+      };
+
+      return {
+        ...experiment,
+        entries: [...experiment.entries, newEntry],
+        updatedAt: new Date(),
+      };
+    });
+
+    set({ experiments });
+    await persistLocalExperiments(experiments);
   },
 
-  /**
-   * Updates an experiment's status.
-   * @param id - Experiment ID
-   * @param status - New status
-   */
   updateStatus: async (id: string, status: ExperimentStatus) => {
-    logger.info("Updating experiment status", {
-      experimentId: id,
-      extra: { status },
-    });
     await get().updateExperiment(id, { status });
   },
 
-  /**
-   * Clears the error state.
-   */
   clearError: () => {
     set({ error: null });
   },
 }));
 
-/**
- * Selector hooks for common use cases.
- */
-
-/**
- * Returns only active experiments.
- */
 export const useActiveExperiments = (): Experiment[] =>
   useExperimentStore((state) =>
-    state.experiments.filter((e) => e.status === "active")
+    state.experiments.filter((experiment) => experiment.status === "active")
   );
 
-/**
- * Returns the count of active experiments.
- */
 export const useActiveExperimentsCount = (): number =>
   useExperimentStore(
-    (state) => state.experiments.filter((e) => e.status === "active").length
+    (state) => state.experiments.filter((experiment) => experiment.status === "active").length
   );

@@ -1,37 +1,42 @@
 /**
  * Authentication service helpers.
- * Provides utility functions for common auth operations.
  */
 
+import * as SecureStore from "expo-secure-store";
 import { logger } from "@/services/logging";
 
 /**
- * Token cache placeholder.
- * Replace with expo-secure-store when adding Clerk.
+ * Clerk token cache backed by secure storage.
  */
 export const tokenCache = {
   async getToken(key: string): Promise<string | null> {
-    return null;
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch {
+      return null;
+    }
   },
   async saveToken(key: string, value: string): Promise<void> {
-    // Placeholder
+    try {
+      await SecureStore.setItemAsync(key, value);
+    } catch {
+      // ignore secure store write failures
+    }
   },
   async clearToken(key: string): Promise<void> {
-    // Placeholder
+    try {
+      await SecureStore.deleteItemAsync(key);
+    } catch {
+      // ignore secure store delete failures
+    }
   },
 };
 
-/**
- * Result type for authentication operations.
- */
 export interface AuthResult {
   success: boolean;
   error?: string;
 }
 
-/**
- * Handles authentication errors and returns a user-friendly message.
- */
 export function getAuthErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
@@ -45,7 +50,7 @@ export function getAuthErrorMessage(error: unknown): string {
     if (message.includes("already exists") || message.includes("taken")) {
       return "An account with this email already exists.";
     }
-    if (message.includes("invalid credentials")) {
+    if (message.includes("invalid credentials") || message.includes("identifier")) {
       return "Invalid email or password.";
     }
     if (message.includes("network")) {
@@ -58,9 +63,6 @@ export function getAuthErrorMessage(error: unknown): string {
   return "An unexpected error occurred. Please try again.";
 }
 
-/**
- * Logs an authentication event for observability.
- */
 export function logAuthEvent(
   event: "sign_in" | "sign_up" | "sign_out" | "session_refresh",
   userId?: string,

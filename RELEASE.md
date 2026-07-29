@@ -9,6 +9,13 @@ Step-by-step instructions for building and submitting the app to TestFlight (iOS
 - [Node.js](https://nodejs.org) 18+
 - [EAS CLI](https://docs.expo.dev/build/setup/): `npm install -g eas-cli`
 - Logged into EAS: `eas login`
+- Runtime env configured for production builds:
+  - `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
+  - `EXPO_PUBLIC_CONVEX_URL`
+- Convex backend env configured:
+  - `CLERK_JWT_ISSUER_DOMAIN`
+- Clerk JWT template configured:
+  - Template name: `convex`
 
 ### iOS (TestFlight)
 

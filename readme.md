@@ -18,8 +18,8 @@ An N-of-1 experiment is a clinical trial where you are both the subject and the 
 - **Track Metrics** - Log daily observations with customizable metrics
 - **Structured Phases** - Alternating on/off periods for controlled testing
 - **Progress Tracking** - Visualize your experiment progress
-- **Authentication** - Mock auth (ready for Clerk integration)
-- **Offline Support** - Local data persistence with AsyncStorage
+- **Authentication** - Clerk-based email auth
+- **Cloud Sync** - Convex-backed core data (experiments, protocols, daily logs)
 - **Observability** - Built-in logging for debugging and analytics
 
 ## Tech Stack
@@ -29,7 +29,8 @@ An N-of-1 experiment is a clinical trial where you are both the subject and the 
 | Framework | [Expo](https://expo.dev) SDK 52+ | Cross-platform React Native development |
 | Language | TypeScript | Type safety and better developer experience |
 | Navigation | [React Navigation](https://reactnavigation.org) v7 | Type-safe navigation |
-| Authentication | Mock Auth (Clerk-ready) | User authentication |
+| Authentication | [Clerk](https://clerk.com) | User authentication |
+| Backend / DB | [Convex](https://convex.dev) | Real-time backend + persistence |
 | State Management | [Zustand](https://zustand-demo.pmnd.rs) | Lightweight global state |
 | Storage | AsyncStorage | Persistent local storage |
 
@@ -46,7 +47,7 @@ An N-of-1 experiment is a clinical trial where you are both the subject and the 
 
 1. **Navigate to the project**
    ```bash
-   cd irvine
+   cd hira-clapton
    ```
 
 2. **Install dependencies**
@@ -54,12 +55,22 @@ An N-of-1 experiment is a clinical trial where you are both the subject and the 
    npm install --legacy-peer-deps
    ```
 
-3. **Start the development server**
+3. **Configure environment**
+   ```bash
+   cp .env.example .env.local
+   ```
+
+4. **Run Convex backend (new terminal)**
+   ```bash
+   npm run convex:dev
+   ```
+
+5. **Start the development server**
    ```bash
    npx expo start
    ```
 
-4. **Run on your device/simulator**
+6. **Run on your device/simulator**
    - Press `i` for iOS Simulator
    - Press `a` for Android Emulator
    - Scan QR code with Expo Go app for physical device
@@ -102,7 +113,7 @@ irvine/
 │   │       └── index.tsx
 │   ├── services/
 │   │   ├── auth/
-│   │   │   ├── auth-context.tsx # Mock auth provider
+│   │   │   ├── auth-context.tsx # Clerk auth adapter
 │   │   │   └── auth-service.ts
 │   │   └── logging/
 │   │       ├── logger.ts
@@ -123,25 +134,17 @@ irvine/
 
 ## Authentication
 
-The app currently uses **mock authentication** for development. It mimics Clerk's API structure so switching to real auth is straightforward.
+The app uses **Clerk authentication** with secure token storage via `expo-secure-store`.
 
-### Mock Auth Behavior
-- **Sign In**: Accepts any email containing `@` and password with 6+ characters
-- **Sign Up**: Same as sign in, with a mock verification step (enter any 6 digits)
-- **Persistence**: Login state is stored in AsyncStorage
+### Development-only credential shortcut
 
-### Adding Real Authentication (Clerk)
+- In development builds, you can sign in with **`test@gmail.com`** and **`peptideking`** to bypass Clerk for local QA workflows.
+- This is intentionally limited to development mode and should not be treated as production authentication behavior.
 
-When Clerk releases a version compatible with Expo SDK 52:
+## Backend and Data
 
-1. Install dependencies:
-   ```bash
-   npm install @clerk/clerk-expo expo-auth-session expo-web-browser expo-secure-store --legacy-peer-deps
-   ```
-
-2. Update `src/providers/providers.tsx` to use `ClerkProvider`
-
-3. Update auth imports in screens to use `@clerk/clerk-expo`
+Core product data is stored in **Convex** (experiments, protocols, dose logs, metrics, stack items).
+On first successful sign-in, existing local AsyncStorage data is imported into Convex via an idempotent migration.
 
 ## Observability & Logging
 
