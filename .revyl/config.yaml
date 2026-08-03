@@ -32,10 +32,13 @@ pr_review:
             app: e71fb604-d488-4d04-8cc4-81c81502f4b0
             root_dir: ./
             use_existing_ci: false
+            # Local simulator build via prebuild + xcodebuild (no EAS / EXPO_TOKEN).
             build_command: |
                 npm ci
-                npx --yes eas-cli build --platform ios --profile development --local --output build/app.tar.gz
-            artifact_path: build/app.tar.gz
+                npx --yes expo prebuild --platform ios --non-interactive
+                (cd ios && pod install)
+                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(xcodebuild -list -json -workspace "$WORKSPACE" | python3 -c 'import json, sys; data=json.load(sys.stdin); print((data.get("workspace") or {}).get("schemes", [""])[0])')"; if [ -z "$SCHEME" ]; then echo "No scheme found in $WORKSPACE"; exit 1; fi; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+            artifact_path: build/ios/Build/Products/Debug-iphonesimulator/*.app
             env: {}
             secrets: []
         # Android left off for staging dogfood (ios-only), matching bug-bazaar.
