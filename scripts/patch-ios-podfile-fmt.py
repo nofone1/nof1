@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Patch the Expo-generated ios/Podfile so fmt builds on Xcode 16.3+/26.
+"""Patch the Expo-generated ios/Podfile so fmt builds on Xcode 26+.
 
-Xcode's clang rejects fmt's consteval format strings (FMT_USE_CONSTEVAL),
-which breaks React Native Pods (fmt) during simulator builds.
+fmt 11.0.2 (via React Native) enables consteval under Apple Clang, but
+Xcode 26's clang rejects those FMT_STRING call sites. Setting
+FMT_USE_CONSTEVAL via preprocessor flags does not work for 11.0.2 because
+base.h unconditionally redefines the macro. Compiling only the fmt pod as
+C++17 disables consteval without changing the rest of the RN stack.
 
 Parameters:
     None. Reads and writes ios/Podfile relative to the repo root (cwd).
@@ -21,24 +24,21 @@ import sys
 from pathlib import Path
 
 PODFILE = Path("ios/Podfile")
-MARKER = "FMT_USE_CONSTEVAL=0"
+MARKER = "CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'"
 PATCH = """
-    # Xcode 16.3+/26: fmt consteval breaks React Native Pod builds.
+    # Xcode 26+: fmt 11.0.2 consteval breaks under newer Apple Clang.
+    # C++17 disables consteval for this pod only (RN still uses C++20).
     installer.pods_project.targets.each do |target|
       next unless target.name == 'fmt'
       target.build_configurations.each do |config|
-        defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS']
-        defs = ['$(inherited)'] if defs.nil?
-        defs = [defs] unless defs.is_a?(Array)
-        defs << 'FMT_USE_CONSTEVAL=0' unless defs.any? { |d| d.to_s.include?('FMT_USE_CONSTEVAL') }
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
       end
     end
 """
 
 
 def main() -> int:
-    """Apply the fmt preprocessor workaround to ios/Podfile."""
+    """Apply the fmt C++17 workaround to ios/Podfile."""
     if not PODFILE.is_file():
         raise SystemExit(f"Missing {PODFILE}; run expo prebuild first")
 
@@ -65,7 +65,7 @@ def main() -> int:
         )
 
     PODFILE.write_text(updated, encoding="utf-8")
-    print(f"{PODFILE}: applied fmt Xcode consteval workaround")
+    print(f"{PODFILE}: applied fmt C++17 workaround for Xcode 26")
     return 0
 
 
