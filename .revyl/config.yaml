@@ -38,15 +38,5 @@ pr_review:
             artifact_path: build/app.tar.gz
             env: {}
             secrets: []
-        android:
-            enabled: true
-            framework: expo_android
-            app: 239688f8-e5ae-433a-b8e2-4d6f24fa9223
-            root_dir: ./
-            use_existing_ci: false
-            build_command: |
-                npm ci
-                npx --yes eas-cli build --platform android --profile preview --local --output build/app.apk
-            artifact_path: build/app.apk
-            env: {}
-            secrets: []
+        # Android left off for staging dogfood (ios-only), matching bug-bazaar.
+        # Re-enable when Android Expo preview builds are reliable on staging.
