@@ -33,11 +33,14 @@ pr_review:
             root_dir: ./
             use_existing_ci: false
             # Local simulator build via prebuild + xcodebuild (no EAS / EXPO_TOKEN).
+            # Scheme must be the workspace basename (e.g. Nof1Experiments). Using the
+            # first xcodebuild -list scheme picks Pod targets like "boost" and yields no .app.
+            # Keep the xcodebuild invocation on one YAML line — Revyl splits lines into steps.
             build_command: |
                 npm ci
                 npx --yes expo prebuild --platform ios --non-interactive
                 (cd ios && pod install)
-                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(xcodebuild -list -json -workspace "$WORKSPACE" | python3 -c 'import json, sys; data=json.load(sys.stdin); print((data.get("workspace") or {}).get("schemes", [""])[0])')"; if [ -z "$SCHEME" ]; then echo "No scheme found in $WORKSPACE"; exit 1; fi; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
             artifact_path: build/ios/Build/Products/Debug-iphonesimulator/*.app
             env: {}
             secrets: []
