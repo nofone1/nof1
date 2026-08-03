@@ -39,6 +39,7 @@ pr_review:
             build_command: |
                 npm ci
                 npx --yes expo prebuild --platform ios --non-interactive
+                python3 scripts/patch-ios-podfile-fmt.py
                 (cd ios && pod install)
                 WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
             artifact_path: build/ios/Build/Products/Debug-iphonesimulator/*.app
