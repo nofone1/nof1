@@ -151,8 +151,9 @@ export function DailyLogScreen({
         }
       >
         {/* Header */}
+        {/* dogfood: re-trigger Cursor proof on nofone1/nof1 via revyl-nashville */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Today</Text>
+          <Text style={styles.greeting}>Today · Revyl dogfood</Text>
           <Text style={styles.date}>{formatDisplayDate(today)}</Text>
         </View>
 

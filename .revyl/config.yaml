@@ -1,0 +1,56 @@
+# Revyl CLI Configuration
+# GitHub PR automation for nofone1/nof1 (Expo).
+# Docs: https://docs.revyl.ai/cli/hot-reload
+
+project:
+    name: nof1-experiments
+    org_id: f66dfe3c-1a0a-465e-a486-5c5a40179a49
+
+defaults:
+    open_browser: false
+    timeout: 1800
+
+pr_review:
+    enabled: true
+    skip_drafts: true
+    path_filters: []
+    label_filters: []
+    actions:
+        preview_link: true
+        strict_build_checks: true
+        proof_of_changes: true
+        proof_harness:
+            kind: cursor
+            model_id: null
+        checks:
+            - The Daily Log header greeting shows "Today · Revyl dogfood"
+        system_prompt: |
+            This is a dogfood PR for Revyl nashville PR automation.
+            Open the Daily Log (home) screen and verify the greeting text
+            reads "Today · Revyl dogfood". Screenshot that header as proof.
+        workflows: []
+    builds:
+        ios:
+            enabled: true
+            framework: expo_ios
+            app: e71fb604-d488-4d04-8cc4-81c81502f4b0
+            root_dir: ./
+            use_existing_ci: false
+            build_command: |
+                npm ci
+                npx --yes eas-cli build --platform ios --profile development --local --output build/app.tar.gz
+            artifact_path: build/app.tar.gz
+            env: {}
+            secrets: []
+        android:
+            enabled: true
+            framework: expo_android
+            app: 239688f8-e5ae-433a-b8e2-4d6f24fa9223
+            root_dir: ./
+            use_existing_ci: false
+            build_command: |
+                npm ci
+                npx --yes eas-cli build --platform android --profile preview --local --output build/app.apk
+            artifact_path: build/app.apk
+            env: {}
+            secrets: []
