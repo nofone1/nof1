@@ -22,12 +22,8 @@ pr_review:
         proof_harness:
             kind: cursor
             model_id: null
-        checks:
-            - The Daily Log header greeting shows "Today · Revyl dogfood"
-        system_prompt: |
-            This is a dogfood PR for Revyl nashville PR automation.
-            Open the Daily Log (home) screen and verify the greeting text
-            reads "Today · Revyl dogfood". Screenshot that header as proof.
+        checks: []
+        system_prompt: ""
         workflows: []
     builds:
         ios:
