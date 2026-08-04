@@ -10,6 +10,14 @@ defaults:
     open_browser: false
     timeout: 1800
 
+# Dev mode / hot reload configuration (needed for Expo JS on cloud devices)
+hotreload:
+    default: expo
+    providers:
+        expo:
+            port: 8081
+            app_scheme: nof1
+
 pr_review:
     enabled: true
     skip_drafts: true
