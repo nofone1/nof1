@@ -1,1 +1,1 @@
-# dogfood prompt-comment e2e retrigger 2026-08-04T15:33:55Z
+# dogfood Cursor proof_of_changes retrigger 2026-08-05T03:27:01Z

@@ -151,9 +151,9 @@ export function DailyLogScreen({
         }
       >
         {/* Header */}
-        {/* dogfood: re-trigger Cursor proof on nofone1/nof1 via Revyl staging */}
+        {/* dogfood: Cursor proof_of_changes retrigger 2026-08-05 */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Today · Revyl staging dogfood</Text>
+          <Text style={styles.greeting}>Today · Cursor proof dogfood</Text>
           <Text style={styles.date}>{formatDisplayDate(today)}</Text>
         </View>
 
