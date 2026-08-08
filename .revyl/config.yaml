@@ -28,8 +28,7 @@ pr_review:
         strict_build_checks: true
         proof_of_changes: true
         proof_harness:
-            kind: cursor
-            model_id: null
+            kind: revyl
         checks: []
         system_prompt: ""
         workflows: []
