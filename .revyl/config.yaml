@@ -39,7 +39,10 @@ pr_review:
             app: e71fb604-d488-4d04-8cc4-81c81502f4b0
             root_dir: ./
             use_existing_ci: false
-            # Local simulator build via prebuild + xcodebuild (no EAS / EXPO_TOKEN).
+            # Local simulator *preview* build via prebuild + xcodebuild Release
+            # (no EAS / EXPO_TOKEN). Release embeds the JS bundle and does not
+            # ship the Expo dev-client launcher, so proof/preview sessions do
+            # not stall on "no local development servers".
             # Scheme must be the workspace basename (e.g. Nof1Experiments). Using the
             # first xcodebuild -list scheme picks Pod targets like "boost" and yields no .app.
             # Keep the xcodebuild invocation on one YAML line — Revyl splits lines into steps.
@@ -48,8 +51,8 @@ pr_review:
                 npx --yes expo prebuild --platform ios --non-interactive
                 python3 scripts/patch-ios-podfile-fmt.py
                 (cd ios && pod install)
-                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
-            artifact_path: build/ios/Build/Products/Debug-iphonesimulator/*.app
+                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME configuration=Release"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+            artifact_path: build/ios/Build/Products/Release-iphonesimulator/*.app
             env: {}
             secrets: []
         # Android left off for staging dogfood (ios-only), matching bug-bazaar.
