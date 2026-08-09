@@ -39,21 +39,23 @@ pr_review:
             app: e71fb604-d488-4d04-8cc4-81c81502f4b0
             root_dir: ./
             use_existing_ci: false
-            # Local simulator *preview* build via prebuild + xcodebuild Release
-            # (no EAS / EXPO_TOKEN). Release embeds the JS bundle and does not
-            # ship the Expo dev-client launcher, so proof/preview sessions do
-            # not stall on "no local development servers".
+            # Local simulator *preview* build (no EAS / EXPO_TOKEN).
+            # expo-dev-client must be removed before prebuild: with it linked,
+            # even Release binaries open the Expo "Development servers" picker
+            # (see proof failure on 653973a). Release then embeds the JS bundle.
             # Scheme must be the workspace basename (e.g. Nof1Experiments). Using the
             # first xcodebuild -list scheme picks Pod targets like "boost" and yields no .app.
             # Keep the xcodebuild invocation on one YAML line — Revyl splits lines into steps.
             build_command: |
                 npm ci
-                npx --yes expo prebuild --platform ios --non-interactive
+                npm uninstall expo-dev-client --legacy-peer-deps
+                npx --yes expo prebuild --platform ios --non-interactive --clean
                 python3 scripts/patch-ios-podfile-fmt.py
                 (cd ios && pod install)
-                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME configuration=Release"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME configuration=Release (preview, no expo-dev-client)"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
             artifact_path: build/ios/Build/Products/Release-iphonesimulator/*.app
-            env: {}
+            env:
+                NODE_ENV: production
             secrets: []
         # Android left off for staging dogfood (ios-only), matching bug-bazaar.
         # Re-enable when Android Expo preview builds are reliable on staging.
