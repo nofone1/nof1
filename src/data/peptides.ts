@@ -51,6 +51,15 @@ const MOTSc: Peptide = {
     type: "Mitochondrial-derived peptide (MDP)",
     sequence: "MRWQEMGYIFYPRKLR",
     sequenceNote: "Encoded by mitochondrial DNA (MT-RNR1 gene) within the 12S rRNA",
+    formula: "C101H152N28O22S2",
+    casNumber: "1627580-64-6",
+  },
+  chemicalSignal: {
+    role: "Mitochondrial mitohormone",
+    pathway: "Folate → AICAR → AMPK (nuclear translocation under metabolic stress)",
+    threeLetterSequence:
+      "Met-Arg-Trp-Gln-Glu-Met-Gly-Tyr-Ile-Phe-Tyr-Pro-Arg-Lys-Leu-Arg",
+    pubChemCid: "146675088",
   },
   indications: [
     {
@@ -203,8 +212,18 @@ const Pinealon: Peptide = {
     weight: "418.4 Da",
     length: 3,
     type: "Tripeptide",
-    sequence: "Glu-Asp-Arg (EDR)",
-    sequenceNote: "Synthetic peptide bioregulator with direct DNA interaction capabilities",
+    sequence: "EDR",
+    sequenceNote:
+      "Synthetic Glu-Asp-Arg (EDR) peptide bioregulator with direct DNA interaction capabilities",
+    formula: "C15H26N6O8",
+    casNumber: "175175-23-2",
+  },
+  chemicalSignal: {
+    role: "Neuroprotective peptide bioregulator",
+    pathway:
+      "Direct DNA interaction → gene-expression modulation (neuronal survival, BDNF, antioxidant response)",
+    threeLetterSequence: "Glu-Asp-Arg",
+    pubChemCid: "10273502",
   },
   indications: [
     {
