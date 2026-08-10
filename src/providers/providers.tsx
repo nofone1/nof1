@@ -20,9 +20,9 @@ interface AppProvidersProps {
  *   children: React tree to render inside the provider stack.
  *
  * Returns:
- *   Provider-wrapped children. When EXPO_PUBLIC_SKIP_AUTH is enabled in a
- *   development build, ClerkProvider is omitted so a placeholder publishable
- *   key cannot crash the tree before Daily Log renders.
+ *   Provider-wrapped children. When EXPO_PUBLIC_SKIP_AUTH is baked into the
+ *   bundle (including Release preview builds), ClerkProvider is omitted so a
+ *   placeholder publishable key cannot crash the tree before Daily Log renders.
  *
  * Edge cases:
  *   skipAuth is inlined at Metro bundle time and is stable for the process.

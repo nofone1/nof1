@@ -50,16 +50,20 @@ pr_review:
             # first xcodebuild -list scheme picks Pod targets like "boost" and yields no .app.
             # Keep the xcodebuild invocation on one YAML line — Revyl splits lines into steps.
             build_command: |
+                export EXPO_PUBLIC_SKIP_AUTH=true
                 npm ci
                 npm uninstall expo-dev-client --legacy-peer-deps
                 npx --yes expo prebuild --platform ios --non-interactive --clean
                 python3 scripts/patch-ios-podfile-fmt.py
                 (cd ios && pod install)
-                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME configuration=Release (preview, no expo-dev-client)"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME configuration=Release (preview, no expo-dev-client, EXPO_PUBLIC_SKIP_AUTH=$EXPO_PUBLIC_SKIP_AUTH)"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
             artifact_path: build/ios/Build/Products/Release-iphonesimulator/*.app
             env:
                 NODE_ENV: production
                 REVYL_USE_FINGERPRINT: "0"
+                # Baked into the Release JS bundle at export:embed time so the
+                # preview app skips Clerk and does not throw on missing Convex.
+                EXPO_PUBLIC_SKIP_AUTH: "true"
             secrets: []
         # Android left off for staging dogfood (ios-only), matching bug-bazaar.
         # Re-enable when Android Expo preview builds are reliable on staging.
