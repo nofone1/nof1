@@ -10,6 +10,18 @@ defaults:
     open_browser: false
     timeout: 1800
 
+# Session setup for every `revyl device start` (including proof sandbox).
+# before_session mints the token that auth_bypass then spends via deep link.
+before_session:
+    script: ./scripts/prepare-test-session.sh
+    timeout_seconds: 60
+
+auth_bypass:
+    launch_vars:
+        - REVYL_AUTH_BYPASS_ENABLED
+        - REVYL_AUTH_BYPASS_TOKEN
+    deep_link: "nof1://revyl-auth?token=${REVYL_AUTH_BYPASS_TOKEN}&role=tester&redirect=%2F"
+
 # Dev mode / hot reload configuration (needed for Expo JS on cloud devices)
 hotreload:
     default: expo
@@ -30,7 +42,13 @@ pr_review:
         proof_harness:
             kind: revyl
         checks: []
-        system_prompt: ""
+        system_prompt: |
+            Root `.revyl/config.yaml` owns session setup: `before_session` and
+            `auth_bypass` apply automatically when `revyl device start` runs.
+            Do not mint tokens by hand. After launch the app should be signed in
+            as Test User via `nof1://revyl-auth` (Profile → Auth shows
+            "Revyl auth bypass"). A logged-out login screen after start is a
+            setup failure to report, not a product bug.
         workflows: []
     builds:
         ios:

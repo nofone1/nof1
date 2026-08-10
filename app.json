@@ -39,7 +39,8 @@
         {
           "target": "18.5"
         }
-      ]
+      ],
+      "./plugins/launch-args-module"
     ],
     "extra": {
       "eas": {

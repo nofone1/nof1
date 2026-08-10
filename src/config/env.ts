@@ -20,8 +20,9 @@ const requestedSkipAuth = process.env.EXPO_PUBLIC_SKIP_AUTH === "true";
  *
  * Release dogfood binaries previously crashed because skipAuth was gated on
  * __DEV__ and validateEnvironment threw on missing Clerk/Convex keys. This
- * dogfood branch forces skipAuth so Daily Log can render without production
- * keys, independent of whether the build runner inlines EXPO_PUBLIC_SKIP_AUTH.
+ * dogfood branch forces skipAuth so ClerkProvider is omitted without keys.
+ * Sessions still start signed-out; before_session + auth_bypass deep link
+ * signs in as the Test User (see acceptRevylAuthBypass).
  */
 export const env: EnvironmentConfig = {
   clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || "",
@@ -29,7 +30,7 @@ export const env: EnvironmentConfig = {
   apiBaseUrl:
     process.env.EXPO_PUBLIC_API_BASE_URL || "https://api.nof1experiments.com",
   isDevelopment,
-  // Dogfood preview: always skip Clerk so Daily Log can render without keys.
+  // Dogfood preview: omit Clerk; auth_bypass deep link performs sign-in.
   skipAuth: true,
 };
 

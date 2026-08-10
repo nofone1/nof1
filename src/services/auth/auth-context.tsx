@@ -53,9 +53,28 @@ const DEV_BYPASS_PASSWORD = "peptideking";
 
 type LocalAuthMode = "skip-auth" | "dev-bypass" | "none";
 
-let skipAuthSignedInState = env.skipAuth;
-let skipAuthMode: LocalAuthMode = env.skipAuth ? "skip-auth" : "none";
+// Dogfood: omit Clerk (env.skipAuth) but start signed-out so before_session +
+// auth_bypass can prove the deep-link round trip via acceptRevylAuthBypass().
+let skipAuthSignedInState = false;
+let skipAuthMode: LocalAuthMode = "none";
 const skipAuthListeners = new Set<() => void>();
+
+/**
+ * Signs in the local dogfood session after a validated Revyl auth-bypass link.
+ *
+ * Params:
+ *   role: Allowlisted role from the deep-link query (logged only).
+ *
+ * Returns:
+ *   void.
+ *
+ * Edge cases:
+ *   Safe to call more than once; identical state is a no-op.
+ */
+export function acceptRevylAuthBypass(role: string = "tester"): void {
+  logger.info("Revyl auth bypass accepted", { extra: { role } });
+  setSkipAuthSignedInState(true, "dev-bypass");
+}
 
 /**
  * Registers a listener for skip-auth signed-in state changes.
@@ -135,12 +154,22 @@ function getSkipAuthModeSnapshot(): LocalAuthMode {
  * Returns:
  *   Current LocalAuthMode.
  */
-function useSkipAuthMode(): LocalAuthMode {
+/**
+ * Subscribes to the local skip-auth mode for UI (e.g. Profile auth hint).
+ *
+ * Returns:
+ *   Current LocalAuthMode (`dev-bypass` after a successful Revyl deep link).
+ */
+export function useLocalAuthMode(): LocalAuthMode {
   return useSyncExternalStore(
     subscribeSkipAuth,
     getSkipAuthModeSnapshot,
     getSkipAuthModeSnapshot
   );
+}
+
+function useSkipAuthMode(): LocalAuthMode {
+  return useLocalAuthMode();
 }
 
 /**

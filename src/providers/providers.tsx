@@ -5,7 +5,11 @@
 import React from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ClerkProvider } from "@clerk/clerk-expo";
-import { AuthProvider, tokenCache } from "@/services/auth";
+import {
+  AuthProvider,
+  RevylAuthBypassProvider,
+  tokenCache,
+} from "@/services/auth";
 import { env } from "@/config/env";
 import { logger } from "@/services/logging";
 
@@ -41,7 +45,9 @@ export function AppProviders({ children }: AppProvidersProps): React.JSX.Element
   if (env.skipAuth) {
     return (
       <SafeAreaProvider>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <RevylAuthBypassProvider>{children}</RevylAuthBypassProvider>
+        </AuthProvider>
       </SafeAreaProvider>
     );
   }
@@ -52,7 +58,9 @@ export function AppProviders({ children }: AppProvidersProps): React.JSX.Element
         publishableKey={env.clerkPublishableKey || "pk_test_skip_auth"}
         tokenCache={tokenCache}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <RevylAuthBypassProvider>{children}</RevylAuthBypassProvider>
+        </AuthProvider>
       </ClerkProvider>
     </SafeAreaProvider>
   );
