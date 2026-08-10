@@ -124,6 +124,8 @@ export interface PeptideOverview {
  * @property type - Classification (e.g., "Tripeptide", "GHRH analog")
  * @property sequence - Amino acid sequence
  * @property sequenceNote - Additional notes about the sequence
+ * @property formula - Optional molecular formula (e.g., "C101H152N28O22S2")
+ * @property casNumber - Optional CAS registry number
  */
 export interface MolecularInfo {
   weight: string;
@@ -131,6 +133,25 @@ export interface MolecularInfo {
   type: string;
   sequence: string;
   sequenceNote?: string;
+  formula?: string;
+  casNumber?: string;
+}
+
+/**
+ * Represents the chemical-signal identity of a peptide.
+ * Used for peptides that act as signaling molecules or bioregulators
+ * (e.g. MOTS-c mitohormone, Pinealon DNA-interacting tripeptide).
+ *
+ * @property role - Short role label (e.g., "Mitochondrial mitohormone")
+ * @property pathway - Primary signaling pathway summary
+ * @property threeLetterSequence - Optional three-letter residue sequence for display
+ * @property pubChemCid - Optional PubChem compound ID
+ */
+export interface ChemicalSignal {
+  role: string;
+  pathway: string;
+  threeLetterSequence?: string;
+  pubChemCid?: string;
 }
 
 /**
@@ -261,6 +282,7 @@ export interface ReconstitutionInfo {
  * @property dosing - Dosing information
  * @property overview - Description and mechanism
  * @property molecularInfo - Molecular details
+ * @property chemicalSignal - Optional chemical-signal / mitohormone identity
  * @property indications - Research indications with effectiveness
  * @property protocols - Research protocols
  * @property sideEffects - Known side effects
@@ -279,6 +301,7 @@ export interface Peptide {
   dosing: DosingInfo;
   overview: PeptideOverview;
   molecularInfo: MolecularInfo;
+  chemicalSignal?: ChemicalSignal;
   indications: ResearchIndication[];
   protocols: ResearchProtocol[];
   sideEffects: string[];
