@@ -42,13 +42,7 @@ pr_review:
         proof_harness:
             kind: revyl
         checks: []
-        system_prompt: |
-            Root `.revyl/config.yaml` owns session setup: `before_session` and
-            `auth_bypass` apply automatically when `revyl device start` runs.
-            Do not mint tokens by hand. After launch the app should be signed in
-            as Test User via `nof1://revyl-auth` (Profile → Auth shows
-            "Revyl auth bypass"). A logged-out login screen after start is a
-            setup failure to report, not a product bug.
+        system_prompt: ""
         workflows: []
     builds:
         ios:
