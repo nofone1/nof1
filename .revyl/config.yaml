@@ -10,6 +10,28 @@ defaults:
     open_browser: false
     timeout: 1800
 
+# Local/remote build streams for `revyl build` / `revyl dev`.
+# Mirrors the iOS preview stream used by pr_review.builds.ios.
+build:
+    system: Expo
+    platforms:
+        ios:
+            app_id: e71fb604-d488-4d04-8cc4-81c81502f4b0
+            commands:
+                - export EXPO_PUBLIC_SKIP_AUTH=true
+                - npm ci
+                - npm uninstall expo-dev-client --legacy-peer-deps
+                - npx --yes expo prebuild --platform ios --non-interactive --clean
+                - python3 scripts/patch-ios-podfile-fmt.py
+                - (cd ios && pod install)
+                - WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME configuration=Release (preview, no expo-dev-client, EXPO_PUBLIC_SKIP_AUTH=$EXPO_PUBLIC_SKIP_AUTH)"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+            output: build/ios/Build/Products/Release-iphonesimulator/*.app
+            env:
+                NODE_ENV: production
+                REVYL_USE_FINGERPRINT: "0"
+                EXPO_PUBLIC_SKIP_AUTH: "true"
+            secrets: []
+
 # Session setup for every `revyl device start` (including proof sandbox).
 # before_session mints the token that auth_bypass then spends via deep link.
 before_session:
@@ -29,6 +51,8 @@ hotreload:
         expo:
             port: 8081
             app_scheme: nof1
+            platform_keys:
+                ios: ios
 
 pr_review:
     enabled: true
