@@ -8,7 +8,12 @@ import { View, Text, ScrollView, Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, Icon, AnimatedPressable } from "@/components/ui";
 import { useLogger } from "@/hooks/use-logger";
-import { useAuth, useUser, logAuthEvent } from "@/services/auth";
+import {
+  useAuth,
+  useLocalAuthMode,
+  useUser,
+  logAuthEvent,
+} from "@/services/auth";
 import { logger } from "@/services/logging";
 import { colors, spacing, typography } from "@/theme";
 import type { MainTabScreenProps } from "@/types/navigation";
@@ -54,7 +59,14 @@ function MenuItem({ label, hint, onPress, isLast, isWarning }: MenuItemProps): R
 export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): React.JSX.Element {
   const { user } = useUser();
   const { signOut } = useAuth();
+  const localAuthMode = useLocalAuthMode();
   const { log } = useLogger("Profile");
+  const authHint =
+    localAuthMode === "dev-bypass"
+      ? "Revyl auth bypass"
+      : localAuthMode === "skip-auth"
+        ? "Skip auth"
+        : "Clerk";
 
   const handleSignOut = useCallback(() => {
     Alert.alert("Sign Out", "Are you sure?", [
@@ -143,7 +155,7 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
         <Text style={styles.sectionHeader}>About</Text>
         <Card style={styles.menuCard} animated animationDelay={320}>
           <MenuItem label="Version" hint="1.0.0" />
-          <MenuItem label="Auth" hint="Clerk" />
+          <MenuItem label="Auth" hint={authHint} />
           <MenuItem label="Terms of Service" onPress={() => {}} isLast />
         </Card>
 

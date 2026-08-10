@@ -75,5 +75,11 @@ watchman-*.log
 .yarn/
 .pnp.*
 
-# Revyl local runtime state (machine-specific)
-.revyl/
+# Revyl local runtime state (machine-specific). Keep config.yaml committed
+# so GitHub PR automation stays managed as config-as-code.
+.revyl/device-sessions.json
+.revyl/remote.json
+.revyl/before-session-values.json
+.revyl/dev-sessions/
+.revyl/.dev-status.json
+.revyl/.dev-push-manifest.json

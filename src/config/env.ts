@@ -12,25 +12,38 @@ interface EnvironmentConfig {
 }
 
 const isDevelopment = __DEV__;
+/** True when EXPO_PUBLIC_SKIP_AUTH was present at Metro embed time. */
 const requestedSkipAuth = process.env.EXPO_PUBLIC_SKIP_AUTH === "true";
 
+/**
+ * Resolved app environment.
+ *
+ * Release dogfood binaries previously crashed because skipAuth was gated on
+ * __DEV__ and validateEnvironment threw on missing Clerk/Convex keys. This
+ * dogfood branch forces skipAuth so ClerkProvider is omitted without keys.
+ * Sessions still start signed-out; before_session + auth_bypass deep link
+ * signs in as the Test User (see acceptRevylAuthBypass).
+ */
 export const env: EnvironmentConfig = {
   clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || "",
   convexUrl: process.env.EXPO_PUBLIC_CONVEX_URL || "",
   apiBaseUrl:
     process.env.EXPO_PUBLIC_API_BASE_URL || "https://api.nof1experiments.com",
   isDevelopment,
-  skipAuth: isDevelopment && requestedSkipAuth,
+  // Dogfood preview: omit Clerk; auth_bypass deep link performs sign-in.
+  skipAuth: true,
 };
 
+/**
+ * Warns about missing public env vars; throws only for real production builds.
+ *
+ * Params: none (reads module-level env).
+ * Returns: void.
+ * Throws: Error when production (non-skipAuth) builds are missing required keys.
+ * Edge cases: skipAuth preview builds only warn so Daily Log can still render.
+ */
 export function validateEnvironment(): void {
   const missing: string[] = [];
-
-  if (requestedSkipAuth && !env.skipAuth) {
-    console.warn(
-      "⚠️ EXPO_PUBLIC_SKIP_AUTH=true is ignored outside development builds."
-    );
-  }
 
   if (!env.clerkPublishableKey && !env.skipAuth) {
     missing.push("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY");
@@ -39,16 +52,22 @@ export function validateEnvironment(): void {
     );
   }
 
-  if (!env.convexUrl) {
+  if (!env.convexUrl && !env.skipAuth) {
     missing.push("EXPO_PUBLIC_CONVEX_URL");
     console.warn(
       "⚠️ Missing EXPO_PUBLIC_CONVEX_URL. Core data will not sync to Convex."
     );
   }
 
-  if (!env.isDevelopment && missing.length > 0) {
+  if (!env.isDevelopment && !env.skipAuth && missing.length > 0) {
     throw new Error(
       `Missing required production environment variables: ${missing.join(", ")}`
+    );
+  }
+
+  if (env.skipAuth) {
+    console.warn(
+      "⚠️ EXPO_PUBLIC_SKIP_AUTH=true: Clerk/Convex auth requirements are relaxed for this build."
     );
   }
 }

@@ -1,0 +1,81 @@
+# Revyl CLI Configuration
+# GitHub PR automation for nofone1/nof1 (Expo).
+# Docs: https://docs.revyl.ai/cli/hot-reload
+
+project:
+    name: nof1-experiments
+    org_id: f66dfe3c-1a0a-465e-a486-5c5a40179a49
+
+defaults:
+    open_browser: false
+    timeout: 1800
+
+# Session setup for every `revyl device start` (including proof sandbox).
+# before_session mints the token that auth_bypass then spends via deep link.
+before_session:
+    script: ./scripts/prepare-test-session.sh
+    timeout_seconds: 60
+
+auth_bypass:
+    launch_vars:
+        - REVYL_AUTH_BYPASS_ENABLED
+        - REVYL_AUTH_BYPASS_TOKEN
+    deep_link: "nof1://revyl-auth?token=${REVYL_AUTH_BYPASS_TOKEN}&role=tester&redirect=%2F"
+
+# Dev mode / hot reload configuration (needed for Expo JS on cloud devices)
+hotreload:
+    default: expo
+    providers:
+        expo:
+            port: 8081
+            app_scheme: nof1
+
+pr_review:
+    enabled: true
+    skip_drafts: true
+    path_filters: []
+    label_filters: []
+    actions:
+        preview_link: true
+        strict_build_checks: true
+        proof_of_changes: true
+        proof_harness:
+            kind: revyl
+        checks: []
+        system_prompt: ""
+        workflows: []
+    builds:
+        ios:
+            enabled: true
+            framework: expo_ios
+            app: e71fb604-d488-4d04-8cc4-81c81502f4b0
+            root_dir: ./
+            use_existing_ci: false
+            # Local simulator *preview* build (no EAS / EXPO_TOKEN).
+            # expo-dev-client must be removed before prebuild: with it linked,
+            # even Release binaries open the Expo "Development servers" picker.
+            # REVYL_USE_FINGERPRINT=0 is required: Expo fingerprint is computed
+            # from committed package.json (still lists expo-dev-client), so a
+            # cache hit skips every build_command step — including uninstall —
+            # and only repacks JS into the old native shell (see c2030c6).
+            # Scheme must be the workspace basename (e.g. Nof1Experiments). Using the
+            # first xcodebuild -list scheme picks Pod targets like "boost" and yields no .app.
+            # Keep the xcodebuild invocation on one YAML line — Revyl splits lines into steps.
+            build_command: |
+                export EXPO_PUBLIC_SKIP_AUTH=true
+                npm ci
+                npm uninstall expo-dev-client --legacy-peer-deps
+                npx --yes expo prebuild --platform ios --non-interactive --clean
+                python3 scripts/patch-ios-podfile-fmt.py
+                (cd ios && pod install)
+                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME configuration=Release (preview, no expo-dev-client, EXPO_PUBLIC_SKIP_AUTH=$EXPO_PUBLIC_SKIP_AUTH)"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+            artifact_path: build/ios/Build/Products/Release-iphonesimulator/*.app
+            env:
+                NODE_ENV: production
+                REVYL_USE_FINGERPRINT: "0"
+                # Baked into the Release JS bundle at export:embed time so the
+                # preview app skips Clerk and does not throw on missing Convex.
+                EXPO_PUBLIC_SKIP_AUTH: "true"
+            secrets: []
+        # Android left off for staging dogfood (ios-only), matching bug-bazaar.
+        # Re-enable when Android Expo preview builds are reliable on staging.

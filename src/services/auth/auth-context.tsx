@@ -53,10 +53,38 @@ const DEV_BYPASS_PASSWORD = "peptideking";
 
 type LocalAuthMode = "skip-auth" | "dev-bypass" | "none";
 
-let skipAuthSignedInState = env.skipAuth;
-let skipAuthMode: LocalAuthMode = env.skipAuth ? "skip-auth" : "none";
+// Dogfood: omit Clerk (env.skipAuth) but start signed-out so before_session +
+// auth_bypass can prove the deep-link round trip via acceptRevylAuthBypass().
+let skipAuthSignedInState = false;
+let skipAuthMode: LocalAuthMode = "none";
 const skipAuthListeners = new Set<() => void>();
 
+/**
+ * Signs in the local dogfood session after a validated Revyl auth-bypass link.
+ *
+ * Params:
+ *   role: Allowlisted role from the deep-link query (logged only).
+ *
+ * Returns:
+ *   void.
+ *
+ * Edge cases:
+ *   Safe to call more than once; identical state is a no-op.
+ */
+export function acceptRevylAuthBypass(role: string = "tester"): void {
+  logger.info("Revyl auth bypass accepted", { extra: { role } });
+  setSkipAuthSignedInState(true, "dev-bypass");
+}
+
+/**
+ * Registers a listener for skip-auth signed-in state changes.
+ *
+ * Params:
+ *   listener: Callback invoked when skip-auth state changes.
+ *
+ * Returns:
+ *   Unsubscribe function.
+ */
 function subscribeSkipAuth(listener: () => void): () => void {
   skipAuthListeners.add(listener);
   return () => {
@@ -64,10 +92,26 @@ function subscribeSkipAuth(listener: () => void): () => void {
   };
 }
 
+/**
+ * Returns the current skip-auth signed-in snapshot for useSyncExternalStore.
+ *
+ * Returns:
+ *   True when the local skip-auth session is signed in.
+ */
 function getSkipAuthSnapshot(): boolean {
   return skipAuthSignedInState;
 }
 
+/**
+ * Updates the local skip-auth signed-in state and notifies listeners.
+ *
+ * Params:
+ *   nextState: Whether the local session should be signed in.
+ *   nextMode: Local auth mode to associate when signed in.
+ *
+ * Edge cases:
+ *   No-ops when both state and mode are unchanged.
+ */
 function setSkipAuthSignedInState(
   nextState: boolean,
   nextMode: LocalAuthMode = "none"
@@ -84,15 +128,39 @@ function setSkipAuthSignedInState(
   skipAuthListeners.forEach((listener) => listener());
 }
 
+/**
+ * Subscribes to the local skip-auth signed-in flag.
+ *
+ * Returns:
+ *   Current skip-auth signed-in boolean.
+ */
 function useSkipAuthSignedInState(): boolean {
   return useSyncExternalStore(subscribeSkipAuth, getSkipAuthSnapshot, getSkipAuthSnapshot);
 }
 
+/**
+ * Returns the current skip-auth mode snapshot.
+ *
+ * Returns:
+ *   Active LocalAuthMode value.
+ */
 function getSkipAuthModeSnapshot(): LocalAuthMode {
   return skipAuthMode;
 }
 
-function useSkipAuthMode(): LocalAuthMode {
+/**
+ * Subscribes to the local skip-auth mode.
+ *
+ * Returns:
+ *   Current LocalAuthMode.
+ */
+/**
+ * Subscribes to the local skip-auth mode for UI (e.g. Profile auth hint).
+ *
+ * Returns:
+ *   Current LocalAuthMode (`dev-bypass` after a successful Revyl deep link).
+ */
+export function useLocalAuthMode(): LocalAuthMode {
   return useSyncExternalStore(
     subscribeSkipAuth,
     getSkipAuthModeSnapshot,
@@ -100,6 +168,20 @@ function useSkipAuthMode(): LocalAuthMode {
   );
 }
 
+function useSkipAuthMode(): LocalAuthMode {
+  return useLocalAuthMode();
+}
+
+/**
+ * Returns whether the given credentials match the hardcoded dev bypass login.
+ *
+ * Params:
+ *   identifier: Email/username entered by the user.
+ *   password: Password entered by the user.
+ *
+ * Returns:
+ *   True only in development builds with the exact bypass credentials.
+ */
 function isDevBypassCredential(identifier: string, password: string): boolean {
   return (
     env.isDevelopment &&
@@ -109,15 +191,37 @@ function isDevBypassCredential(identifier: string, password: string): boolean {
   );
 }
 
+/**
+ * Returns auth loaded/signed-in/signOut state for the app shell.
+ *
+ * Returns:
+ *   Auth control fields used by navigation and settings.
+ *
+ * Edge cases:
+ *   When EXPO_PUBLIC_SKIP_AUTH is enabled, Clerk hooks are not called because
+ *   ClerkProvider is omitted from the tree.
+ */
 export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "signOut"> {
-  const { isLoaded, isSignedIn } = useClerkAuth();
-  const { signOut } = useClerk();
   const isSkipAuthSignedIn = useSkipAuthSignedInState();
 
-  if (env.skipAuth || isSkipAuthSignedIn) {
+  if (env.skipAuth) {
     return {
       isLoaded: true,
       isSignedIn: isSkipAuthSignedIn,
+      signOut: async () => {
+        logger.info("Skip-auth sign out");
+        setSkipAuthSignedInState(false);
+      },
+    };
+  }
+
+  const { isLoaded, isSignedIn } = useClerkAuth();
+  const { signOut } = useClerk();
+
+  if (isSkipAuthSignedIn) {
+    return {
+      isLoaded: true,
+      isSignedIn: true,
       signOut: async () => {
         logger.info("Skip-auth sign out");
         setSkipAuthSignedInState(false);
@@ -132,17 +236,32 @@ export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "s
   };
 }
 
+/**
+ * Returns the current user profile for UI display.
+ *
+ * Returns:
+ *   Object with `user` set to the active profile, or null when signed out.
+ */
 export function useUser(): { user: User | null } {
-  const { user } = useClerkUser();
   const isSkipAuthSignedIn = useSkipAuthSignedInState();
   const skipAuthMode = useSkipAuthMode();
 
-  if (env.skipAuth || isSkipAuthSignedIn) {
+  if (env.skipAuth) {
     if (skipAuthMode === "dev-bypass") {
       return { user: isSkipAuthSignedIn ? DEV_BYPASS_USER : null };
     }
 
     return { user: isSkipAuthSignedIn ? DEV_SKIP_USER : null };
+  }
+
+  const { user } = useClerkUser();
+
+  if (isSkipAuthSignedIn) {
+    if (skipAuthMode === "dev-bypass") {
+      return { user: DEV_BYPASS_USER };
+    }
+
+    return { user: DEV_SKIP_USER };
   }
 
   if (!user) {
@@ -168,6 +287,15 @@ export function useUser(): { user: User | null } {
   };
 }
 
+/**
+ * Returns sign-in helpers used by the login screen.
+ *
+ * Returns:
+ *   `signIn`, `setActive`, and `isLoaded` for the login flow.
+ *
+ * Throws:
+ *   Error when Clerk is still loading and a real sign-in is attempted.
+ */
 export function useSignIn(): {
   signIn: {
     create: (params: {
@@ -178,8 +306,6 @@ export function useSignIn(): {
   setActive: (params: { session: string | null }) => Promise<void>;
   isLoaded: boolean;
 } {
-  const { isLoaded, signIn, setActive } = useClerkSignIn();
-
   if (env.skipAuth) {
     return {
       signIn: {
@@ -197,6 +323,8 @@ export function useSignIn(): {
       isLoaded: true,
     };
   }
+
+  const { isLoaded, signIn, setActive } = useClerkSignIn();
 
   return {
     signIn: {
@@ -236,6 +364,15 @@ export function useSignIn(): {
   };
 }
 
+/**
+ * Returns sign-up helpers used by the registration screen.
+ *
+ * Returns:
+ *   `signUp`, `setActive`, and `isLoaded` for the sign-up flow.
+ *
+ * Throws:
+ *   Error when Clerk is still loading and a real sign-up step is attempted.
+ */
 export function useSignUp(): {
   signUp: {
     create: (params: { emailAddress: string; password: string }) => Promise<void>;
@@ -247,8 +384,6 @@ export function useSignUp(): {
   setActive: (params: { session: string | null }) => Promise<void>;
   isLoaded: boolean;
 } {
-  const { isLoaded, signUp, setActive } = useClerkSignUp();
-
   if (env.skipAuth) {
     return {
       signUp: {
@@ -268,6 +403,8 @@ export function useSignUp(): {
       isLoaded: true,
     };
   }
+
+  const { isLoaded, signUp, setActive } = useClerkSignUp();
 
   return {
     signUp: {
@@ -312,14 +449,76 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
+/**
+ * Configures Convex token forwarding and logger context for auth.
+ *
+ * Params:
+ *   children: App tree rendered under auth side-effects.
+ *
+ * Returns:
+ *   Children unchanged. Skip-auth builds avoid Clerk hooks entirely.
+ */
 export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element {
+  if (env.skipAuth) {
+    return <SkipAuthProvider>{children}</SkipAuthProvider>;
+  }
+
+  return <ClerkAuthProvider>{children}</ClerkAuthProvider>;
+}
+
+/**
+ * Auth side-effects for EXPO_PUBLIC_SKIP_AUTH development builds.
+ *
+ * Params:
+ *   children: App tree to render.
+ *
+ * Returns:
+ *   Children with skip-auth Convex/logger wiring applied.
+ */
+function SkipAuthProvider({ children }: AuthProviderProps): React.JSX.Element {
+  const isSkipAuthSignedIn = useSkipAuthSignedInState();
+  const skipAuthMode = useSkipAuthMode();
+
+  useEffect(() => {
+    logger.info("EXPO_PUBLIC_SKIP_AUTH enabled: Convex auth token forwarding is disabled.");
+    setConvexTokenGetter(async () => null);
+
+    return () => {
+      setConvexTokenGetter(null);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isSkipAuthSignedIn) {
+      logger.setContext({
+        userId:
+          skipAuthMode === "dev-bypass" ? DEV_BYPASS_USER.id : DEV_SKIP_USER.id,
+      });
+    } else {
+      logger.clearContext();
+    }
+  }, [isSkipAuthSignedIn, skipAuthMode]);
+
+  return <>{children}</>;
+}
+
+/**
+ * Auth side-effects for Clerk-backed builds.
+ *
+ * Params:
+ *   children: App tree to render.
+ *
+ * Returns:
+ *   Children with Clerk token forwarding and migration wiring.
+ */
+function ClerkAuthProvider({ children }: AuthProviderProps): React.JSX.Element {
   const { isLoaded, isSignedIn, userId, getToken } = useClerkAuth();
   const migratedUserRef = useRef<string | null>(null);
   const isSkipAuthSignedIn = useSkipAuthSignedInState();
   const skipAuthMode = useSkipAuthMode();
 
   useEffect(() => {
-    if (env.skipAuth || isSkipAuthSignedIn) {
+    if (isSkipAuthSignedIn) {
       logger.info("EXPO_PUBLIC_SKIP_AUTH enabled: Convex auth token forwarding is disabled.");
       setConvexTokenGetter(async () => null);
 
@@ -353,7 +552,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
   }, [getToken, isSignedIn, userId, isSkipAuthSignedIn]);
 
   useEffect(() => {
-    if (env.skipAuth || isSkipAuthSignedIn) {
+    if (isSkipAuthSignedIn) {
       if (isSkipAuthSignedIn) {
         logger.setContext({
           userId:
@@ -374,7 +573,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
   }, [isSkipAuthSignedIn, userId, skipAuthMode]);
 
   useEffect(() => {
-    if (env.skipAuth || isSkipAuthSignedIn) {
+    if (isSkipAuthSignedIn) {
       return;
     }
 
@@ -394,7 +593,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
         error instanceof Error ? error : new Error(String(error))
       );
     });
-  }, [isLoaded, isSignedIn, userId]);
+  }, [isLoaded, isSignedIn, userId, isSkipAuthSignedIn]);
 
   return <>{children}</>;
 }
