@@ -12,15 +12,16 @@ interface EnvironmentConfig {
 }
 
 const isDevelopment = __DEV__;
+/** True when EXPO_PUBLIC_SKIP_AUTH was present at Metro embed time. */
 const requestedSkipAuth = process.env.EXPO_PUBLIC_SKIP_AUTH === "true";
 
 /**
  * Resolved app environment.
  *
- * EXPO_PUBLIC_SKIP_AUTH is honored whenever it is baked into the JS bundle at
- * Metro embed time — including Release preview builds. Gating skipAuth on
- * __DEV__ made Release dogfood binaries crash: validateEnvironment threw on
- * missing Clerk/Convex keys, and ClerkProvider received a placeholder key.
+ * Release dogfood binaries previously crashed because skipAuth was gated on
+ * __DEV__ and validateEnvironment threw on missing Clerk/Convex keys. This
+ * dogfood branch forces skipAuth so Daily Log can render without production
+ * keys, independent of whether the build runner inlines EXPO_PUBLIC_SKIP_AUTH.
  */
 export const env: EnvironmentConfig = {
   clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || "",
@@ -28,7 +29,8 @@ export const env: EnvironmentConfig = {
   apiBaseUrl:
     process.env.EXPO_PUBLIC_API_BASE_URL || "https://api.nof1experiments.com",
   isDevelopment,
-  skipAuth: requestedSkipAuth,
+  // Dogfood preview: always skip Clerk so Daily Log can render without keys.
+  skipAuth: true,
 };
 
 /**
