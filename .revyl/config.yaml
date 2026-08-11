@@ -28,7 +28,6 @@ build:
             output: build/ios/Build/Products/Release-iphonesimulator/*.app
             env:
                 NODE_ENV: production
-                REVYL_USE_FINGERPRINT: "0"
                 EXPO_PUBLIC_SKIP_AUTH: "true"
             secrets: []
 
@@ -78,10 +77,8 @@ pr_review:
             # Local simulator *preview* build (no EAS / EXPO_TOKEN).
             # expo-dev-client must be removed before prebuild: with it linked,
             # even Release binaries open the Expo "Development servers" picker.
-            # REVYL_USE_FINGERPRINT=0 is required: Expo fingerprint is computed
-            # from committed package.json (still lists expo-dev-client), so a
-            # cache hit skips every build_command step — including uninstall —
-            # and only repacks JS into the old native shell (see c2030c6).
+            # Fingerprint reuse stays enabled: fingerprint.config.js ignores the
+            # expo-dev-* autolinking graph so cache keys match this uninstall.
             # Scheme must be the workspace basename (e.g. Nof1Experiments). Using the
             # first xcodebuild -list scheme picks Pod targets like "boost" and yields no .app.
             # Keep the xcodebuild invocation on one YAML line — Revyl splits lines into steps.
@@ -96,7 +93,6 @@ pr_review:
             artifact_path: build/ios/Build/Products/Release-iphonesimulator/*.app
             env:
                 NODE_ENV: production
-                REVYL_USE_FINGERPRINT: "0"
                 # Baked into the Release JS bundle at export:embed time so the
                 # preview app skips Clerk and does not throw on missing Convex.
                 EXPO_PUBLIC_SKIP_AUTH: "true"
