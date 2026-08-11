@@ -7,7 +7,11 @@ import React, { useEffect, useCallback } from "react";
 import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, Loading, Icon, AnimatedPressable, Badge } from "@/components/ui";
-import { DoseDecayChart, ReconstitutionCalculator } from "@/components/peptide";
+import {
+  ChemicalSignalCard,
+  DoseDecayChart,
+  ReconstitutionCalculator,
+} from "@/components/peptide";
 import { usePeptideStore } from "@/stores/peptide-store";
 import { useTrackingStore } from "@/stores/tracking-store";
 import { colors, spacing, typography } from "@/theme";
@@ -174,6 +178,22 @@ export function PeptideDetailScreen({
               <Text style={styles.molecularValue}>{peptide.molecularInfo.type}</Text>
             </View>
           </View>
+          {(peptide.molecularInfo.formula || peptide.molecularInfo.casNumber) && (
+            <View style={styles.molecularGrid}>
+              {peptide.molecularInfo.formula ? (
+                <View style={styles.molecularItem}>
+                  <Text style={styles.molecularLabel}>Formula</Text>
+                  <Text style={styles.formulaValue}>{peptide.molecularInfo.formula}</Text>
+                </View>
+              ) : null}
+              {peptide.molecularInfo.casNumber ? (
+                <View style={styles.molecularItem}>
+                  <Text style={styles.molecularLabel}>CAS</Text>
+                  <Text style={styles.molecularValue}>{peptide.molecularInfo.casNumber}</Text>
+                </View>
+              ) : null}
+            </View>
+          )}
           <View style={styles.sequenceContainer}>
             <Text style={styles.sequenceLabel}>Amino Acid Sequence</Text>
             <Text style={styles.sequenceText}>{peptide.molecularInfo.sequence}</Text>
@@ -182,6 +202,21 @@ export function PeptideDetailScreen({
             )}
           </View>
         </Card>
+
+        {/* Chemical Signal */}
+        {peptide.chemicalSignal ? (
+          <Card style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <Icon name="activity" size={18} color={colors.primary[500]} />
+              <Text style={styles.sectionTitle}>Chemical Signal</Text>
+            </View>
+            <ChemicalSignalCard
+              chemicalSignal={peptide.chemicalSignal}
+              molecularInfo={peptide.molecularInfo}
+              peptideName={peptide.name}
+            />
+          </Card>
+        ) : null}
 
         {/* Research Protocols */}
         <Card style={styles.section}>
@@ -539,6 +574,12 @@ const styles = StyleSheet.create({
     ...typography.small,
     fontWeight: "500",
     color: colors.text.primary,
+  },
+  formulaValue: {
+    fontSize: 12,
+    fontFamily: "monospace",
+    fontWeight: "600",
+    color: colors.primary[400],
   },
   sequenceContainer: {
     backgroundColor: colors.background.primary,
