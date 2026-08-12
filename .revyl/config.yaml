@@ -63,9 +63,18 @@ pr_review:
         strict_build_checks: true
         proof_of_changes: true
         proof_harness:
-            kind: revyl
+            kind: cursor
         checks: []
-        system_prompt: ""
+        system_prompt: |
+          Go through and test the feature end to end on the preview build.
+
+          Start a device, exercise the user-visible UI change until you can
+          prove it works or is broken, run validation, then publish the proof
+          comment with evidence.
+
+          Fail loudly: do not invent success. If device start, validation, or
+          commenting fails, stop and report the exact failure. Do not retry
+          concurrency denials in a loop.
         workflows: []
     builds:
         ios:
