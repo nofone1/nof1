@@ -52,6 +52,7 @@ hotreload:
             app_scheme: nof1
             platform_keys:
                 ios: ios
+                android: android
 
 pr_review:
     enabled: true
@@ -106,5 +107,28 @@ pr_review:
                 # preview app skips Clerk and does not throw on missing Convex.
                 EXPO_PUBLIC_SKIP_AUTH: "true"
             secrets: []
-        # Android left off for staging dogfood (ios-only), matching bug-bazaar.
-        # Re-enable when Android Expo preview builds are reliable on staging.
+        android:
+            enabled: true
+            framework: expo_android
+            app: nof1-experiments Android
+            root_dir: ./
+            use_existing_ci: false
+            # Local emulator *preview* build (no EAS / EXPO_TOKEN).
+            # expo-dev-client must be removed before prebuild, matching iOS.
+            build_command: |
+                export EXPO_PUBLIC_SKIP_AUTH=true
+                npm ci
+                npm uninstall expo-dev-client --legacy-peer-deps
+                npx --yes expo prebuild --platform android --non-interactive --clean
+                (cd android && GRADLE_USER_HOME="$PWD/../.gradle-home" ./gradlew assembleDebug)
+                mkdir -p build/android
+                cp android/app/build/outputs/apk/debug/app-debug.apk build/android/app.apk
+            artifact_path: build/android/app.apk
+            env:
+                NODE_ENV: production
+                EXPO_PUBLIC_SKIP_AUTH: "true"
+            secrets: []
+            caches:
+                - key: nof1-android-gradle
+                  paths:
+                      - .gradle-home
