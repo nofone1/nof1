@@ -48,7 +48,7 @@ export function PeptideCard({ peptide, onPress }: PeptideCardProps): React.JSX.E
 
   return (
     <Card variant="elevated" onPress={onPress} style={styles.card}>
-      <Text style={styles.dogfoodMarker}>DOGFOOD R25</Text>
+      <Text style={styles.dogfoodMarker}>DOGFOOD R26</Text>
       <View style={styles.header}>
         <View style={styles.shortCodeBadge}>
           <Text style={styles.shortCodeText}>{peptide.shortCode}</Text>
