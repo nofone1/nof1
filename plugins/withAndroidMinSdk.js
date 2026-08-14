@@ -1,4 +1,8 @@
-const { createRunOncePlugin, withGradleProperties } = require('@expo/config-plugins');
+const {
+  createRunOncePlugin,
+  withGradleProperties,
+  withProjectBuildGradle,
+} = require('@expo/config-plugins');
 
 const pluginName = 'with-android-min-sdk';
 
@@ -12,6 +16,16 @@ function setGradleProperty(properties, key, value) {
   return properties;
 }
 
+function replaceNdkVersion(contents, ndkVersion) {
+  const next = contents.replace(/ndkVersion\s*=\s*.+/g, `ndkVersion = "${ndkVersion}"`);
+  if (next === contents) {
+    throw new Error(
+      `${pluginName}: android/build.gradle has no ndkVersion assignment to set ${ndkVersion}`
+    );
+  }
+  return next;
+}
+
 function withAndroidMinSdk(config, props) {
   const minSdkVersion = String((props && props.minSdkVersion) || 28);
   const architectures = String((props && props.architectures) || 'x86_64');
@@ -21,7 +35,7 @@ function withAndroidMinSdk(config, props) {
       ? String(props.newArchEnabled)
       : 'false';
 
-  return withGradleProperties(config, (modConfig) => {
+  config = withGradleProperties(config, (modConfig) => {
     modConfig.modResults = setGradleProperty(
       modConfig.modResults,
       'android.minSdkVersion',
@@ -41,6 +55,14 @@ function withAndroidMinSdk(config, props) {
       modConfig.modResults,
       'newArchEnabled',
       newArchEnabled
+    );
+    return modConfig;
+  });
+
+  return withProjectBuildGradle(config, (modConfig) => {
+    modConfig.modResults.contents = replaceNdkVersion(
+      modConfig.modResults.contents,
+      ndkVersion
     );
     return modConfig;
   });
