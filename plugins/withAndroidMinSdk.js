@@ -1,5 +1,6 @@
 const {
   createRunOncePlugin,
+  withAppBuildGradle,
   withGradleProperties,
   withProjectBuildGradle,
 } = require('@expo/config-plugins');
@@ -21,6 +22,25 @@ function replaceNdkVersion(contents, ndkVersion) {
   if (next === contents) {
     throw new Error(
       `${pluginName}: android/build.gradle has no ndkVersion assignment to set ${ndkVersion}`
+    );
+  }
+  return next;
+}
+
+function embedJsInDebugApk(contents) {
+  if (/debuggableVariants\s*=/.test(contents)) {
+    return contents.replace(
+      /debuggableVariants\s*=\s*\[[^\]]*\]/,
+      'debuggableVariants = []'
+    );
+  }
+  const next = contents.replace(
+    /(react\s*\{)/,
+    '$1\n    debuggableVariants = []'
+  );
+  if (next === contents) {
+    throw new Error(
+      `${pluginName}: android/app/build.gradle has no react { block to embed the debug JS bundle`
     );
   }
   return next;
@@ -79,13 +99,18 @@ function withAndroidMinSdk(config, props) {
     return modConfig;
   });
 
-  return withProjectBuildGradle(config, (modConfig) => {
+  config = withProjectBuildGradle(config, (modConfig) => {
     modConfig.modResults.contents = replaceAgpClasspath(
       replaceNdkVersion(modConfig.modResults.contents, ndkVersion),
       agpVersion
     );
     return modConfig;
   });
+
+  return withAppBuildGradle(config, (modConfig) => {
+    modConfig.modResults.contents = embedJsInDebugApk(modConfig.modResults.contents);
+    return modConfig;
+  });
 }
 
-module.exports = createRunOncePlugin(withAndroidMinSdk, pluginName, '1.0.0');
+module.exports = createRunOncePlugin(withAndroidMinSdk, pluginName, '1.1.0');
