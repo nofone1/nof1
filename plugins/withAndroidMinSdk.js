@@ -26,10 +26,25 @@ function replaceNdkVersion(contents, ndkVersion) {
   return next;
 }
 
+function replaceAgpClasspath(contents, agpVersion) {
+  const versioned = contents.replace(
+    /classpath\(['"]com\.android\.tools\.build:gradle:[^'"]+['"]\)/g,
+    `classpath('com.android.tools.build:gradle:${agpVersion}')`
+  );
+  if (versioned !== contents) {
+    return versioned;
+  }
+  return contents.replace(
+    /classpath\(['"]com\.android\.tools\.build:gradle['"]\)/g,
+    `classpath('com.android.tools.build:gradle:${agpVersion}')`
+  );
+}
+
 function withAndroidMinSdk(config, props) {
   const minSdkVersion = String((props && props.minSdkVersion) || 28);
   const architectures = String((props && props.architectures) || 'x86_64');
   const ndkVersion = String((props && props.ndkVersion) || '27.1.12297006');
+  const agpVersion = String((props && props.agpVersion) || '8.7.2');
   const newArchEnabled =
     props && Object.prototype.hasOwnProperty.call(props, 'newArchEnabled')
       ? String(props.newArchEnabled)
@@ -56,13 +71,18 @@ function withAndroidMinSdk(config, props) {
       'newArchEnabled',
       newArchEnabled
     );
+    modConfig.modResults = setGradleProperty(
+      modConfig.modResults,
+      'android.native.buildOutput',
+      'verbose'
+    );
     return modConfig;
   });
 
   return withProjectBuildGradle(config, (modConfig) => {
-    modConfig.modResults.contents = replaceNdkVersion(
-      modConfig.modResults.contents,
-      ndkVersion
+    modConfig.modResults.contents = replaceAgpClasspath(
+      replaceNdkVersion(modConfig.modResults.contents, ndkVersion),
+      agpVersion
     );
     return modConfig;
   });
