@@ -15,6 +15,11 @@ function setGradleProperty(properties, key, value) {
 function withAndroidMinSdk(config, props) {
   const minSdkVersion = String((props && props.minSdkVersion) || 28);
   const architectures = String((props && props.architectures) || 'x86_64');
+  const ndkVersion = String((props && props.ndkVersion) || '27.1.12297006');
+  const newArchEnabled =
+    props && Object.prototype.hasOwnProperty.call(props, 'newArchEnabled')
+      ? String(props.newArchEnabled)
+      : 'false';
 
   return withGradleProperties(config, (modConfig) => {
     modConfig.modResults = setGradleProperty(
@@ -26,6 +31,16 @@ function withAndroidMinSdk(config, props) {
       modConfig.modResults,
       'reactNativeArchitectures',
       architectures
+    );
+    modConfig.modResults = setGradleProperty(
+      modConfig.modResults,
+      'android.ndkVersion',
+      ndkVersion
+    );
+    modConfig.modResults = setGradleProperty(
+      modConfig.modResults,
+      'newArchEnabled',
+      newArchEnabled
     );
     return modConfig;
   });

@@ -44,7 +44,9 @@
         "./plugins/withAndroidMinSdk",
         {
           "minSdkVersion": 28,
-          "architectures": "x86_64"
+          "architectures": "x86_64",
+          "ndkVersion": "27.1.12297006",
+          "newArchEnabled": false
         }
       ],
       "./plugins/launch-args-module"
@@ -53,7 +55,7 @@
       "eas": {
         "projectId": "81b500c4-6a29-4905-ba8e-ac11dfc7cff9"
       },
-      "dogfoodMarker": "R31"
+      "dogfoodMarker": "R32"
     }
   }
 }
