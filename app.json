@@ -40,13 +40,19 @@
           "target": "18.5"
         }
       ],
+      [
+        "./plugins/withAndroidMinSdk",
+        {
+          "minSdkVersion": 28
+        }
+      ],
       "./plugins/launch-args-module"
     ],
     "extra": {
       "eas": {
         "projectId": "81b500c4-6a29-4905-ba8e-ac11dfc7cff9"
       },
-      "dogfoodMarker": "R29"
+      "dogfoodMarker": "R30"
     }
   }
 }
