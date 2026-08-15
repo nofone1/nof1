@@ -1,9 +1,13 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 const {
+  disableDebugPackager,
   embedJsInDebugApk,
   pinHostHermesCommand,
 } = require('./embed-js-in-debug-apk');
+const {
+  registerLaunchArgsPersistence,
+} = require('./launch-args-persist');
 
 const expoCommentedTemplate = `
 react {
@@ -65,4 +69,52 @@ react {
   );
   assert.doesNotMatch(next, /absolutePath\s+new File/);
   assert.doesNotMatch(next, /\.absolutePath\(/);
+});
+
+test('disables Expo getUseDeveloperSupport so debug APKs skip Metro', () => {
+  const next = disableDebugPackager(`
+class MainApplication : Application(), ReactApplication {
+  override val reactNativeHost: ReactNativeHost = ReactNativeHostWrapper(
+        this,
+        object : DefaultReactNativeHost(this) {
+          override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
+      }
+  )
+}
+`);
+  assert.match(next, /override fun getUseDeveloperSupport\(\): Boolean = false/);
+  assert.doesNotMatch(next, /getUseDeveloperSupport\(\).*= BuildConfig\.DEBUG/);
+});
+
+test('throws when MainApplication has no getUseDeveloperSupport', () => {
+  assert.throws(
+    () => disableDebugPackager('class MainApplication : Application()'),
+    /failed to disable getUseDeveloperSupport/
+  );
+});
+
+test('registers launch-extra persistence after super.onCreate', () => {
+  const next = registerLaunchArgsPersistence(`
+class MainApplication : Application(), ReactApplication {
+  override fun onCreate() {
+    super.onCreate()
+    SoLoader.init(this, OpenSourceMergedSoMapping)
+  }
+}
+`);
+  assert.match(next, /super\.onCreate\(\)\n\s+registerActivityLifecycleCallbacks/);
+  assert.match(next, /LaunchArgsModule\.persistFrom\(activity\.intent\)/);
+});
+
+test('is idempotent when launch-extra persistence is already registered', () => {
+  const once = registerLaunchArgsPersistence(`
+class MainApplication : Application(), ReactApplication {
+  override fun onCreate() {
+    super.onCreate()
+    LaunchArgsModule.persistFrom(activity.intent)
+  }
+}
+`);
+  const twice = registerLaunchArgsPersistence(once);
+  assert.equal(twice, once);
 });

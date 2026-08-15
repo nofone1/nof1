@@ -2,9 +2,11 @@ const {
   createRunOncePlugin,
   withAppBuildGradle,
   withGradleProperties,
+  withMainApplication,
   withProjectBuildGradle,
 } = require('@expo/config-plugins');
 const {
+  disableDebugPackager,
   embedJsInDebugApk,
   pinHostHermesCommand,
 } = require('./embed-js-in-debug-apk');
@@ -92,12 +94,19 @@ function withAndroidMinSdk(config, props) {
     return modConfig;
   });
 
-  return withAppBuildGradle(config, (modConfig) => {
+  config = withAppBuildGradle(config, (modConfig) => {
     modConfig.modResults.contents = pinHostHermesCommand(
       embedJsInDebugApk(modConfig.modResults.contents)
     );
     return modConfig;
   });
+
+  return withMainApplication(config, (modConfig) => {
+    modConfig.modResults.contents = disableDebugPackager(
+      modConfig.modResults.contents
+    );
+    return modConfig;
+  });
 }
 
-module.exports = createRunOncePlugin(withAndroidMinSdk, pluginName, '1.4.0');
+module.exports = createRunOncePlugin(withAndroidMinSdk, pluginName, '1.5.0');

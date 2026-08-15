@@ -1,6 +1,7 @@
 const { withDangerousMod, withXcodeProject } = require('@expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
+const { registerLaunchArgsPersistence } = require('./launch-args-persist');
 
 const IOS_SWIFT = `import Foundation
 import React
@@ -44,22 +45,30 @@ class LaunchArgsModule(private val reactContext: ReactApplicationContext) : Reac
   @ReactMethod
   fun getLaunchArguments(promise: Promise) {
     try {
+      persistFrom(reactContext.currentActivity?.intent)
       val args: WritableArray = Arguments.createArray()
-      val extras = reactContext.currentActivity?.intent?.extras
-
-      if (extras != null) {
-        for (key in extras.keySet()) {
-          if (key.startsWith("android.") || key.startsWith("com.android.")) {
-            continue
-          }
-          args.pushString("-$key")
-          args.pushString(extras.get(key)?.toString() ?: "")
-        }
+      for ((key, value) in persisted) {
+        args.pushString("-$key")
+        args.pushString(value)
       }
-
       promise.resolve(args)
     } catch (error: Exception) {
       promise.reject("LAUNCH_ARGS_ERROR", error.message, error)
+    }
+  }
+
+  companion object {
+    private val persisted = LinkedHashMap<String, String>()
+
+    @JvmStatic
+    fun persistFrom(intent: android.content.Intent?) {
+      val extras = intent?.extras ?: return
+      for (key in extras.keySet()) {
+        if (key.startsWith("android.") || key.startsWith("com.android.")) {
+          continue
+        }
+        persisted[key] = extras.get(key)?.toString() ?: ""
+      }
     }
   }
 }
@@ -163,6 +172,11 @@ const withLaunchArgsModule = config => {
         );
         fs.writeFileSync(mainApplicationPath, source);
       }
+      source = fs.readFileSync(mainApplicationPath, 'utf8');
+      fs.writeFileSync(
+        mainApplicationPath,
+        registerLaunchArgsPersistence(source)
+      );
     }
 
     return config;

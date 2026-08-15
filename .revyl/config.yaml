@@ -106,7 +106,8 @@ pr_review:
             # Local emulator *preview* build (no EAS / EXPO_TOKEN).
             # expo-dev-client must be removed before prebuild, matching iOS.
             # Keep assembleDebug: Release CMake is unproven on this Tart image.
-            # withAndroidMinSdk sets debuggableVariants=[] so Metro is not required.
+            # withAndroidMinSdk embeds JS and sets getUseDeveloperSupport=false
+            # so the debug APK does not wait on Metro.
             build_command: |
                 export EXPO_PUBLIC_SKIP_AUTH=true
                 npm ci

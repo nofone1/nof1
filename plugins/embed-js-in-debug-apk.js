@@ -6,6 +6,10 @@ const liveEmptyDebuggableVariants = /^[ \t]*debuggableVariants\s*=\s*\[\s*\]/m;
 const liveHermesCommandAssignment = /^([ \t]*)hermesCommand\s*=.*$/m;
 const liveHermesCommandWithOsBin =
   /^([ \t]*hermesCommand\s*=.*)%OS-BIN%(.*)$/m;
+const liveUseDeveloperSupport =
+  /^([ \t]*)override fun getUseDeveloperSupport\(\)(?:: Boolean)?\s*=\s*BuildConfig\.DEBUG\s*$/m;
+const disabledUseDeveloperSupport =
+  /^[ \t]*override fun getUseDeveloperSupport\(\): Boolean = false\s*$/m;
 
 /**
  * Forces assembleDebug to embed the Metro JS bundle instead of expecting packager.
@@ -104,4 +108,52 @@ function pinHostHermesCommand(contents, osBin = hermescOsBin()) {
   return next;
 }
 
-module.exports = { embedJsInDebugApk, hermescOsBin, pinHostHermesCommand };
+/**
+ * Stops a debug APK from waiting on Metro after the JS bundle is embedded.
+ *
+ * `debuggableVariants = []` only creates `index.android.bundle`. Expo's
+ * `getUseDeveloperSupport()` still returns `BuildConfig.DEBUG`, so the
+ * runtime asks Metro first and shows a white React root for ~30s.
+ *
+ * Params:
+ *   contents: `MainApplication.kt` or `MainApplication.java` from prebuild.
+ *
+ * Returns:
+ *   Source with `getUseDeveloperSupport()` hard-coded to false.
+ *
+ * Throws:
+ *   Error when the method is missing or still returns `BuildConfig.DEBUG`.
+ */
+function disableDebugPackager(contents) {
+  let next = contents;
+  if (liveUseDeveloperSupport.test(contents)) {
+    next = contents.replace(
+      liveUseDeveloperSupport,
+      '$1override fun getUseDeveloperSupport(): Boolean = false'
+    );
+  } else if (
+    contents.includes('getUseDeveloperSupport') &&
+    /return BuildConfig\.DEBUG;/.test(contents)
+  ) {
+    next = contents.replace(
+      /(boolean getUseDeveloperSupport\(\)\s*\{[\s\S]*?)return BuildConfig\.DEBUG;/,
+      '$1return false;'
+    );
+  }
+  if (
+    !disabledUseDeveloperSupport.test(next) &&
+    !/return false;\s*\n\s*\}/.test(next)
+  ) {
+    throw new Error(
+      `${pluginName}: failed to disable getUseDeveloperSupport (debug APK would wait for Metro)`
+    );
+  }
+  return next;
+}
+
+module.exports = {
+  embedJsInDebugApk,
+  hermescOsBin,
+  pinHostHermesCommand,
+  disableDebugPackager,
+};
