@@ -40,12 +40,23 @@
           "target": "18.5"
         }
       ],
+      [
+        "./plugins/withAndroidMinSdk",
+        {
+          "minSdkVersion": 28,
+          "architectures": "x86_64",
+          "ndkVersion": "27.1.12297006",
+          "agpVersion": "8.7.2",
+          "newArchEnabled": false
+        }
+      ],
       "./plugins/launch-args-module"
     ],
     "extra": {
       "eas": {
         "projectId": "81b500c4-6a29-4905-ba8e-ac11dfc7cff9"
-      }
+      },
+      "dogfoodMarker": "R42"
     }
   }
 }
