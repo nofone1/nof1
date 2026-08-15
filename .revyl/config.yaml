@@ -63,6 +63,7 @@ pr_review:
         preview_link: true
         strict_build_checks: true
         proof_of_changes: true
+        status_in_pr_description: true
         proof_harness:
             kind: revyl
         checks: []
