@@ -3,7 +3,9 @@ const pluginName = 'with-android-min-sdk';
 const liveDebuggableVariantsAssignment =
   /^([ \t]*)debuggableVariants\s*=\s*\[[^\]]*\]/m;
 const liveEmptyDebuggableVariants = /^[ \t]*debuggableVariants\s*=\s*\[\s*\]/m;
-const liveHermesCommandAssignment = /^([ \t]*)hermesCommand\s*=/m;
+const liveHermesCommandAssignment = /^([ \t]*)hermesCommand\s*=.*$/m;
+const liveHermesCommandWithOsBin =
+  /^([ \t]*hermesCommand\s*=.*)%OS-BIN%(.*)$/m;
 
 /**
  * Forces assembleDebug to embed the Metro JS bundle instead of expecting packager.
@@ -85,14 +87,15 @@ function hermescOsBin() {
  *   Error when there is no `react {` block or the live assignment is missing.
  */
 function pinHostHermesCommand(contents, osBin = hermescOsBin()) {
-  const assignment =
-    `hermesCommand = new File(rootDir, "../node_modules/react-native/sdks/hermesc/${osBin}/hermesc").absolutePath`;
-  let next = contents;
-  if (liveHermesCommandAssignment.test(contents)) {
-    next = contents.replace(liveHermesCommandAssignment, `$1${assignment}`);
-  } else {
-    next = contents.replace(/(react\s*\{)/, `$1\n    ${assignment}`);
+  if (liveHermesCommandWithOsBin.test(contents)) {
+    return contents.replace(liveHermesCommandWithOsBin, `$1${osBin}$2`);
   }
+  if (liveHermesCommandAssignment.test(contents)) {
+    return contents;
+  }
+  const assignment =
+    `hermesCommand = new File(rootDir, "../node_modules/react-native/sdks/hermesc/${osBin}/hermesc").getAbsolutePath()`;
+  const next = contents.replace(/(react\s*\{)/, `$1\n    ${assignment}`);
   if (!/^[ \t]*hermesCommand\s*=/m.test(next)) {
     throw new Error(
       `${pluginName}: failed to insert a live hermesCommand (comment-only matches are ignored)`

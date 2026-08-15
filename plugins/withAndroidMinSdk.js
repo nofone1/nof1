@@ -100,4 +100,4 @@ function withAndroidMinSdk(config, props) {
   });
 }
 
-module.exports = createRunOncePlugin(withAndroidMinSdk, pluginName, '1.3.0');
+module.exports = createRunOncePlugin(withAndroidMinSdk, pluginName, '1.4.0');

@@ -39,18 +39,30 @@ test('throws when there is no react block', () => {
   );
 });
 
-test('pins a live hermesCommand and ignores Expo comments', () => {
+test('replaces %OS-BIN% on Expo live hermesCommand and ignores comments', () => {
   const next = pinHostHermesCommand(
     `
 react {
     // hermesCommand = "$rootDir/my-custom-hermesc/bin/hermesc"
+    hermesCommand = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/sdks/hermesc/%OS-BIN%/hermesc"
 }
 `,
     'linux64-bin'
   );
-  assert.match(
-    next,
-    /^[ \t]*hermesCommand = new File\(rootDir, "\.\.\/node_modules\/react-native\/sdks\/hermesc\/linux64-bin\/hermesc"\)\.absolutePath/m
-  );
+  assert.match(next, /sdks\/hermesc\/linux64-bin\/hermesc/);
+  assert.doesNotMatch(next, /^[ \t]*hermesCommand\s*=.*%OS-BIN%/m);
   assert.match(next, /\/\/ hermesCommand = "\$rootDir\/my-custom-hermesc\/bin\/hermesc"/);
+});
+
+test('does not glue a new assignment onto an existing hermesCommand line', () => {
+  const next = pinHostHermesCommand(
+    `
+react {
+    hermesCommand = new File(["node"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/sdks/hermesc/%OS-BIN%/hermesc"
+}
+`,
+    'linux64-bin'
+  );
+  assert.doesNotMatch(next, /absolutePath\s+new File/);
+  assert.doesNotMatch(next, /\.absolutePath\(/);
 });
