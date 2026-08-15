@@ -66,16 +66,6 @@ pr_review:
         proof_harness:
             kind: revyl
         checks: []
-        system_prompt: |
-          Go through and test the feature end to end on the preview build.
-
-          Start a device, exercise the user-visible UI change until you can
-          prove it works or is broken, run validation, then publish the proof
-          comment with evidence.
-
-          Fail loudly: do not invent success. If device start, validation, or
-          commenting fails, stop and report the exact failure. Do not retry
-          concurrency denials in a loop.
         workflows: []
     builds:
         ios:
@@ -123,7 +113,9 @@ pr_review:
                 npm uninstall expo-dev-client --legacy-peer-deps
                 npx --yes expo prebuild --platform android --non-interactive --clean
                 grep -n 'ndkVersion' android/build.gradle android/gradle.properties || true
-                grep -nE '^[ \t]*debuggableVariants = \[\]' android/app/build.gradle
+                grep -nE '^[[:space:]]*debuggableVariants = \[\]' android/app/build.gradle
+                grep -nE '^[[:space:]]*hermesCommand =' android/app/build.gradle
+                mkdir -p .gradle-home/init.d && cp -f /home/admin/.gradle/init.d/*.gradle .gradle-home/init.d/ 2>/dev/null || true
                 (cd android && GRADLE_USER_HOME="$PWD/../.gradle-home" ./gradlew assembleDebug -PreactNativeArchitectures=x86_64 --stacktrace)
                 mkdir -p build/android
                 cp android/app/build/outputs/apk/debug/app-debug.apk build/android/app.apk

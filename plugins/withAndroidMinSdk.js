@@ -4,7 +4,10 @@ const {
   withGradleProperties,
   withProjectBuildGradle,
 } = require('@expo/config-plugins');
-const { embedJsInDebugApk } = require('./embed-js-in-debug-apk');
+const {
+  embedJsInDebugApk,
+  pinHostHermesCommand,
+} = require('./embed-js-in-debug-apk');
 
 const pluginName = 'with-android-min-sdk';
 
@@ -90,9 +93,11 @@ function withAndroidMinSdk(config, props) {
   });
 
   return withAppBuildGradle(config, (modConfig) => {
-    modConfig.modResults.contents = embedJsInDebugApk(modConfig.modResults.contents);
+    modConfig.modResults.contents = pinHostHermesCommand(
+      embedJsInDebugApk(modConfig.modResults.contents)
+    );
     return modConfig;
   });
 }
 
-module.exports = createRunOncePlugin(withAndroidMinSdk, pluginName, '1.2.0');
+module.exports = createRunOncePlugin(withAndroidMinSdk, pluginName, '1.3.0');

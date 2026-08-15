@@ -1,6 +1,9 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
-const { embedJsInDebugApk } = require('./embed-js-in-debug-apk');
+const {
+  embedJsInDebugApk,
+  pinHostHermesCommand,
+} = require('./embed-js-in-debug-apk');
 
 const expoCommentedTemplate = `
 react {
@@ -34,4 +37,20 @@ test('throws when there is no react block', () => {
     () => embedJsInDebugApk('android { namespace "com.nof1.experiments" }'),
     /no react \{ block/
   );
+});
+
+test('pins a live hermesCommand and ignores Expo comments', () => {
+  const next = pinHostHermesCommand(
+    `
+react {
+    // hermesCommand = "$rootDir/my-custom-hermesc/bin/hermesc"
+}
+`,
+    'linux64-bin'
+  );
+  assert.match(
+    next,
+    /^[ \t]*hermesCommand = new File\(rootDir, "\.\.\/node_modules\/react-native\/sdks\/hermesc\/linux64-bin\/hermesc"\)\.absolutePath/m
+  );
+  assert.match(next, /\/\/ hermesCommand = "\$rootDir\/my-custom-hermesc\/bin\/hermesc"/);
 });
