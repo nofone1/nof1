@@ -29,6 +29,7 @@ build:
             env:
                 NODE_ENV: production
                 EXPO_PUBLIC_SKIP_AUTH: "true"
+                REVYL_USE_FINGERPRINT: "1"
             secrets: []
 
 # Session setup for every `revyl device start` (including proof sandbox).
@@ -97,6 +98,7 @@ pr_review:
                 # Baked into the Release JS bundle at export:embed time so the
                 # preview app skips Clerk and does not throw on missing Convex.
                 EXPO_PUBLIC_SKIP_AUTH: "true"
+                REVYL_USE_FINGERPRINT: "1"
             secrets: []
         android:
             enabled: true
@@ -126,6 +128,7 @@ pr_review:
             env:
                 NODE_ENV: production
                 EXPO_PUBLIC_SKIP_AUTH: "true"
+                REVYL_USE_FINGERPRINT: "1"
             secrets: []
             caches:
                 - key: nof1-android-gradle
