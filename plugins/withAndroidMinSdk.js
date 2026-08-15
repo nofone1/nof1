@@ -4,6 +4,7 @@ const {
   withGradleProperties,
   withProjectBuildGradle,
 } = require('@expo/config-plugins');
+const { embedJsInDebugApk } = require('./embed-js-in-debug-apk');
 
 const pluginName = 'with-android-min-sdk';
 
@@ -22,25 +23,6 @@ function replaceNdkVersion(contents, ndkVersion) {
   if (next === contents) {
     throw new Error(
       `${pluginName}: android/build.gradle has no ndkVersion assignment to set ${ndkVersion}`
-    );
-  }
-  return next;
-}
-
-function embedJsInDebugApk(contents) {
-  if (/debuggableVariants\s*=/.test(contents)) {
-    return contents.replace(
-      /debuggableVariants\s*=\s*\[[^\]]*\]/,
-      'debuggableVariants = []'
-    );
-  }
-  const next = contents.replace(
-    /(react\s*\{)/,
-    '$1\n    debuggableVariants = []'
-  );
-  if (next === contents) {
-    throw new Error(
-      `${pluginName}: android/app/build.gradle has no react { block to embed the debug JS bundle`
     );
   }
   return next;
@@ -113,4 +95,4 @@ function withAndroidMinSdk(config, props) {
   });
 }
 
-module.exports = createRunOncePlugin(withAndroidMinSdk, pluginName, '1.1.0');
+module.exports = createRunOncePlugin(withAndroidMinSdk, pluginName, '1.2.0');

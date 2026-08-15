@@ -123,9 +123,11 @@ pr_review:
                 npm uninstall expo-dev-client --legacy-peer-deps
                 npx --yes expo prebuild --platform android --non-interactive --clean
                 grep -n 'ndkVersion' android/build.gradle android/gradle.properties || true
+                grep -nE '^[ \t]*debuggableVariants = \[\]' android/app/build.gradle
                 (cd android && GRADLE_USER_HOME="$PWD/../.gradle-home" ./gradlew assembleDebug -PreactNativeArchitectures=x86_64 --stacktrace)
                 mkdir -p build/android
                 cp android/app/build/outputs/apk/debug/app-debug.apk build/android/app.apk
+                unzip -l build/android/app.apk | grep -E 'index\.android\.bundle'
             artifact_path: build/android/app.apk
             env:
                 NODE_ENV: production
