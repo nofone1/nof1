@@ -51,6 +51,15 @@ const MOTSc: Peptide = {
     type: "Mitochondrial-derived peptide (MDP)",
     sequence: "MRWQEMGYIFYPRKLR",
     sequenceNote: "Encoded by mitochondrial DNA (MT-RNR1 gene) within the 12S rRNA",
+    formula: "C101H152N28O22S2",
+    casNumber: "1627580-64-6",
+  },
+  chemicalSignal: {
+    role: "Mitochondrial mitohormone",
+    pathway: "Folate → AICAR → AMPK (nuclear translocation under metabolic stress)",
+    threeLetterSequence:
+      "Met-Arg-Trp-Gln-Glu-Met-Gly-Tyr-Ile-Phe-Tyr-Pro-Arg-Lys-Leu-Arg",
+    pubChemCid: "146675088",
   },
   indications: [
     {

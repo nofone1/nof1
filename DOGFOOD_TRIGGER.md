@@ -1,1 +1,1 @@
-# dogfood Cursor proof_of_changes retrigger 2026-08-05T03:27:01Z
+# dogfood revyl-sandbox proof supersede 2026-08-20T01:20:33Z (401-zombie-fix e2e, supersedes prior run mid-proof)

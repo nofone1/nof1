@@ -4,6 +4,8 @@
  * before_session mints REVYL_AUTH_BYPASS_* launch vars; auth_bypass.deep_link
  * opens nof1://revyl-auth?... after install. This provider validates that
  * round trip and signs the local skip-auth session in as the Test User.
+ * Android may drop the initial URL after a Metro/activity restart; launch
+ * extras with a matching token are then enough to accept the same bypass.
  */
 
 import React, { useCallback, useEffect, useState } from "react";
@@ -237,6 +239,21 @@ export function RevylAuthBypassProvider({
       .then((url) => {
         if (url) {
           onUrl(url);
+          return;
+        }
+        if (
+          launchConfig.ready &&
+          launchConfig.enabled &&
+          launchConfig.expectedToken
+        ) {
+          acceptRevylAuthBypass("tester");
+          console.warn(
+            "Revyl auth bypass accepted from launch extras (no initial URL)."
+          );
+          setStatus({
+            state: "accepted",
+            message: "Revyl auth bypass accepted from launch extras.",
+          });
         }
       })
       .catch(() => undefined);
@@ -247,7 +264,7 @@ export function RevylAuthBypassProvider({
     return () => {
       subscription.remove();
     };
-  }, [onUrl]);
+  }, [onUrl, launchConfig]);
 
   return <>{children}</>;
 }
