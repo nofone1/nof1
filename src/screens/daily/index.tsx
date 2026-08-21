@@ -153,7 +153,7 @@ export function DailyLogScreen({
         {/* Header */}
         {/* dogfood: Cursor proof_of_changes retrigger 2026-08-05 */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Today · Daily Log</Text>
+          <Text style={styles.greeting}>Today · Daily Log (GW E2E)</Text>
           <Text style={styles.date}>{formatDisplayDate(today)}</Text>
         </View>
 
