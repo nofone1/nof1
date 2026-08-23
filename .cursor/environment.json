@@ -1,0 +1,17 @@
+{
+  "name": "nof1-experiments",
+  "install": "npm ci --legacy-peer-deps",
+  "terminals": [
+    {
+      "name": "expo-web",
+      "command": "EXPO_PUBLIC_SKIP_AUTH=true npx expo start --web --port 8081",
+      "description": "Expo dev server serving the N-of-1 app on the web (http://localhost:8081). Also serves the Metro bundle for native/Expo Go clients."
+    }
+  ],
+  "ports": [
+    {
+      "name": "expo-web",
+      "port": 8081
+    }
+  ]
+}
