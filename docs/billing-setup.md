@@ -165,41 +165,17 @@ deduplication on `(provider, eventId)`, and discarding any grant write whose
 `providerUpdatedAt` is not newer than what is stored. They run against an
 in-memory fake of the Convex database, so no deployment is needed.
 
-### Revyl E2E flows
+### Manual sandbox coverage
 
-The dogfood flows live in `.revyl/tests/` and run against the existing shared
-bypass identity — `.revyl/config.yaml` is unchanged.
+Dogfood still uses the shared bypass identity in `.revyl/config.yaml`. Access
+is held in process memory and never read back from Convex, and RevenueCat is
+configured with a throwaway `dogfood-<random>` customer per launch rather than
+with the bypass user's Clerk ID. That keeps Test Store purchases from leaking
+into the next run.
 
-Two mechanisms keep runs isolated despite that shared identity. Access is held
-in process memory and never read back from Convex, and RevenueCat is configured
-with a throwaway `dogfood-<random>` customer per launch rather than with the
-bypass user's Clerk ID. The second matters because Test Store purchases persist
-on RevenueCat's servers against whichever app user ID bought them: reusing the
-shared ID would leave a stale entitlement that suppresses the paywall on the
-next run.
-
-| Test | Asserts |
-| --- | --- |
-| `billing-free-user-sees-paywall` | A new session is Free and Upgrade opens the paywall |
-| `billing-purchase-unlocks-plus` | A Test Store purchase unlocks Plus and shows the App Store management button |
-| `billing-cancelled-purchase-stays-free` | Dismissing the paywall leaves the user Free |
-| `billing-restore-purchases` | Restore reports nothing before a purchase and succeeds after |
-| `billing-relaunch-resets-dogfood-access` | Skip-auth access is in-memory only, so purchases never leak into the next run |
-
-Push and run them with:
-
-```
-revyl test create <name> --from-file .revyl/tests/<name>.yaml
-revyl test run <name>
-```
-
-`revyl test create` requires a login bound to the org in `.revyl/config.yaml`
-(`f66dfe3c-1a0a-465e-a486-5c5a40179a49`); the YAML is checked in so it can be
-pushed from any machine with that login.
-
-Provider sandbox coverage stays manual and out of Revyl: one App Store / Play
-sandbox purchase and one Whop sandbox purchase per release, each verified
-end to end through the webhook into `entitlementGrants`.
+Provider sandbox coverage is one App Store / Play sandbox purchase and one
+Whop sandbox purchase per release, each verified end to end through the
+webhook into `entitlementGrants`.
 
 ## 5. Why the app calls `billing:syncRevenueCat`
 
