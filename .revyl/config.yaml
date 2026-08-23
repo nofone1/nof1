@@ -29,6 +29,28 @@ hotreload:
         expo:
             port: 8081
             app_scheme: nof1
+            platform_keys:
+                ios: ios
+
+# Revyl remote builds (`revyl build --remote`). Fingerprinting reuses the
+# native shell when @expo/fingerprint is unchanged and remixed JS is applied
+# on top. expo-dev-client is unlinked by react-native.config.js when
+# EXPO_PUBLIC_SKIP_AUTH=true, so a fingerprint hit stays on a preview binary.
+build:
+    system: Expo
+    platforms:
+        ios:
+            app_id: e71fb604-d488-4d04-8cc4-81c81502f4b0
+            commands:
+                - npm ci
+                - npx --yes expo prebuild --platform ios --non-interactive --clean
+                - (cd ios && pod install)
+                - WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME configuration=Release EXPO_PUBLIC_SKIP_AUTH=$EXPO_PUBLIC_SKIP_AUTH"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+            output: build/ios/Build/Products/Release-iphonesimulator/*.app
+            env:
+                NODE_ENV: production
+                REVYL_USE_FINGERPRINT: "1"
+                EXPO_PUBLIC_SKIP_AUTH: "true"
 
 pr_review:
     enabled: true
@@ -51,28 +73,21 @@ pr_review:
             app: e71fb604-d488-4d04-8cc4-81c81502f4b0
             root_dir: ./
             use_existing_ci: false
-            # Local simulator *preview* build (no EAS / EXPO_TOKEN).
-            # expo-dev-client must be removed before prebuild: with it linked,
-            # even Release binaries open the Expo "Development servers" picker.
-            # REVYL_USE_FINGERPRINT=0 is required: Expo fingerprint is computed
-            # from committed package.json (still lists expo-dev-client), so a
-            # cache hit skips every build_command step — including uninstall —
-            # and only repacks JS into the old native shell (see c2030c6).
-            # Scheme must be the workspace basename (e.g. Nof1Experiments). Using the
-            # first xcodebuild -list scheme picks Pod targets like "boost" and yields no .app.
-            # Keep the xcodebuild invocation on one YAML line — Revyl splits lines into steps.
+            # Same Expo preview pipeline as build.platforms.ios. Framework
+            # defaults omit the scheme-detection xcodebuild line; the first
+            # listed scheme is often a Pod target like "boost" and yields no .app.
+            # Keep that xcodebuild invocation on one YAML line — Revyl splits
+            # lines into steps. fmt / expo-dev-client are handled in prebuild
+            # (plugins/withIosDeploymentTarget.js, react-native.config.js).
             build_command: |
-                export EXPO_PUBLIC_SKIP_AUTH=true
                 npm ci
-                npm uninstall expo-dev-client --legacy-peer-deps
                 npx --yes expo prebuild --platform ios --non-interactive --clean
-                python3 scripts/patch-ios-podfile-fmt.py
                 (cd ios && pod install)
-                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME configuration=Release (preview, no expo-dev-client, EXPO_PUBLIC_SKIP_AUTH=$EXPO_PUBLIC_SKIP_AUTH)"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+                WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building workspace=$WORKSPACE scheme=$SCHEME configuration=Release EXPO_PUBLIC_SKIP_AUTH=$EXPO_PUBLIC_SKIP_AUTH"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
             artifact_path: build/ios/Build/Products/Release-iphonesimulator/*.app
             env:
                 NODE_ENV: production
-                REVYL_USE_FINGERPRINT: "0"
+                REVYL_USE_FINGERPRINT: "1"
                 # Baked into the Release JS bundle at export:embed time so the
                 # preview app skips Clerk and does not throw on missing Convex.
                 EXPO_PUBLIC_SKIP_AUTH: "true"
