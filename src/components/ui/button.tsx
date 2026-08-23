@@ -35,6 +35,8 @@ export interface ButtonProps {
   onPress?: () => void;
   /** Haptic feedback type */
   haptic?: HapticType;
+  /** Test identifier for automated UI tests */
+  testID?: string;
 }
 
 /**
@@ -53,6 +55,7 @@ export function Button({
   children,
   onPress,
   haptic = "light",
+  testID,
 }: ButtonProps): React.JSX.Element {
   const isDisabled = disabled || loading;
 
@@ -78,6 +81,7 @@ export function Button({
       haptic={haptic}
       scaleValue={0.97}
       style={containerStyles}
+      testID={testID}
     >
       <View style={styles.content}>
         {loading && (

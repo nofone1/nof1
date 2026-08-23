@@ -71,3 +71,12 @@ export async function convexMutation<T>(
   await applyAuth(client);
   return client.mutation(functionName as any, args as any) as Promise<T>;
 }
+
+export async function convexAction<T>(
+  functionName: ConvexFunctionName,
+  args: Record<string, unknown> = {}
+): Promise<T> {
+  const client = getClient();
+  await applyAuth(client);
+  return client.action(functionName as any, args as any) as Promise<T>;
+}

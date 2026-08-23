@@ -1,0 +1,22 @@
+test:
+  metadata:
+    name: billing-free-user-sees-paywall
+    platform: ios
+    tags:
+      - billing
+      - e2e
+  build:
+    name: ios
+  blocks:
+    - type: instructions
+      step_description: "Open the Profile tab."
+    - type: validation
+      step_description: "The Subscription row shows the hint 'Free Plan'."
+    - type: instructions
+      step_description: "Open the Subscription row."
+    - type: validation
+      step_description: "The subscription screen shows 'Free Plan' with a 'Free' badge."
+    - type: instructions
+      step_description: "Tap 'Upgrade to Plus'."
+    - type: validation
+      step_description: "The Nof1 Plus paywall is visible with a monthly and an annual option."

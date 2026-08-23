@@ -84,6 +84,8 @@ export type MainStackParamList = {
   CreateProtocol: undefined;
   /** Health connections management */
   HealthConnections: undefined;
+  /** Nof1 Plus subscription status and management */
+  Subscription: undefined;
 };
 
 /**

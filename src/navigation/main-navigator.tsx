@@ -19,6 +19,7 @@ import { PeptideBrowseScreen, PeptideDetailScreen } from "@/screens/peptide";
 import { CreateProtocolScreen } from "@/screens/protocol/create";
 import { ProfileScreen } from "@/screens/profile";
 import { HealthConnectionsScreen } from "@/screens/profile/health-connections";
+import { SubscriptionScreen } from "@/screens/subscription";
 import { colors, spacing } from "@/theme";
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -131,6 +132,7 @@ export function MainNavigator(): React.JSX.Element {
       <Stack.Screen name="Experiments" component={ExperimentsScreen} />
       <Stack.Screen name="CreateProtocol" component={CreateProtocolScreen} />
       <Stack.Screen name="HealthConnections" component={HealthConnectionsScreen} />
+      <Stack.Screen name="Subscription" component={SubscriptionScreen} />
     </Stack.Navigator>
   );
 }

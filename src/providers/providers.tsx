@@ -10,6 +10,7 @@ import {
   RevylAuthBypassProvider,
   tokenCache,
 } from "@/services/auth";
+import { BillingProvider } from "@/services/billing";
 import { env } from "@/config/env";
 import { logger } from "@/services/logging";
 
@@ -46,7 +47,9 @@ export function AppProviders({ children }: AppProvidersProps): React.JSX.Element
     return (
       <SafeAreaProvider>
         <AuthProvider>
-          <RevylAuthBypassProvider>{children}</RevylAuthBypassProvider>
+          <RevylAuthBypassProvider>
+            <BillingProvider>{children}</BillingProvider>
+          </RevylAuthBypassProvider>
         </AuthProvider>
       </SafeAreaProvider>
     );
@@ -59,7 +62,9 @@ export function AppProviders({ children }: AppProvidersProps): React.JSX.Element
         tokenCache={tokenCache}
       >
         <AuthProvider>
-          <RevylAuthBypassProvider>{children}</RevylAuthBypassProvider>
+          <RevylAuthBypassProvider>
+            <BillingProvider>{children}</BillingProvider>
+          </RevylAuthBypassProvider>
         </AuthProvider>
       </ClerkProvider>
     </SafeAreaProvider>

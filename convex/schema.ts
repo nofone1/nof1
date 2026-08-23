@@ -87,4 +87,40 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_userId_and_version", ["userId", "version"]),
+
+  // Maps a Clerk user to their identifiers at each billing provider.
+  billingAccounts: defineTable({
+    userId: v.string(),
+    revenueCatAppUserId: v.optional(v.string()),
+    whopUserId: v.optional(v.string()),
+    whopMembershipId: v.optional(v.string()),
+    updatedAt: v.string(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_whopUserId", ["whopUserId"]),
+
+  // One row per (userId, provider). Providers never overwrite each other.
+  entitlementGrants: defineTable({
+    userId: v.string(),
+    entitlement: v.string(),
+    provider: v.string(),
+    status: v.string(),
+    productId: v.optional(v.string()),
+    providerRecordId: v.string(),
+    expiresAt: v.optional(v.string()),
+    providerUpdatedAt: v.string(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_and_provider", ["userId", "provider"]),
+
+  // Webhook receipt log used for idempotency across redelivered events.
+  billingEvents: defineTable({
+    provider: v.string(),
+    eventId: v.string(),
+    eventType: v.string(),
+    receivedAt: v.string(),
+    processedAt: v.optional(v.string()),
+    status: v.string(),
+    error: v.optional(v.string()),
+  }).index("by_provider_and_eventId", ["provider", "eventId"]),
 });

@@ -15,6 +15,7 @@ import {
   logAuthEvent,
 } from "@/services/auth";
 import { logger } from "@/services/logging";
+import { useBilling } from "@/services/billing";
 import { colors, spacing, typography } from "@/theme";
 import type { MainTabScreenProps } from "@/types/navigation";
 
@@ -60,7 +61,13 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
   const { user } = useUser();
   const { signOut } = useAuth();
   const localAuthMode = useLocalAuthMode();
+  const { access, isLoading: isAccessLoading } = useBilling();
   const { log } = useLogger("Profile");
+  const subscriptionHint = isAccessLoading
+    ? "Checking…"
+    : access.hasPlus
+      ? "Nof1 Plus"
+      : "Free Plan";
   const authHint =
     localAuthMode === "dev-bypass"
       ? "Revyl auth bypass"
@@ -133,7 +140,12 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
         <Card style={styles.menuCard} animated animationDelay={80}>
           <MenuItem label="Edit Profile" hint="Coming soon" />
           <MenuItem label="Notifications" hint="Coming soon" />
-          <MenuItem label="Subscription" hint="Free Plan" isLast />
+          <MenuItem
+            label="Subscription"
+            hint={subscriptionHint}
+            onPress={() => navigation.navigate("Subscription")}
+            isLast
+          />
         </Card>
 
         {/* Features Section */}
