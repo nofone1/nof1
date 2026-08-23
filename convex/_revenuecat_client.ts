@@ -1,5 +1,5 @@
 /**
- * Server-side RevenueCat REST client.
+ * RevenueCat REST client for server-side calls.
  *
  * Used by both the webhook handler and the client-triggered sync so a grant is
  * always written from current subscriber state rather than from an event body

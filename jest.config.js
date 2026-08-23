@@ -7,8 +7,8 @@
 
 module.exports = {
   testEnvironment: "node",
-  roots: ["<rootDir>/convex"],
-  testMatch: ["**/__tests__/**/*.test.ts"],
+  roots: ["<rootDir>/tests"],
+  testMatch: ["**/*.test.ts"],
   transform: {
     "^.+\\.tsx?$": ["babel-jest", { presets: ["babel-preset-expo"] }],
   },

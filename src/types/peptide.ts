@@ -156,10 +156,10 @@ export interface ResearchProtocol {
 export interface ResearchIndication {
   name: string;
   effectiveness: "most_effective" | "effective" | "moderate";
-  details: Array<{
+  details: {
     title: string;
     description: string;
-  }>;
+  }[];
 }
 
 /**

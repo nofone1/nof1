@@ -11,9 +11,8 @@ export interface ConcentrationLevel {
   peptideName: string;
   peptideId: string | null;
   percentage: number;
-  status: "therapeutic" | "sub_therapeutic" | "cleared";
+  status: "higher" | "declining" | "low";
   lastDoseTime: Date;
-  nextDoseOptimal?: string;
   halfLifeHours: number;
 }
 
@@ -40,7 +39,7 @@ export function calculateConcentrations(
 
   const results: ConcentrationLevel[] = [];
 
-  for (const [key, peptideDoseList] of peptideDoses) {
+  for (const peptideDoseList of peptideDoses.values()) {
     const firstDose = peptideDoseList[0];
     const pk = firstDose.peptideId ? pharmacokineticsMap.get(firstDose.peptideId) : undefined;
     if (!pk) continue;
@@ -65,27 +64,11 @@ export function calculateConcentrations(
     // Determine status
     let status: ConcentrationLevel["status"];
     if (percentage > 40) {
-      status = "therapeutic";
+      status = "higher";
     } else if (percentage > 10) {
-      status = "sub_therapeutic";
+      status = "declining";
     } else {
-      status = "cleared";
-    }
-
-    // Calculate next optimal dose time (when concentration drops below ~30%)
-    const hoursFromLastDose = (now.getTime() - lastDoseTime.getTime()) / (1000 * 60 * 60);
-    const targetHours = pk.halfLifeHours * 1.7; // ~30% remaining
-    const hoursUntilOptimal = targetHours - hoursFromLastDose;
-
-    let nextDoseOptimal: string | undefined;
-    if (hoursUntilOptimal > 0) {
-      if (hoursUntilOptimal < 1) {
-        nextDoseOptimal = `${Math.round(hoursUntilOptimal * 60)} min`;
-      } else if (hoursUntilOptimal < 24) {
-        nextDoseOptimal = `${Math.round(hoursUntilOptimal)} hrs`;
-      } else {
-        nextDoseOptimal = `${(hoursUntilOptimal / 24).toFixed(1)} days`;
-      }
+      status = "low";
     }
 
     results.push({
@@ -94,7 +77,6 @@ export function calculateConcentrations(
       percentage,
       status,
       lastDoseTime,
-      nextDoseOptimal,
       halfLifeHours: pk.halfLifeHours,
     });
   }

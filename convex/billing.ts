@@ -21,9 +21,9 @@ import {
   fetchWhopMemberships,
   fetchWhopUserId,
   requireWhopPlusProductId,
-} from "./_whop-client";
+} from "./_whop_client";
 import { resolveGrantFromMemberships } from "./_whop";
-import { fetchSubscriberState } from "./_revenuecat-client";
+import { fetchSubscriberState } from "./_revenuecat_client";
 import { resolveGrantFromSubscriber } from "./_revenuecat";
 import {
   emptyAccess,

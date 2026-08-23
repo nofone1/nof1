@@ -57,8 +57,8 @@ export function CreateExperimentScreen({
       if (peptide) {
         setSelectedPeptideId(peptide.id);
         setInterventionName(peptide.name);
-        setDosage(peptide.dosing.typicalDose);
-        setFrequency(peptide.dosing.frequency);
+        setDosage("");
+        setFrequency("");
         setName(`Testing ${peptide.name}`);
         setHypothesis(`Testing the effects of ${peptide.name} on my health and wellbeing.`);
         setIsPeptidePreFilled(true);
@@ -77,8 +77,8 @@ export function CreateExperimentScreen({
     if (peptide) {
       setSelectedPeptideId(peptide.id);
       setInterventionName(peptide.name);
-      setDosage(peptide.dosing.typicalDose);
-      setFrequency(peptide.dosing.frequency);
+      setDosage("");
+      setFrequency("");
       setIsPeptidePreFilled(true);
       log.info("Selected peptide from picker", { extra: { peptideId: peptide.id } });
     } else {

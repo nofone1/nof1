@@ -4,12 +4,12 @@ import { requireUserId, toIso } from "./_auth";
 
 function normalizeAdherence(adherence: unknown) {
   if (!Array.isArray(adherence)) {
-    return [] as Array<{
+    return [] as {
       date: string;
       taken: boolean;
       skipped?: boolean;
       notes?: string;
-    }>;
+    }[];
   }
 
   return adherence.map((entry) => {

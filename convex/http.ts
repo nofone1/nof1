@@ -10,9 +10,12 @@
 import { anyApi, httpActionGeneric, httpRouter } from "convex/server";
 import { nowIso } from "./_auth";
 import { resolveGrantFromSubscriber } from "./_revenuecat";
-import { fetchSubscriberState } from "./_revenuecat-client";
-import { verifyHmacSignature, verifyStandardWebhookSignature } from "./_webhooks";
-import { fetchWhopMemberships, requireWhopPlusProductId } from "./_whop-client";
+import { fetchSubscriberState } from "./_revenuecat_client";
+import {
+  verifyRevenueCatWebhookSignature,
+  verifyStandardWebhookSignature,
+} from "./_webhooks";
+import { fetchWhopMemberships, requireWhopPlusProductId } from "./_whop_client";
 import { resolveGrantFromMemberships } from "./_whop";
 
 const REVENUECAT_PROVIDER = "revenuecat";
@@ -91,10 +94,11 @@ async function isAuthenticRevenueCatRequest(
     return true;
   }
 
-  return verifyHmacSignature(
+  return verifyRevenueCatWebhookSignature(
     signingSecret,
     rawBody,
-    request.headers.get("X-RevenueCat-Signature")
+    request.headers.get("X-RevenueCat-Webhook-Signature"),
+    Date.now()
   );
 }
 

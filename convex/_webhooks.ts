@@ -146,6 +146,70 @@ export async function verifyHmacSignature(
   return timingSafeEqual(provided, hex) || timingSafeEqual(provided, base64);
 }
 
+/** How far a RevenueCat signature timestamp may drift, in milliseconds. */
+const REVENUECAT_WEBHOOK_TOLERANCE_MS = 5 * 60 * 1000;
+
+/**
+ * Verifies RevenueCat's timestamped webhook signature.
+ *
+ * Params:
+ *   secret: Signing secret issued for the RevenueCat webhook integration.
+ *   payload: Exact raw request body as received.
+ *   header: `X-RevenueCat-Webhook-Signature` header value.
+ *   nowMs: Current time in epoch milliseconds, for replay checking.
+ *
+ * Returns:
+ *   True when a v1 signature matches and its timestamp is within tolerance.
+ *
+ * Edge cases:
+ *   RevenueCat signs `{timestamp}.{rawBody}` and may include more than one v1
+ *   value during rotation. Malformed or stale timestamps are rejected.
+ */
+export async function verifyRevenueCatWebhookSignature(
+  secret: string,
+  payload: string,
+  header: string | null,
+  nowMs: number
+): Promise<boolean> {
+  if (!header) {
+    return false;
+  }
+
+  let timestamp: string | null = null;
+  const signatures: string[] = [];
+
+  for (const part of header.split(",")) {
+    const separator = part.indexOf("=");
+    if (separator < 1) {
+      continue;
+    }
+
+    const key = part.slice(0, separator).trim();
+    const value = part.slice(separator + 1).trim();
+
+    if (key === "t") {
+      timestamp = value;
+    } else if (key === "v1" && value) {
+      signatures.push(value);
+    }
+  }
+
+  if (!timestamp || !/^\d+$/.test(timestamp) || signatures.length === 0) {
+    return false;
+  }
+
+  const timestampSeconds = Number.parseInt(timestamp, 10);
+  if (
+    Math.abs(nowMs - timestampSeconds * 1000) >
+    REVENUECAT_WEBHOOK_TOLERANCE_MS
+  ) {
+    return false;
+  }
+
+  const { hex } = await hmacSha256(secret, `${timestamp}.${payload}`);
+  return signatures.some((signature) => timingSafeEqual(signature, hex));
+}
+
 /** How far a Standard Webhooks timestamp may drift, in milliseconds. */
 const STANDARD_WEBHOOK_TOLERANCE_MS = 5 * 60 * 1000;
 

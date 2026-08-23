@@ -20,6 +20,8 @@ import type { AccessSource } from "@/services/billing";
 import type { MainStackScreenProps } from "@/types/navigation";
 
 const WHOP_MEMBERSHIPS_URL = "https://whop.com/orders";
+const MONTHLY_PRICE = "$9.99";
+const ANNUAL_PRICE = "$79.99";
 
 /**
  * Formats an ISO timestamp as a readable date.
@@ -288,6 +290,26 @@ export function SubscriptionScreen({
           )}
         </Card>
 
+        {!access.hasPlus && (
+          <Card style={styles.pricingCard}>
+            <Text style={styles.pricingTitle}>Nof1 Plus plans</Text>
+            <View style={styles.priceRow}>
+              <View style={styles.priceOption}>
+                <Text style={styles.price}>{MONTHLY_PRICE}</Text>
+                <Text style={styles.pricePeriod}>per month</Text>
+              </View>
+              <View style={styles.priceOption}>
+                <Text style={styles.price}>{ANNUAL_PRICE}</Text>
+                <Text style={styles.pricePeriod}>per year</Text>
+              </View>
+            </View>
+            <Text style={styles.pricingDisclosure}>
+              Subscriptions renew automatically until cancelled. Your store
+              shows the final localized price and billing terms before purchase.
+            </Text>
+          </Card>
+        )}
+
         {access.sources.length > 0 && (
           <>
             <Text style={styles.sectionHeader}>Access sources</Text>
@@ -366,6 +388,22 @@ export function SubscriptionScreen({
           </Button>
         </Card>
 
+        <View style={styles.legalLinks}>
+          <AnimatedPressable
+            onPress={() => navigation.navigate("Legal", { document: "terms" })}
+            haptic="light"
+          >
+            <Text style={styles.legalLink}>Terms of Service</Text>
+          </AnimatedPressable>
+          <Text style={styles.legalSeparator}>•</Text>
+          <AnimatedPressable
+            onPress={() => navigation.navigate("Legal", { document: "privacy" })}
+            haptic="light"
+          >
+            <Text style={styles.legalLink}>Privacy Policy</Text>
+          </AnimatedPressable>
+        </View>
+
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
@@ -416,6 +454,40 @@ const styles = StyleSheet.create({
   statusCard: {
     marginBottom: spacing.xl,
     gap: spacing.base,
+  },
+  pricingCard: {
+    marginBottom: spacing.xl,
+  },
+  pricingTitle: {
+    ...typography.heading3,
+    color: colors.text.primary,
+    marginBottom: spacing.base,
+  },
+  priceRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+    marginBottom: spacing.base,
+  },
+  priceOption: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    borderRadius: 12,
+    padding: spacing.base,
+  },
+  price: {
+    ...typography.heading2,
+    color: colors.primary[500],
+  },
+  pricePeriod: {
+    ...typography.small,
+    color: colors.text.secondary,
+    marginTop: spacing.xs,
+  },
+  pricingDisclosure: {
+    ...typography.captionSmall,
+    color: colors.text.tertiary,
+    lineHeight: 18,
   },
   statusHeader: {
     flexDirection: "row",
@@ -482,6 +554,20 @@ const styles = StyleSheet.create({
   actionsCard: {
     marginBottom: spacing.xl,
     gap: spacing.md,
+  },
+  legalLinks: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  legalLink: {
+    ...typography.small,
+    color: colors.primary[500],
+  },
+  legalSeparator: {
+    ...typography.small,
+    color: colors.text.muted,
   },
   bottomSpacer: {
     height: 120,

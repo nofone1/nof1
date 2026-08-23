@@ -15,9 +15,11 @@ import { type PlusAccess } from "./types";
 
 const CONNECT_WHOP = "billing:connectWhop" as const;
 
+const whopOauthBaseUrl = env.whopOauthBaseUrl.replace(/\/+$/, "");
+
 const WHOP_DISCOVERY: AuthSession.DiscoveryDocument = {
-  authorizationEndpoint: "https://api.whop.com/oauth/authorize",
-  tokenEndpoint: "https://api.whop.com/oauth/token",
+  authorizationEndpoint: `${whopOauthBaseUrl}/authorize`,
+  tokenEndpoint: `${whopOauthBaseUrl}/token`,
 };
 
 const WHOP_SCOPES = ["openid", "profile", "email"];

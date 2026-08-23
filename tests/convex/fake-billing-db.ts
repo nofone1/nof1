@@ -7,7 +7,7 @@
  * which is enough to exercise ordering and deduplication behavior.
  */
 
-import type { BillingDb } from "../billing";
+import type { BillingDb } from "../../convex/billing";
 
 /** A stored document with the synthetic ID the fake assigns on insert. */
 export interface FakeDoc extends Record<string, unknown> {

@@ -22,9 +22,6 @@ import type { Peptide, PeptideCategory, ResearchLevel } from "@/types/peptide";
 import {
   PEPTIDES,
   getPeptideById,
-  getPeptidesByCategory,
-  getPeptidesByResearchLevel,
-  searchPeptides,
 } from "@/data/peptides";
 
 /**

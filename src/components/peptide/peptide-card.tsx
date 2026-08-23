@@ -26,7 +26,7 @@ export interface PeptideCardProps {
 
 /**
  * Displays a peptide summary card for the browse list.
- * Shows short code badge, name, subtitle, research level, categories, and dosing info.
+ * Shows short code badge, name, subtitle, research level, and categories.
  *
  * @param props - Component props
  * @returns The rendered peptide card
@@ -68,21 +68,6 @@ export function PeptideCard({ peptide, onPress }: PeptideCardProps): React.JSX.E
             {getCategoryDisplay(category)}
           </Badge>
         ))}
-      </View>
-
-      <View style={styles.dosingContainer}>
-        <View style={styles.dosingItem}>
-          <Text style={styles.dosingLabel}>Dose</Text>
-          <Text style={styles.dosingValue}>{peptide.dosing.typicalDose}</Text>
-        </View>
-        <View style={styles.dosingItem}>
-          <Text style={styles.dosingLabel}>Frequency</Text>
-          <Text style={styles.dosingValue}>{peptide.dosing.frequency}</Text>
-        </View>
-        <View style={styles.dosingItem}>
-          <Text style={styles.dosingLabel}>Cycle</Text>
-          <Text style={styles.dosingValue}>{peptide.dosing.cycleDuration}</Text>
-        </View>
       </View>
 
       <View style={styles.footer}>
@@ -136,28 +121,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     marginBottom: spacing.base,
     gap: spacing.sm,
-  },
-  dosingContainer: {
-    flexDirection: "row",
-    backgroundColor: colors.background.primary,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.base,
-  },
-  dosingItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  dosingLabel: {
-    ...typography.captionSmall,
-    color: colors.text.tertiary,
-    marginBottom: spacing.xs,
-  },
-  dosingValue: {
-    ...typography.small,
-    fontWeight: "500",
-    color: colors.text.primary,
-    textAlign: "center",
   },
   footer: {
     flexDirection: "row",

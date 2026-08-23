@@ -1,5 +1,5 @@
 /**
- * Server-side Whop API client.
+ * Whop API client for server-side calls.
  *
  * Every call here uses a server-only credential and must therefore run inside
  * a Convex action or HTTP action, never in the app.
@@ -17,29 +17,28 @@ interface WhopUserInfo {
   sub: string;
 }
 
-/**
- * Reads the app credential used for both OAuth exchange and REST calls.
- *
- * Returns:
- *   The Whop app secret.
- *
- * Throws:
- *   Error when neither WHOP_OAUTH_CLIENT_SECRET nor WHOP_API_KEY is set.
- *
- * Edge cases:
- *   Whop issues one app credential used as the OAuth client secret and as the
- *   REST bearer token. WHOP_OAUTH_CLIENT_SECRET exists only for deployments
- *   that were issued a separate OAuth secret.
- */
-function requireAppSecret(): string {
-  const secret =
-    process.env.WHOP_OAUTH_CLIENT_SECRET || process.env.WHOP_API_KEY;
+/** Reads the credential used to exchange OAuth authorization codes. */
+function requireOAuthClientSecret(): string {
+  const secret = process.env.WHOP_OAUTH_CLIENT_SECRET;
 
   if (!secret) {
-    throw new Error("Missing Convex environment variable: WHOP_API_KEY");
+    throw new Error(
+      "Missing Convex environment variable: WHOP_OAUTH_CLIENT_SECRET"
+    );
   }
 
   return secret;
+}
+
+/** Reads the company API key used for seller-side REST requests. */
+function requireApiKey(): string {
+  const apiKey = process.env.WHOP_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("Missing Convex environment variable: WHOP_API_KEY");
+  }
+
+  return apiKey;
 }
 
 /**
@@ -112,7 +111,7 @@ export async function exchangeWhopCode(
       code,
       redirect_uri: redirectUri,
       client_id: requireAppId(),
-      client_secret: requireAppSecret(),
+      client_secret: requireOAuthClientSecret(),
       code_verifier: codeVerifier,
     }),
   });
@@ -183,7 +182,7 @@ export async function fetchWhopUserId(accessToken: string): Promise<string> {
  *   grant derived from an incomplete read.
  *
  * Edge cases:
- *   Uses the server app credential, not the user's OAuth token, so the result
+ *   Uses the seller's company credential, not the user's OAuth token, so the result
  *   reflects seller-side truth rather than what the user can see.
  */
 export async function fetchWhopMemberships(
@@ -196,7 +195,7 @@ export async function fetchWhopMemberships(
 
   const response = await fetch(url.toString(), {
     headers: {
-      Authorization: `Bearer ${requireAppSecret()}`,
+      Authorization: `Bearer ${requireApiKey()}`,
       Accept: "application/json",
     },
   });

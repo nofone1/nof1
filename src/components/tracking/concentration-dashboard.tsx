@@ -17,15 +17,15 @@ interface ConcentrationDashboardProps {
 }
 
 const STATUS_COLORS = {
-  therapeutic: colors.primary[500],
-  sub_therapeutic: colors.accent.warning,
-  cleared: colors.text.tertiary,
+  higher: colors.primary[500],
+  declining: colors.accent.warning,
+  low: colors.text.tertiary,
 };
 
 const STATUS_LABELS = {
-  therapeutic: "Active",
-  sub_therapeutic: "Declining",
-  cleared: "Cleared",
+  higher: "Higher estimate",
+  declining: "Declining estimate",
+  low: "Low estimate",
 };
 
 /**
@@ -50,7 +50,7 @@ export function ConcentrationDashboard({
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Icon name="activity" size={18} color={colors.primary[500]} />
-          <Text style={styles.headerTitle}>Active Concentrations</Text>
+          <Text style={styles.headerTitle}>Estimated Concentrations</Text>
         </View>
       </View>
 
@@ -73,11 +73,6 @@ function ConcentrationRow({ level }: { level: ConcentrationLevel }): React.JSX.E
           <Text style={[styles.statusText, { color: statusColor }]}>
             {STATUS_LABELS[level.status]}
           </Text>
-          {level.nextDoseOptimal && (
-            <Text style={styles.nextDose}>
-              Next dose in {level.nextDoseOptimal}
-            </Text>
-          )}
         </View>
       </View>
       <View style={styles.barContainer}>
@@ -142,11 +137,6 @@ const styles = StyleSheet.create({
   statusText: {
     ...typography.captionSmall,
     fontWeight: "600",
-  },
-  nextDose: {
-    ...typography.captionSmall,
-    color: colors.text.tertiary,
-    marginLeft: spacing.sm,
   },
   barContainer: {
     flexDirection: "row",

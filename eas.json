@@ -4,6 +4,7 @@
   },
   "build": {
     "development": {
+      "environment": "development",
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
@@ -14,6 +15,7 @@
       "extends": "development"
     },
     "preview": {
+      "environment": "preview",
       "distribution": "internal",
       "ios": {
         "simulator": true
@@ -26,6 +28,7 @@
       }
     },
     "production": {
+      "environment": "production",
       "ios": {
         "resourceClass": "m-medium"
       },

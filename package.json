@@ -12,6 +12,8 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "release:check": "npm run lint && npm run typecheck && npm test -- --runInBand",
+    "eas-build-pre-install": "node scripts/validate-release-env.js",
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
     "build:ios-simulator": "eas build --profile development --platform ios --local",
@@ -23,7 +25,7 @@
   "dependencies": {
     "@clerk/clerk-expo": "^2.15.3",
     "@react-native-async-storage/async-storage": "1.23.1",
-    "@react-native-community/slider": "^5.1.2",
+    "@react-native-community/slider": "4.5.5",
     "@react-navigation/bottom-tabs": "^7.0.0",
     "@react-navigation/native": "^7.0.0",
     "@react-navigation/native-stack": "^7.0.0",

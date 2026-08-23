@@ -20,6 +20,8 @@ interface EnvironmentConfig {
   revenueCatTestApiKey: string;
   /** Public Whop application ID used to start the OAuth flow. */
   whopAppId: string;
+  /** Public Whop OAuth base URL. Override only for sandbox builds. */
+  whopOauthBaseUrl: string;
 }
 
 const isDevelopment = __DEV__;
@@ -49,6 +51,8 @@ export const env: EnvironmentConfig = {
     process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || "",
   revenueCatTestApiKey: process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY || "",
   whopAppId: process.env.EXPO_PUBLIC_WHOP_APP_ID || "",
+  whopOauthBaseUrl:
+    process.env.EXPO_PUBLIC_WHOP_OAUTH_BASE_URL || "https://api.whop.com/oauth",
 };
 
 /**

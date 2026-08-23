@@ -7,11 +7,20 @@
 
 import { toMillis, type GrantStatus } from "./_billing";
 
-/** Base URL for the Whop REST API. */
-export const WHOP_API_BASE = "https://api.whop.com/api/v1";
+/** Removes trailing slashes so callers can safely append endpoint paths. */
+function normalizeBaseUrl(value: string): string {
+  return value.replace(/\/+$/, "");
+}
 
-/** Base URL for Whop OAuth endpoints. Shared by sandbox and production. */
-export const WHOP_OAUTH_BASE = "https://api.whop.com/oauth";
+/** Base URL for the Whop REST API, overridable for Whop sandbox. */
+export const WHOP_API_BASE = normalizeBaseUrl(
+  process.env.WHOP_API_BASE_URL || "https://api.whop.com/api/v1"
+);
+
+/** Base URL for Whop OAuth endpoints, overridable for Whop sandbox. */
+export const WHOP_OAUTH_BASE = normalizeBaseUrl(
+  process.env.WHOP_OAUTH_BASE_URL || "https://api.whop.com/oauth"
+);
 
 /** Subset of the Whop membership object we depend on. */
 export interface WhopMembership {

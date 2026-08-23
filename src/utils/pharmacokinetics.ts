@@ -25,7 +25,7 @@ export function generateDecayCurve(
   halfLifeHours: number,
   totalHours: number,
   points: number = 12,
-): Array<{ hour: number; percentage: number }> {
+): { hour: number; percentage: number }[] {
   const step = totalHours / (points - 1);
   return Array.from({ length: points }, (_, i) => {
     const hour = step * i;

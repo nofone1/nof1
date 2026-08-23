@@ -11,8 +11,8 @@ import {
   applyProviderGrant,
   claimWebhookEvent,
   type ApplyGrantArgs,
-} from "../billing";
-import { resolveAccess } from "../_billing";
+} from "../../convex/billing";
+import { resolveAccess } from "../../convex/_billing";
 import { FakeBillingDb } from "./fake-billing-db";
 
 const USER_ID = "user_abc123";

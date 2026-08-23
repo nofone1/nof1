@@ -7,9 +7,8 @@ import React, { useEffect, useCallback } from "react";
 import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, Loading, Icon, AnimatedPressable, Badge } from "@/components/ui";
-import { DoseDecayChart, ReconstitutionCalculator } from "@/components/peptide";
+import { DoseDecayChart } from "@/components/peptide";
 import { usePeptideStore } from "@/stores/peptide-store";
-import { useTrackingStore } from "@/stores/tracking-store";
 import { colors, spacing, typography } from "@/theme";
 import type { MainStackScreenProps } from "@/types/navigation";
 import {
@@ -31,7 +30,6 @@ export function PeptideDetailScreen({
 }: MainStackScreenProps<"PeptideDetail">): React.JSX.Element {
   const { peptideId } = route.params;
   const { selectedPeptide, selectPeptide, clearSelection } = usePeptideStore();
-  const { addToStack } = useTrackingStore();
 
   useEffect(() => {
     selectPeptide(peptideId);
@@ -53,18 +51,9 @@ export function PeptideDetailScreen({
         text: "Use in Experiment",
         onPress: () => navigation.navigate("CreateExperiment", { peptideId: selectedPeptide.id }),
       },
-      {
-        text: "Add to My Stack",
-        onPress: () => addToStack({
-          peptideId: selectedPeptide.id,
-          name: selectedPeptide.name,
-          dosage: selectedPeptide.dosing.typicalDose,
-          frequency: selectedPeptide.dosing.frequency,
-        }),
-      },
       { text: "Cancel", style: "cancel" },
     ]);
-  }, [selectedPeptide, navigation, addToStack]);
+  }, [selectedPeptide, navigation]);
 
   if (!selectedPeptide) {
     return (
@@ -111,32 +100,21 @@ export function PeptideDetailScreen({
           ))}
         </View>
 
-        {/* Quick Dosing Info */}
-        <Card variant="elevated" style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Icon name="clipboard" size={18} color={colors.primary[500]} />
-            <Text style={styles.sectionTitle}>Dosing Overview</Text>
+        <AnimatedPressable
+          style={styles.medicalNotice}
+          onPress={() => navigation.navigate("Legal", { document: "medical" })}
+          haptic="light"
+        >
+          <Icon name="alert-triangle" size={18} color={colors.accent.warning} />
+          <View style={styles.medicalNoticeContent}>
+            <Text style={styles.medicalNoticeTitle}>Educational information only</Text>
+            <Text style={styles.medicalNoticeText}>
+              Not medical advice or a recommendation to use this compound. Consult a
+              qualified clinician before making health decisions.
+            </Text>
           </View>
-          <View style={styles.dosingGrid}>
-            <View style={styles.dosingItem}>
-              <Text style={styles.dosingLabel}>Typical Dose</Text>
-              <Text style={styles.dosingValue}>{peptide.dosing.typicalDose}</Text>
-            </View>
-            <View style={styles.dosingItem}>
-              <Text style={styles.dosingLabel}>Frequency</Text>
-              <Text style={styles.dosingValue}>{peptide.dosing.frequency}</Text>
-            </View>
-            <View style={styles.dosingItem}>
-              <Text style={styles.dosingLabel}>Route</Text>
-              <Text style={styles.dosingValue}>{peptide.dosing.route}</Text>
-            </View>
-            <View style={styles.dosingItem}>
-              <Text style={styles.dosingLabel}>Cycle</Text>
-              <Text style={styles.dosingValue}>{peptide.dosing.cycleDuration}</Text>
-            </View>
-          </View>
-          <Text style={styles.routeDetails}>{peptide.dosing.routeDetails}</Text>
-        </Card>
+          <Icon name="chevron-right" size={18} color={colors.text.muted} />
+        </AnimatedPressable>
 
         {/* Overview */}
         <Card style={styles.section}>
@@ -181,27 +159,6 @@ export function PeptideDetailScreen({
               <Text style={styles.sequenceNote}>{peptide.molecularInfo.sequenceNote}</Text>
             )}
           </View>
-        </Card>
-
-        {/* Research Protocols */}
-        <Card style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Icon name="file-text" size={18} color={colors.primary[500]} />
-            <Text style={styles.sectionTitle}>Research Protocols</Text>
-          </View>
-          {peptide.protocols.map((protocol, index) => (
-            <View key={index} style={styles.protocolRow}>
-              <View style={styles.protocolGoal}>
-                <Text style={styles.protocolGoalText}>{protocol.goal}</Text>
-              </View>
-              <View style={styles.protocolDetails}>
-                <Text style={styles.protocolDetailText}>
-                  {protocol.dose} • {protocol.frequency}
-                </Text>
-                <Text style={styles.protocolRouteText}>{protocol.route}</Text>
-              </View>
-            </View>
-          ))}
         </Card>
 
         {/* What to Expect */}
@@ -343,20 +300,6 @@ export function PeptideDetailScreen({
           </Card>
         )}
 
-        {/* Reconstitution Calculator */}
-        {peptide.reconstitution && (
-          <Card style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Icon name="sliders" size={18} color={colors.primary[500]} />
-              <Text style={styles.sectionTitle}>Reconstitution Calculator</Text>
-            </View>
-            <ReconstitutionCalculator
-              reconstitution={peptide.reconstitution}
-              peptideName={peptide.name}
-            />
-          </Card>
-        )}
-
         {/* Research Studies */}
         {peptide.studies && peptide.studies.length > 0 && (
           <Card style={styles.section}>
@@ -473,6 +416,30 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     gap: spacing.sm,
   },
+  medicalNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    padding: spacing.base,
+    marginBottom: spacing.base,
+    borderRadius: 12,
+    backgroundColor: "rgba(214, 158, 46, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(214, 158, 46, 0.3)",
+  },
+  medicalNoticeContent: {
+    flex: 1,
+  },
+  medicalNoticeTitle: {
+    ...typography.bodyMedium,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  medicalNoticeText: {
+    ...typography.captionSmall,
+    color: colors.text.secondary,
+    lineHeight: 18,
+  },
   section: {
     marginBottom: spacing.base,
   },
@@ -485,29 +452,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.caption,
     color: colors.text.primary,
-  },
-  dosingGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: spacing.md,
-  },
-  dosingItem: {
-    width: "50%",
-    marginBottom: spacing.md,
-  },
-  dosingLabel: {
-    ...typography.captionSmall,
-    color: colors.text.tertiary,
-    marginBottom: spacing.xs,
-  },
-  dosingValue: {
-    ...typography.bodyMedium,
-    color: colors.text.primary,
-  },
-  routeDetails: {
-    ...typography.small,
-    color: colors.text.secondary,
-    fontStyle: "italic",
   },
   overviewLabel: {
     ...typography.small,
@@ -560,33 +504,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.text.tertiary,
     fontStyle: "italic",
-  },
-  protocolRow: {
-    flexDirection: "row",
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
-  },
-  protocolGoal: {
-    flex: 1,
-  },
-  protocolGoalText: {
-    ...typography.small,
-    fontWeight: "500",
-    color: colors.text.primary,
-  },
-  protocolDetails: {
-    flex: 1,
-    alignItems: "flex-end",
-  },
-  protocolDetailText: {
-    ...typography.small,
-    color: colors.text.secondary,
-    marginBottom: 2,
-  },
-  protocolRouteText: {
-    ...typography.captionSmall,
-    color: colors.text.tertiary,
   },
   timelineRow: {
     flexDirection: "row",

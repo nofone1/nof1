@@ -22,8 +22,8 @@ the other.
 
 | Product | Price | Notes |
 | --- | --- | --- |
-| Nof1 Plus monthly | $7.99 / month | Attach to `nof1_plus` |
-| Nof1 Plus annual | $69.99 / year | Attach to `nof1_plus` |
+| Nof1 Plus monthly | $9.99 / month | Attach to `nof1_plus` |
+| Nof1 Plus annual | $79.99 / year | Attach to `nof1_plus` |
 
 Create both in App Store Connect and Google Play, import them into RevenueCat,
 attach both to the `nof1_plus` entitlement, and add them to the **default**
@@ -57,8 +57,8 @@ Add a webhook for both the production and sandbox environments:
 | Authorization header | the value stored in `REVENUECAT_WEBHOOK_AUTH` |
 | HMAC signing | **enabled**, secret stored in `REVENUECAT_WEBHOOK_SIGNING_SECRET` |
 
-The handler verifies the Authorization header first, then the
-`X-RevenueCat-Signature` HMAC. Signature verification is skipped only when
+The handler verifies the Authorization header first, then the timestamped
+`X-RevenueCat-Webhook-Signature` HMAC. Signature verification is skipped only when
 `REVENUECAT_WEBHOOK_SIGNING_SECRET` is unset, which exists purely so the endpoint
 can be stood up before signing is switched on. Turn it on immediately after.
 
@@ -88,15 +88,18 @@ product.
 | Scopes | `openid profile email` |
 | Permission | `oauth:token_exchange` (Permissions tab) |
 | App ID (`app_…`) | `EXPO_PUBLIC_WHOP_APP_ID` **and** `WHOP_APP_ID` |
-| App secret | `WHOP_API_KEY` (server only) |
+| App API key / OAuth secret | `WHOP_OAUTH_CLIENT_SECRET` (server only) |
+| Company API key | `WHOP_API_KEY` (server only) |
 
 The app ID is needed in two places: in the bundle to build the authorize URL,
 and on the Convex deployment as the OAuth `client_id` for the token exchange.
 It is public in both.
 
-If Whop issued a separate OAuth client secret rather than reusing the app API
-key, set `WHOP_OAUTH_CLIENT_SECRET`; otherwise `WHOP_API_KEY` is used for both
-the token exchange and server-to-server reads.
+Whop uses different credentials for different server roles. Use a company API
+key for seller-side membership reads (`WHOP_API_KEY`) and the app API key for
+OAuth token exchange (`WHOP_OAUTH_CLIENT_SECRET`). Do not reuse the app key for
+company membership reads; Whop rejects that request even though the key itself
+is valid.
 
 The `nof1` scheme is already registered in [`app.json`](../app.json). The OAuth
 code is exchanged server-side in Convex with PKCE; the client never sees the app
@@ -136,6 +139,7 @@ EXPO_PUBLIC_REVENUECAT_IOS_API_KEY
 EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY
 EXPO_PUBLIC_REVENUECAT_TEST_API_KEY
 EXPO_PUBLIC_WHOP_APP_ID
+EXPO_PUBLIC_WHOP_OAUTH_BASE_URL   # sandbox: https://sandbox-api.whop.com/oauth
 ```
 
 ### Convex deployment secrets
@@ -149,17 +153,26 @@ REVENUECAT_WEBHOOK_AUTH
 REVENUECAT_WEBHOOK_SIGNING_SECRET
 WHOP_APP_ID
 WHOP_API_KEY
-WHOP_OAUTH_CLIENT_SECRET   # only if Whop issued a separate OAuth secret
-WHOP_COMPANY_ID
+WHOP_OAUTH_CLIENT_SECRET   # app API key used for OAuth token exchange
 WHOP_WEBHOOK_SECRET
 WHOP_PLUS_PRODUCT_ID
 ```
+
+For a Whop sandbox deployment, also set these non-secret Convex variables:
+
+```
+WHOP_API_BASE_URL=https://sandbox-api.whop.com/api/v1
+WHOP_OAUTH_BASE_URL=https://sandbox-api.whop.com/oauth
+```
+
+Production deployments may omit both OAuth/API base URL overrides; the
+code defaults to `https://api.whop.com` endpoints.
 
 ## 4. Tests
 
 ### Unit tests
 
-`npm test` runs the Convex billing unit tests in `convex/__tests__/`. They cover
+`npm test` runs the Convex billing unit tests in `tests/convex/`. They cover
 the two properties that keep entitlements correct when providers misbehave:
 deduplication on `(provider, eventId)`, and discarding any grant write whose
 `providerUpdatedAt` is not newer than what is stored. They run against an

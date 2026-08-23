@@ -7,7 +7,7 @@ import React, { useEffect, useCallback, useState } from "react";
 import { View, Text, ScrollView, Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, Loading, Badge, Icon, AnimatedPressable } from "@/components/ui";
-import { useExperiments, useLogger } from "@/hooks";
+import { useExperiments } from "@/hooks";
 import { colors, spacing, typography } from "@/theme";
 import type { MainStackScreenProps } from "@/types/navigation";
 import { ExperimentStatus } from "@/types/experiment";
@@ -34,7 +34,6 @@ export function ExperimentDetailScreen({
 }: MainStackScreenProps<"ExperimentDetail">): React.JSX.Element {
   const { experimentId } = route.params;
   const { select, currentExperiment, updateStatus, remove, isLoading } = useExperiments();
-  const { log } = useLogger("ExperimentDetail");
   const [isLoggingEntry, setIsLoggingEntry] = useState(false);
 
   useEffect(() => {

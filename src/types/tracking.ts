@@ -3,8 +3,6 @@
  * These types define the structure for logging doses, metrics, and managing the user's stack.
  */
 
-import { MetricType } from "./experiment";
-
 /**
  * Injection site locations for tracking dose administration.
  */

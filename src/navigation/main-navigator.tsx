@@ -20,6 +20,7 @@ import { CreateProtocolScreen } from "@/screens/protocol/create";
 import { ProfileScreen } from "@/screens/profile";
 import { HealthConnectionsScreen } from "@/screens/profile/health-connections";
 import { SubscriptionScreen } from "@/screens/subscription";
+import { LegalScreen } from "@/screens/legal";
 import { colors, spacing } from "@/theme";
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -133,6 +134,7 @@ export function MainNavigator(): React.JSX.Element {
       <Stack.Screen name="CreateProtocol" component={CreateProtocolScreen} />
       <Stack.Screen name="HealthConnections" component={HealthConnectionsScreen} />
       <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+      <Stack.Screen name="Legal" component={LegalScreen} />
     </Stack.Navigator>
   );
 }
