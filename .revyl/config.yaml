@@ -51,6 +51,29 @@ build:
                 NODE_ENV: production
                 REVYL_USE_FINGERPRINT: "1"
                 EXPO_PUBLIC_SKIP_AUTH: "true"
+        # Manual provider-to-Convex acceptance build. Unlike the regular
+        # proof build above, this uses a genuine Clerk session so RevenueCat
+        # and Whop entitlements can be written for the signed-in user.
+        # Configure the named encrypted secrets in the Nof1 Revyl org, then run:
+        #   revyl build --remote --platform ios-billing --no-cache
+        ios-billing:
+            app_id: e71fb604-d488-4d04-8cc4-81c81502f4b0
+            commands:
+                - npm ci
+                - npx --yes expo prebuild --platform ios --non-interactive --clean
+                - (cd ios && pod install)
+                - WORKSPACE="$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)"; if [ -z "$WORKSPACE" ]; then echo "No xcworkspace found under ios"; exit 1; fi; SCHEME="$(basename "$WORKSPACE" .xcworkspace)"; echo "Building signed-in billing workspace=$WORKSPACE scheme=$SCHEME configuration=Release"; xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios-billing CODE_SIGNING_ALLOWED=NO build
+            output: build/ios-billing/Build/Products/Release-iphonesimulator/*.app
+            env:
+                NODE_ENV: production
+                REVYL_USE_FINGERPRINT: "1"
+                EXPO_PUBLIC_SKIP_AUTH: "false"
+            secrets:
+                - EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
+                - EXPO_PUBLIC_CONVEX_URL
+                - EXPO_PUBLIC_REVENUECAT_TEST_API_KEY
+                - EXPO_PUBLIC_WHOP_APP_ID
+                - EXPO_PUBLIC_WHOP_OAUTH_BASE_URL
 
 pr_review:
     enabled: true

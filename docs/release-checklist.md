@@ -85,6 +85,38 @@ tracks:
 - production auth, sync, paywall, Customer Center, privacy/terms, and support
   flows on physical iOS and Android devices.
 
+## Revyl billing acceptance build
+
+The default Revyl `ios` build is a UI-proof build. It bakes in
+`EXPO_PUBLIC_SKIP_AUTH=true`, deliberately omits provider configuration, and
+therefore cannot verify a provider-to-Convex entitlement. A disabled Upgrade
+button, an unavailable Restore message, and Free after Refresh are expected in
+that build rather than evidence of a billing regression.
+
+For end-to-end sandbox billing, use the separate `ios-billing` build profile.
+Store these names as encrypted build secrets in the **Nof1 Revyl organization**:
+
+- `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- `EXPO_PUBLIC_CONVEX_URL`
+- `EXPO_PUBLIC_REVENUECAT_TEST_API_KEY`
+- `EXPO_PUBLIC_WHOP_APP_ID`
+- `EXPO_PUBLIC_WHOP_OAUTH_BASE_URL`
+
+Then build with:
+
+```sh
+revyl build --remote --platform ios-billing --no-cache
+```
+
+Sign in through Clerk with a dedicated QA account. Do not use the Revyl bypass
+deep link for this matrix: bypass access is local-only and does not produce the
+Clerk identity required by Convex billing actions. RevenueCat Test Store can be
+verified on the simulator. Whop additionally requires the matching sandbox
+server variables in Convex, including a company API key in `WHOP_API_KEY`.
+
+This path does not use EAS, but it does intentionally keep Expo's native
+prebuild step because the application is an Expo project.
+
 ## Planned SDK maintenance
 
 Expo Doctor is green on SDK 52. Clerk Core 2 is pinned to its Expo-52-compatible
