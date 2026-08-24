@@ -40,6 +40,12 @@
           "target": "18.5"
         }
       ],
+      [
+        "./plugins/withAndroidMinSdk",
+        {
+          "minSdkVersion": 28
+        }
+      ],
       "./plugins/launch-args-module"
     ],
     "extra": {
