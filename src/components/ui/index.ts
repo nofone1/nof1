@@ -30,6 +30,15 @@ export {
   type CardVariant,
 } from "./card";
 
+export {
+  LiquidGlass,
+  GlassPill,
+  GlassAtmosphere,
+  type LiquidGlassProps,
+  type GlassAtmosphereProps,
+  type GlassTint,
+} from "./liquid-glass";
+
 // Feedback components
 export { Loading, type LoadingProps } from "./loading";
 export { Badge, type BadgeProps, type BadgeVariant, type BadgeSize } from "./badge";

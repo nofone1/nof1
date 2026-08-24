@@ -1,15 +1,26 @@
 /**
  * Peptide Detail screen.
- * Displays comprehensive information about a peptide including dosing, protocols, and safety.
+ * Displays comprehensive peptide information on liquid-glass panels
+ * over a luminous dark atmosphere.
  */
 
 import React, { useEffect, useCallback } from "react";
 import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Card, Loading, Icon, AnimatedPressable, Badge } from "@/components/ui";
+import {
+  Button,
+  Loading,
+  Icon,
+  AnimatedPressable,
+  Badge,
+  LiquidGlass,
+  GlassPill,
+  GlassAtmosphere,
+  type IconName,
+} from "@/components/ui";
 import { DoseDecayChart } from "@/components/peptide";
 import { usePeptideStore } from "@/stores/peptide-store";
-import { colors, spacing, typography } from "@/theme";
+import { colors, spacing, typography, glass, type GlassTint } from "@/theme";
 import type { MainStackScreenProps } from "@/types/navigation";
 import {
   getResearchLevelDisplay,
@@ -17,8 +28,52 @@ import {
   getCategoryDisplay,
 } from "@/types/peptide";
 
+interface DetailSectionProps {
+  /** Feather icon shown beside the section title. */
+  icon: IconName;
+  /** Uppercase section title. */
+  title: string;
+  /** Icon color. Defaults to sage. */
+  iconColor?: string;
+  /** Glass material for the section panel. */
+  tint?: GlassTint;
+  /** Section body. */
+  children: React.ReactNode;
+}
+
 /**
- * Peptide detail screen component.
+ * Glass-wrapped section with a titled header row.
+ *
+ * Params:
+ *   icon: Feather icon name.
+ *   title: Section heading.
+ *   iconColor: Optional icon color.
+ *   tint: Optional glass tint. Defaults to clear.
+ *   children: Section body.
+ *
+ * Returns:
+ *   The rendered glass section.
+ */
+function DetailSection({
+  icon,
+  title,
+  iconColor = colors.primary[400],
+  tint = "clear",
+  children,
+}: DetailSectionProps): React.JSX.Element {
+  return (
+    <LiquidGlass tint={tint} style={styles.section}>
+      <View style={styles.sectionHeaderRow}>
+        <Icon name={icon} size={18} color={iconColor} />
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
+      {children}
+    </LiquidGlass>
+  );
+}
+
+/**
+ * Peptide detail screen with liquid-glass materials.
  * Shows comprehensive peptide information with option to use in experiment.
  *
  * @param props - Navigation props with peptideId param
@@ -58,6 +113,7 @@ export function PeptideDetailScreen({
   if (!selectedPeptide) {
     return (
       <SafeAreaView style={styles.container}>
+        <GlassAtmosphere />
         <Loading fullScreen message="Loading peptide..." />
       </SafeAreaView>
     );
@@ -69,18 +125,25 @@ export function PeptideDetailScreen({
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <AnimatedPressable style={styles.backButton} onPress={() => navigation.goBack()} haptic="light">
-          <Icon name="arrow-left" size={20} color={colors.primary[500]} />
-          <Text style={styles.backText}>Back</Text>
-        </AnimatedPressable>
+      <GlassAtmosphere />
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <GlassPill onPress={() => navigation.goBack()} style={styles.backPill}>
+          <View style={styles.backPillInner}>
+            <Icon name="arrow-left" size={18} color={colors.text.primary} />
+            <Text style={styles.backText}>Back</Text>
+          </View>
+        </GlassPill>
 
-        {/* Header */}
-        <View style={styles.header}>
+        <LiquidGlass tint="elevated" radius={glass.radius.hero} style={styles.hero}>
           <View style={styles.titleRow}>
-            <View style={styles.shortCodeBadge}>
-              <Text style={styles.shortCodeText}>{peptide.shortCode}</Text>
-            </View>
+            <LiquidGlass tint="sage" radius={18} padding={0} style={styles.shortCodeBadge}>
+              <View style={styles.shortCodeInner}>
+                <Text style={styles.shortCodeText}>{peptide.shortCode}</Text>
+              </View>
+            </LiquidGlass>
             <View style={styles.titleContainer}>
               <Text style={styles.title}>{peptide.name}</Text>
               <View style={[styles.researchBadge, { backgroundColor: researchLevelColor }]}>
@@ -89,39 +152,34 @@ export function PeptideDetailScreen({
             </View>
           </View>
           <Text style={styles.subtitle}>{peptide.subtitle}</Text>
-        </View>
+          <View style={styles.categoriesContainer}>
+            {peptide.categories.map((category) => (
+              <Badge key={category} variant="purple" size="md">
+                {getCategoryDisplay(category)}
+              </Badge>
+            ))}
+          </View>
+        </LiquidGlass>
 
-        {/* Categories */}
-        <View style={styles.categoriesContainer}>
-          {peptide.categories.map((category) => (
-            <Badge key={category} variant="purple" size="md">
-              {getCategoryDisplay(category)}
-            </Badge>
-          ))}
-        </View>
-
-        <AnimatedPressable
-          style={styles.medicalNotice}
+        <LiquidGlass
+          tint="amber"
           onPress={() => navigation.navigate("Legal", { document: "medical" })}
-          haptic="light"
+          style={styles.medicalNotice}
         >
-          <Icon name="alert-triangle" size={18} color={colors.accent.warning} />
-          <View style={styles.medicalNoticeContent}>
-            <Text style={styles.medicalNoticeTitle}>Educational information only</Text>
-            <Text style={styles.medicalNoticeText}>
-              Not medical advice or a recommendation to use this compound. Consult a
-              qualified clinician before making health decisions.
-            </Text>
+          <View style={styles.medicalNoticeRow}>
+            <Icon name="alert-triangle" size={18} color={colors.accent.warning} />
+            <View style={styles.medicalNoticeContent}>
+              <Text style={styles.medicalNoticeTitle}>Educational information only</Text>
+              <Text style={styles.medicalNoticeText}>
+                Not medical advice or a recommendation to use this compound. Consult a
+                qualified clinician before making health decisions.
+              </Text>
+            </View>
+            <Icon name="chevron-right" size={18} color={colors.text.muted} />
           </View>
-          <Icon name="chevron-right" size={18} color={colors.text.muted} />
-        </AnimatedPressable>
+        </LiquidGlass>
 
-        {/* Overview */}
-        <Card style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Icon name="book-open" size={18} color={colors.primary[500]} />
-            <Text style={styles.sectionTitle}>Overview</Text>
-          </View>
+        <DetailSection icon="book-open" title="Overview">
           <Text style={styles.overviewLabel}>What is {peptide.name}?</Text>
           <Text style={styles.overviewText}>{peptide.overview.description}</Text>
           <View style={styles.spacer} />
@@ -130,14 +188,9 @@ export function PeptideDetailScreen({
           <View style={styles.spacer} />
           <Text style={styles.overviewLabel}>Mechanism of Action</Text>
           <Text style={styles.overviewText}>{peptide.overview.mechanism}</Text>
-        </Card>
+        </DetailSection>
 
-        {/* Molecular Info */}
-        <Card style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Icon name="hexagon" size={18} color={colors.primary[500]} />
-            <Text style={styles.sectionTitle}>Molecular Information</Text>
-          </View>
+        <DetailSection icon="hexagon" title="Molecular Information">
           <View style={styles.molecularGrid}>
             <View style={styles.molecularItem}>
               <Text style={styles.molecularLabel}>Weight</Text>
@@ -152,51 +205,47 @@ export function PeptideDetailScreen({
               <Text style={styles.molecularValue}>{peptide.molecularInfo.type}</Text>
             </View>
           </View>
-          <View style={styles.sequenceContainer}>
+          <LiquidGlass tint="sage" radius={glass.radius.inset} padding={spacing.md}>
             <Text style={styles.sequenceLabel}>Amino Acid Sequence</Text>
             <Text style={styles.sequenceText}>{peptide.molecularInfo.sequence}</Text>
             {peptide.molecularInfo.sequenceNote && (
               <Text style={styles.sequenceNote}>{peptide.molecularInfo.sequenceNote}</Text>
             )}
-          </View>
-        </Card>
+          </LiquidGlass>
+        </DetailSection>
 
-        {/* What to Expect */}
-        <Card style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Icon name="calendar" size={18} color={colors.primary[500]} />
-            <Text style={styles.sectionTitle}>What to Expect</Text>
-          </View>
+        <DetailSection icon="calendar" title="What to Expect">
           {peptide.timeline.map((entry, index) => (
-            <View key={index} style={styles.timelineRow}>
+            <View
+              key={index}
+              style={[
+                styles.timelineRow,
+                index === peptide.timeline.length - 1 && styles.rowLast,
+              ]}
+            >
               <View style={styles.timelineWeek}>
                 <Text style={styles.timelineWeekText}>Week {entry.week}</Text>
               </View>
               <Text style={styles.timelineDescription}>{entry.description}</Text>
             </View>
           ))}
-        </Card>
+        </DetailSection>
 
-        {/* Side Effects & Safety */}
-        <Card style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Icon name="alert-triangle" size={18} color={colors.accent.warning} />
-            <Text style={styles.sectionTitle}>Side Effects & Safety</Text>
-          </View>
+        <DetailSection
+          icon="alert-triangle"
+          title="Side Effects & Safety"
+          iconColor={colors.accent.warning}
+          tint="amber"
+        >
           {peptide.sideEffects.map((effect, index) => (
             <View key={index} style={styles.sideEffectRow}>
               <Text style={styles.bulletPoint}>•</Text>
               <Text style={styles.sideEffectText}>{effect}</Text>
             </View>
           ))}
-        </Card>
+        </DetailSection>
 
-        {/* Storage */}
-        <Card style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Icon name="thermometer" size={18} color={colors.primary[500]} />
-            <Text style={styles.sectionTitle}>Storage</Text>
-          </View>
+        <DetailSection icon="thermometer" title="Storage">
           <View style={styles.storageRow}>
             <Text style={styles.storageLabel}>Temperature</Text>
             <Text style={styles.storageValue}>{peptide.storage.temperature}</Text>
@@ -209,28 +258,24 @@ export function PeptideDetailScreen({
             <Text style={styles.storageLabel}>Reconstituted Stability</Text>
             <Text style={styles.storageValue}>{peptide.storage.reconstitutedStability}</Text>
           </View>
-        </Card>
+        </DetailSection>
 
-        {/* Pharmacokinetics */}
         {peptide.pharmacokinetics && (
-          <Card style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Icon name="trending-down" size={18} color={colors.primary[500]} />
-              <Text style={styles.sectionTitle}>Pharmacokinetics</Text>
-            </View>
+          <DetailSection icon="trending-down" title="Pharmacokinetics">
             <DoseDecayChart pharmacokinetics={peptide.pharmacokinetics} />
-          </Card>
+          </DetailSection>
         )}
 
-        {/* Research Indications */}
         {peptide.indications.length > 0 && (
-          <Card style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Icon name="bar-chart-2" size={18} color={colors.primary[500]} />
-              <Text style={styles.sectionTitle}>Research Indications</Text>
-            </View>
+          <DetailSection icon="bar-chart-2" title="Research Indications">
             {peptide.indications.map((indication, index) => (
-              <View key={index} style={styles.indicationRow}>
+              <View
+                key={index}
+                style={[
+                  styles.indicationRow,
+                  index === peptide.indications.length - 1 && styles.rowLast,
+                ]}
+              >
                 <View style={styles.indicationHeader}>
                   <Text style={styles.indicationName}>{indication.name}</Text>
                   <Badge
@@ -258,20 +303,18 @@ export function PeptideDetailScreen({
                 ))}
               </View>
             ))}
-          </Card>
+          </DetailSection>
         )}
 
-        {/* Interactions */}
         {peptide.interactions && peptide.interactions.length > 0 && (
-          <Card style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Icon name="git-merge" size={18} color={colors.primary[500]} />
-              <Text style={styles.sectionTitle}>Peptide Interactions</Text>
-            </View>
-            {peptide.interactions.map((interaction, index) => (
+          <DetailSection icon="git-merge" title="Peptide Interactions">
+            {peptide.interactions.map((interaction, index, interactions) => (
               <AnimatedPressable
                 key={index}
-                style={styles.interactionRow}
+                style={[
+                  styles.interactionRow,
+                  index === interactions.length - 1 && styles.rowLast,
+                ]}
                 onPress={() => navigation.push("PeptideDetail", { peptideId: interaction.peptideId })}
                 haptic="light"
               >
@@ -297,20 +340,18 @@ export function PeptideDetailScreen({
                 </Badge>
               </AnimatedPressable>
             ))}
-          </Card>
+          </DetailSection>
         )}
 
-        {/* Research Studies */}
         {peptide.studies && peptide.studies.length > 0 && (
-          <Card style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Icon name="bookmark" size={18} color={colors.primary[500]} />
-              <Text style={styles.sectionTitle}>Research Studies</Text>
-            </View>
-            {peptide.studies.map((study, index) => (
+          <DetailSection icon="bookmark" title="Research Studies">
+            {peptide.studies.map((study, index, studies) => (
               <AnimatedPressable
                 key={index}
-                style={styles.studyRow}
+                style={[
+                  styles.studyRow,
+                  index === studies.length - 1 && styles.rowLast,
+                ]}
                 onPress={() => Linking.openURL(`https://doi.org/${study.doi}`)}
                 haptic="light"
               >
@@ -321,24 +362,23 @@ export function PeptideDetailScreen({
                 <Text style={styles.studySummary}>{study.summary}</Text>
               </AnimatedPressable>
             ))}
-          </Card>
+          </DetailSection>
         )}
 
-        {/* Action Buttons */}
-        <Card variant="elevated" style={styles.actionCard}>
+        <LiquidGlass tint="elevated" radius={glass.radius.hero} style={styles.actionCard}>
           <Pressable onLongPress={handleMoreActions} style={styles.logDoseWrapper}>
             <Button variant="primary" size="lg" fullWidth onPress={handleLogDose}>
               Log Dose
             </Button>
           </Pressable>
-          <AnimatedPressable onPress={handleMoreActions} style={styles.moreActionsRow} haptic="light">
-            <Icon name="more-horizontal" size={16} color={colors.text.secondary} />
-            <Text style={styles.actionHint}>
-              Protocol, Experiment, Stack...
-            </Text>
-            <Icon name="chevron-right" size={14} color={colors.text.tertiary} />
-          </AnimatedPressable>
-        </Card>
+          <GlassPill onPress={handleMoreActions} style={styles.moreActionsPill}>
+            <View style={styles.moreActionsRow}>
+              <Icon name="more-horizontal" size={16} color={colors.text.secondary} />
+              <Text style={styles.actionHint}>Protocol, Experiment, Stack...</Text>
+              <Icon name="chevron-right" size={14} color={colors.text.tertiary} />
+            </View>
+          </GlassPill>
+        </LiquidGlass>
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -355,17 +395,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xl,
   },
-  backButton: {
+  backPill: {
+    marginBottom: spacing.xl,
+  },
+  backPillInner: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: spacing.xl,
     gap: spacing.sm,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.sm,
   },
   backText: {
     ...typography.bodyMedium,
-    color: colors.primary[500],
+    color: colors.text.primary,
   },
-  header: {
+  hero: {
     marginBottom: spacing.base,
   },
   titleRow: {
@@ -374,13 +418,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   shortCodeBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
-    backgroundColor: colors.primary[500],
+    width: 58,
+    height: 58,
+    marginRight: spacing.base,
+  },
+  shortCodeInner: {
+    width: 58,
+    height: 58,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: spacing.base,
   },
   shortCodeText: {
     ...typography.bodyMedium,
@@ -409,23 +455,20 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.body,
     color: colors.text.secondary,
+    marginBottom: spacing.base,
   },
   categoriesContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: spacing.xl,
     gap: spacing.sm,
   },
   medicalNotice: {
+    marginBottom: spacing.base,
+  },
+  medicalNoticeRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    padding: spacing.base,
-    marginBottom: spacing.base,
-    borderRadius: 12,
-    backgroundColor: "rgba(214, 158, 46, 0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(214, 158, 46, 0.3)",
   },
   medicalNoticeContent: {
     flex: 1,
@@ -456,7 +499,7 @@ const styles = StyleSheet.create({
   overviewLabel: {
     ...typography.small,
     fontWeight: "500",
-    color: colors.primary[400],
+    color: colors.primary[300],
     marginBottom: spacing.sm,
   },
   overviewText: {
@@ -484,11 +527,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: colors.text.primary,
   },
-  sequenceContainer: {
-    backgroundColor: colors.background.primary,
-    borderRadius: spacing.sm,
-    padding: spacing.md,
-  },
   sequenceLabel: {
     ...typography.captionSmall,
     color: colors.text.tertiary,
@@ -497,7 +535,7 @@ const styles = StyleSheet.create({
   sequenceText: {
     fontSize: 12,
     fontFamily: "monospace",
-    color: colors.primary[400],
+    color: colors.primary[200],
     marginBottom: spacing.sm,
   },
   sequenceNote: {
@@ -508,8 +546,8 @@ const styles = StyleSheet.create({
   timelineRow: {
     flexDirection: "row",
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255, 255, 255, 0.08)",
   },
   timelineWeek: {
     width: 80,
@@ -517,7 +555,7 @@ const styles = StyleSheet.create({
   timelineWeekText: {
     ...typography.small,
     fontWeight: "500",
-    color: colors.primary[400],
+    color: colors.primary[300],
   },
   timelineDescription: {
     flex: 1,
@@ -552,11 +590,14 @@ const styles = StyleSheet.create({
     ...typography.small,
     fontWeight: "500",
     color: colors.text.primary,
+    flexShrink: 1,
+    textAlign: "right",
+    marginLeft: spacing.md,
   },
   indicationRow: {
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255, 255, 255, 0.08)",
   },
   indicationHeader: {
     flexDirection: "row",
@@ -587,8 +628,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255, 255, 255, 0.08)",
   },
   interactionInfo: {
     flex: 1,
@@ -605,13 +646,13 @@ const styles = StyleSheet.create({
   },
   studyRow: {
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255, 255, 255, 0.08)",
   },
   studyTitle: {
     ...typography.small,
     fontWeight: "500",
-    color: colors.primary[400],
+    color: colors.primary[300],
     marginBottom: spacing.xs,
   },
   studyMeta: {
@@ -624,10 +665,11 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     lineHeight: 20,
   },
+  rowLast: {
+    borderBottomWidth: 0,
+  },
   actionCard: {
     marginTop: spacing.lg,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
   },
   logDoseWrapper: {
     borderRadius: 100,
@@ -638,15 +680,16 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     flex: 1,
   },
+  moreActionsPill: {
+    marginTop: spacing.base,
+    alignSelf: "stretch",
+  },
   moreActionsRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    marginTop: spacing.base,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.base,
-    backgroundColor: colors.background.primary,
-    borderRadius: 12,
   },
   bottomSpacer: {
     height: spacing["2xl"],
