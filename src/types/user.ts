@@ -3,15 +3,7 @@
  * These types complement Clerk's user model with app-specific data.
  */
 
-/**
- * Represents the user's subscription tier.
- */
-export enum SubscriptionTier {
-  /** Free tier with limited experiments */
-  FREE = "free",
-  /** Premium tier with unlimited experiments */
-  PREMIUM = "premium",
-}
+import type { PlusAccess } from "@/services/billing/types";
 
 /**
  * Represents user notification preferences.
@@ -34,7 +26,8 @@ export interface NotificationPreferences {
  * @property email - User's email address
  * @property displayName - User's display name
  * @property avatarUrl - URL to user's profile image
- * @property subscription - User's current subscription tier
+ * @property access - Combined Nof1 Plus access, resolved server-side from
+ *   every billing provider. Never derive this from client state.
  * @property notificationPreferences - User's notification settings
  * @property experimentsCount - Total number of experiments created
  * @property createdAt - Timestamp when user profile was created
@@ -45,7 +38,7 @@ export interface UserProfile {
   email: string;
   displayName?: string;
   avatarUrl?: string;
-  subscription: SubscriptionTier;
+  access: PlusAccess;
   notificationPreferences: NotificationPreferences;
   experimentsCount: number;
   createdAt: Date;

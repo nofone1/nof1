@@ -1,6 +1,11 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
 import { nowIso, requireUserId, toIso } from "./_auth";
+import { requirePlus } from "./billing";
+import {
+  FREE_IN_PROGRESS_EXPERIMENT_LIMIT,
+  isInProgressExperimentStatus,
+} from "./_billing";
 
 function normalizeSchedule(schedule: unknown): {
   startDate: string;
@@ -71,6 +76,47 @@ async function findExperiment(ctx: any, userId: string, id: string) {
   return docs.find((doc: any) => doc.userId === userId && doc.id === id) ?? null;
 }
 
+/**
+ * Throws unless the user may have another experiment in progress.
+ *
+ * Params:
+ *   ctx: Convex mutation context.
+ *   userId: Clerk user ID.
+ *   excludeExperimentId: Experiment being updated, excluded from the count.
+ *
+ * Returns:
+ *   void when the user is under the Free limit or has Nof1 Plus.
+ *
+ * Throws:
+ *   Error("Nof1 Plus required") when a Free user is already at the limit.
+ *
+ * Edge cases:
+ *   This is the server-side gate for the premium "unlimited experiments"
+ *   feature. Completed and cancelled experiments never count, so a Free user
+ *   can run any number of experiments over time, just not concurrently.
+ */
+async function requireExperimentCapacity(
+  ctx: any,
+  userId: string,
+  excludeExperimentId: string | null
+): Promise<void> {
+  const docs = await ctx.db
+    .query("experiments")
+    .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+    .collect();
+
+  const inProgress = docs.filter(
+    (doc: any) =>
+      doc.id !== excludeExperimentId && isInProgressExperimentStatus(doc.status)
+  );
+
+  if (inProgress.length < FREE_IN_PROGRESS_EXPERIMENT_LIMIT) {
+    return;
+  }
+
+  await requirePlus(ctx, userId);
+}
+
 export const list = queryGeneric({
   args: {},
   handler: async (ctx) => {
@@ -121,6 +167,14 @@ export const create = mutationGeneric({
       updatedAt: now,
     };
 
+    const isEnteringProgress =
+      isInProgressExperimentStatus(doc.status) &&
+      !isInProgressExperimentStatus(existing?.status);
+
+    if (isEnteringProgress) {
+      await requireExperimentCapacity(ctx, userId, id);
+    }
+
     if (existing) {
       await ctx.db.patch(existing._id, doc);
       return doc;
@@ -155,6 +209,14 @@ export const update = mutationGeneric({
     delete updates.userId;
     delete updates.id;
     delete updates.createdAt;
+
+    const isEnteringProgress =
+      isInProgressExperimentStatus(updates.status) &&
+      !isInProgressExperimentStatus(existing.status);
+
+    if (isEnteringProgress) {
+      await requireExperimentCapacity(ctx, userId, args.id);
+    }
 
     if (updates.schedule) {
       updates.schedule = normalizeSchedule({

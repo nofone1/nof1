@@ -35,10 +35,10 @@ export function CreateProtocolScreen({
     if (peptide) {
       setSelectedPeptideId(peptide.id);
       setPeptideName(peptide.name);
-      setDosage(peptide.dosing.typicalDose);
-      setFrequency(peptide.dosing.frequency);
-      setRoute(peptide.dosing.route);
-      setCycleDuration(peptide.dosing.cycleDuration);
+      setDosage("");
+      setFrequency("");
+      setRoute("");
+      setCycleDuration("");
       setName(`${peptide.name} Protocol`);
     } else {
       setSelectedPeptideId("custom");

@@ -7,7 +7,7 @@
  * @param hint - Hint text below input
  */
 
-import React, { forwardRef, useState, useCallback } from "react";
+import React, { forwardRef, useCallback } from "react";
 import { View, Text, TextInput, StyleSheet, type TextInputProps } from "react-native";
 import Animated, {
   useSharedValue,
@@ -40,13 +40,11 @@ const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
  */
 export const Input = forwardRef<TextInput, InputProps>(
   ({ label, error, hint, style, onFocus, onBlur, ...props }, ref): React.JSX.Element => {
-    const [isFocused, setIsFocused] = useState(false);
     const focusProgress = useSharedValue(0);
     const hasError = !!error;
 
     const handleFocus = useCallback(
       (e: any) => {
-        setIsFocused(true);
         focusProgress.value = withTiming(1, { duration: 200 });
         onFocus?.(e);
       },
@@ -55,7 +53,6 @@ export const Input = forwardRef<TextInput, InputProps>(
 
     const handleBlur = useCallback(
       (e: any) => {
-        setIsFocused(false);
         focusProgress.value = withTiming(0, { duration: 200 });
         onBlur?.(e);
       },

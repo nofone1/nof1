@@ -3,7 +3,7 @@
  * Features gold avatar ring, Feather icons, and refined menu styling.
  */
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, ScrollView, Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, Icon, AnimatedPressable } from "@/components/ui";
@@ -15,6 +15,7 @@ import {
   logAuthEvent,
 } from "@/services/auth";
 import { logger } from "@/services/logging";
+import { useBilling } from "@/services/billing";
 import { colors, spacing, typography } from "@/theme";
 import type { MainTabScreenProps } from "@/types/navigation";
 
@@ -58,9 +59,16 @@ function MenuItem({ label, hint, onPress, isLast, isWarning }: MenuItemProps): R
  */
 export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): React.JSX.Element {
   const { user } = useUser();
-  const { signOut } = useAuth();
+  const { signOut, deleteAccount } = useAuth();
   const localAuthMode = useLocalAuthMode();
+  const { access, isLoading: isAccessLoading } = useBilling();
   const { log } = useLogger("Profile");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const subscriptionHint = isAccessLoading
+    ? "Checking…"
+    : access.hasPlus
+      ? "Nof1 Plus"
+      : "Free Plan";
   const authHint =
     localAuthMode === "dev-bypass"
       ? "Revyl auth bypass"
@@ -103,6 +111,48 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
     ]);
   }, []);
 
+  const handleDeleteAccount = useCallback(() => {
+    Alert.alert(
+      "Delete Account?",
+      "This permanently deletes your Nof1 account, synced experiments, protocols, tracking data, and billing-access links. It does not cancel an App Store, Google Play, or Whop subscription.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Continue",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Final confirmation",
+              "This cannot be undone. Cancel active subscriptions separately in the store where you purchased them.",
+              [
+                { text: "Keep Account", style: "cancel" },
+                {
+                  text: "Delete Permanently",
+                  style: "destructive",
+                  onPress: async () => {
+                    setIsDeletingAccount(true);
+                    try {
+                      await deleteAccount();
+                    } catch (error) {
+                      Alert.alert(
+                        "Account not deleted",
+                        error instanceof Error
+                          ? error.message
+                          : "Please try again or contact support."
+                      );
+                    } finally {
+                      setIsDeletingAccount(false);
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  }, [deleteAccount]);
+
   const userInitial = user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "?";
 
   return (
@@ -133,7 +183,18 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
         <Card style={styles.menuCard} animated animationDelay={80}>
           <MenuItem label="Edit Profile" hint="Coming soon" />
           <MenuItem label="Notifications" hint="Coming soon" />
-          <MenuItem label="Subscription" hint="Free Plan" isLast />
+          <MenuItem
+            label="Subscription"
+            hint={subscriptionHint}
+            onPress={() => navigation.navigate("Subscription")}
+          />
+          <MenuItem
+            label="Delete Account"
+            hint={isDeletingAccount ? "Deleting…" : "Permanently remove your data"}
+            onPress={isDeletingAccount ? undefined : handleDeleteAccount}
+            isLast
+            isWarning
+          />
         </Card>
 
         {/* Features Section */}
@@ -156,7 +217,19 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
         <Card style={styles.menuCard} animated animationDelay={320}>
           <MenuItem label="Version" hint="1.0.0" />
           <MenuItem label="Auth" hint={authHint} />
-          <MenuItem label="Terms of Service" onPress={() => {}} isLast />
+          <MenuItem
+            label="Privacy Policy"
+            onPress={() => navigation.navigate("Legal", { document: "privacy" })}
+          />
+          <MenuItem
+            label="Terms of Service"
+            onPress={() => navigation.navigate("Legal", { document: "terms" })}
+          />
+          <MenuItem
+            label="Medical Safety"
+            onPress={() => navigation.navigate("Legal", { document: "medical" })}
+            isLast
+          />
         </Card>
 
         {/* Sign Out */}

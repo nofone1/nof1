@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useRef, useSyncExternalStore } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   useAuth as useClerkAuth,
   useClerk,
@@ -14,6 +15,7 @@ import {
 import { env } from "@/config/env";
 import { logger } from "@/services/logging";
 import { setConvexTokenGetter } from "@/services/backend/convex-client";
+import { convexMutation } from "@/services/backend/convex-client";
 import { migrateLocalCoreDataIfNeeded } from "@/services/backend/local-migration";
 
 interface User {
@@ -28,6 +30,7 @@ interface AuthContextValue {
   isSignedIn: boolean;
   user: User | null;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const DEV_SKIP_USER: User = {
@@ -201,22 +204,42 @@ function isDevBypassCredential(identifier: string, password: string): boolean {
  *   When EXPO_PUBLIC_SKIP_AUTH is enabled, Clerk hooks are not called because
  *   ClerkProvider is omitted from the tree.
  */
-export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "signOut"> {
+type AuthControls = Pick<
+  AuthContextValue,
+  "isLoaded" | "isSignedIn" | "signOut" | "deleteAccount"
+>;
+
+/** Returns auth controls for builds that intentionally omit Clerk. */
+function useSkipAuthControls(): AuthControls {
   const isSkipAuthSignedIn = useSkipAuthSignedInState();
 
-  if (env.skipAuth) {
-    return {
-      isLoaded: true,
-      isSignedIn: isSkipAuthSignedIn,
-      signOut: async () => {
-        logger.info("Skip-auth sign out");
-        setSkipAuthSignedInState(false);
-      },
-    };
-  }
+  return {
+    isLoaded: true,
+    isSignedIn: isSkipAuthSignedIn,
+    signOut: async () => {
+      logger.info("Skip-auth sign out");
+      setSkipAuthSignedInState(false);
+    },
+    deleteAccount: async () => {
+      try {
+        await AsyncStorage.clear();
+      } catch (error) {
+        logger.warn("Failed to clear local data after account deletion", {
+          extra: { error: error instanceof Error ? error.message : String(error) },
+        });
+      }
+      logger.clearContext();
+      setSkipAuthSignedInState(false);
+    },
+  };
+}
+
+/** Returns Clerk-backed auth controls for signed production builds. */
+function useClerkAuthControls(): AuthControls {
+  const isSkipAuthSignedIn = useSkipAuthSignedInState();
 
   const { isLoaded, isSignedIn } = useClerkAuth();
-  const { signOut } = useClerk();
+  const { signOut, user } = useClerk();
 
   if (isSkipAuthSignedIn) {
     return {
@@ -226,6 +249,17 @@ export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "s
         logger.info("Skip-auth sign out");
         setSkipAuthSignedInState(false);
       },
+      deleteAccount: async () => {
+        try {
+          await AsyncStorage.clear();
+        } catch (error) {
+          logger.warn("Failed to clear local data after account deletion", {
+            extra: { error: error instanceof Error ? error.message : String(error) },
+          });
+        }
+        logger.clearContext();
+        setSkipAuthSignedInState(false);
+      },
     };
   }
 
@@ -233,7 +267,33 @@ export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "s
     isLoaded,
     isSignedIn: Boolean(isSignedIn),
     signOut,
+    deleteAccount: async () => {
+      if (!user) {
+        throw new Error("Your account is still loading. Try again in a moment.");
+      }
+
+      // Delete app-owned records while the Clerk token is still valid, then
+      // remove the identity and finally clear all on-device app data.
+      await convexMutation("account:deleteMyData");
+      await user.delete();
+      try {
+        await AsyncStorage.clear();
+      } catch (error) {
+        logger.warn("Failed to clear local data after account deletion", {
+          extra: { error: error instanceof Error ? error.message : String(error) },
+        });
+      }
+      logger.clearContext();
+    },
   };
+}
+
+const useAuthControlsImplementation = env.skipAuth
+  ? useSkipAuthControls
+  : useClerkAuthControls;
+
+export function useAuth(): AuthControls {
+  return useAuthControlsImplementation();
 }
 
 /**
@@ -242,18 +302,22 @@ export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "s
  * Returns:
  *   Object with `user` set to the active profile, or null when signed out.
  */
-export function useUser(): { user: User | null } {
+/** Returns the synthetic profile used by skip-auth builds. */
+function useSkipAuthUser(): { user: User | null } {
   const isSkipAuthSignedIn = useSkipAuthSignedInState();
   const skipAuthMode = useSkipAuthMode();
 
-  if (env.skipAuth) {
-    if (skipAuthMode === "dev-bypass") {
-      return { user: isSkipAuthSignedIn ? DEV_BYPASS_USER : null };
-    }
-
-    return { user: isSkipAuthSignedIn ? DEV_SKIP_USER : null };
+  if (skipAuthMode === "dev-bypass") {
+    return { user: isSkipAuthSignedIn ? DEV_BYPASS_USER : null };
   }
 
+  return { user: isSkipAuthSignedIn ? DEV_SKIP_USER : null };
+}
+
+/** Returns the current Clerk profile, including local dev-bypass state. */
+function useClerkUserProfile(): { user: User | null } {
+  const isSkipAuthSignedIn = useSkipAuthSignedInState();
+  const skipAuthMode = useSkipAuthMode();
   const { user } = useClerkUser();
 
   if (isSkipAuthSignedIn) {
@@ -287,6 +351,14 @@ export function useUser(): { user: User | null } {
   };
 }
 
+const useUserImplementation = env.skipAuth
+  ? useSkipAuthUser
+  : useClerkUserProfile;
+
+export function useUser(): { user: User | null } {
+  return useUserImplementation();
+}
+
 /**
  * Returns sign-in helpers used by the login screen.
  *
@@ -296,7 +368,7 @@ export function useUser(): { user: User | null } {
  * Throws:
  *   Error when Clerk is still loading and a real sign-in is attempted.
  */
-export function useSignIn(): {
+interface SignInControls {
   signIn: {
     create: (params: {
       identifier: string;
@@ -305,25 +377,29 @@ export function useSignIn(): {
   };
   setActive: (params: { session: string | null }) => Promise<void>;
   isLoaded: boolean;
-} {
-  if (env.skipAuth) {
-    return {
-      signIn: {
-        create: async () => {
-          logger.info("Skip-auth sign in");
-          return {
-            status: "complete",
-            createdSessionId: DEV_SKIP_SESSION_ID,
-          };
-        },
-      },
-      setActive: async ({ session }) => {
-        setSkipAuthSignedInState(Boolean(session), "skip-auth");
-      },
-      isLoaded: true,
-    };
-  }
+}
 
+/** Returns local sign-in controls when Clerk is intentionally absent. */
+function useSkipSignIn(): SignInControls {
+  return {
+    signIn: {
+      create: async () => {
+        logger.info("Skip-auth sign in");
+        return {
+          status: "complete",
+          createdSessionId: DEV_SKIP_SESSION_ID,
+        };
+      },
+    },
+    setActive: async ({ session }) => {
+      setSkipAuthSignedInState(Boolean(session), "skip-auth");
+    },
+    isLoaded: true,
+  };
+}
+
+/** Returns Clerk-backed sign-in controls. */
+function useClerkSignInControls(): SignInControls {
   const { isLoaded, signIn, setActive } = useClerkSignIn();
 
   return {
@@ -364,6 +440,14 @@ export function useSignIn(): {
   };
 }
 
+const useSignInImplementation = env.skipAuth
+  ? useSkipSignIn
+  : useClerkSignInControls;
+
+export function useSignIn(): SignInControls {
+  return useSignInImplementation();
+}
+
 /**
  * Returns sign-up helpers used by the registration screen.
  *
@@ -373,7 +457,7 @@ export function useSignIn(): {
  * Throws:
  *   Error when Clerk is still loading and a real sign-up step is attempted.
  */
-export function useSignUp(): {
+interface SignUpControls {
   signUp: {
     create: (params: { emailAddress: string; password: string }) => Promise<void>;
     prepareEmailAddressVerification: (params: { strategy: "email_code" }) => Promise<void>;
@@ -383,27 +467,31 @@ export function useSignUp(): {
   };
   setActive: (params: { session: string | null }) => Promise<void>;
   isLoaded: boolean;
-} {
-  if (env.skipAuth) {
-    return {
-      signUp: {
-        create: async () => undefined,
-        prepareEmailAddressVerification: async () => undefined,
-        attemptEmailAddressVerification: async () => {
-          logger.info("Skip-auth sign up verification");
-          return {
-            status: "complete",
-            createdSessionId: DEV_SKIP_SESSION_ID,
-          };
-        },
-      },
-      setActive: async ({ session }) => {
-        setSkipAuthSignedInState(Boolean(session), "skip-auth");
-      },
-      isLoaded: true,
-    };
-  }
+}
 
+/** Returns local sign-up controls when Clerk is intentionally absent. */
+function useSkipSignUp(): SignUpControls {
+  return {
+    signUp: {
+      create: async () => undefined,
+      prepareEmailAddressVerification: async () => undefined,
+      attemptEmailAddressVerification: async () => {
+        logger.info("Skip-auth sign up verification");
+        return {
+          status: "complete",
+          createdSessionId: DEV_SKIP_SESSION_ID,
+        };
+      },
+    },
+    setActive: async ({ session }) => {
+      setSkipAuthSignedInState(Boolean(session), "skip-auth");
+    },
+    isLoaded: true,
+  };
+}
+
+/** Returns Clerk-backed sign-up controls. */
+function useClerkSignUpControls(): SignUpControls {
   const { isLoaded, signUp, setActive } = useClerkSignUp();
 
   return {
@@ -443,6 +531,14 @@ export function useSignUp(): {
     },
     isLoaded,
   };
+}
+
+const useSignUpImplementation = env.skipAuth
+  ? useSkipSignUp
+  : useClerkSignUpControls;
+
+export function useSignUp(): SignUpControls {
+  return useSignUpImplementation();
 }
 
 interface AuthProviderProps {

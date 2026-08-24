@@ -14,7 +14,6 @@ import type { MainTabScreenProps } from "@/types/navigation";
 import type { Peptide } from "@/types/peptide";
 import { QuickMetricType, QUICK_METRIC_INFO, type InjectionSite } from "@/types/tracking";
 import { AdministrationRoute } from "@/types/peptide";
-import { usePeptideStore } from "@/stores/peptide-store";
 
 type LogTab = "dose" | "metric";
 
@@ -127,7 +126,6 @@ export function QuickLogScreen({
   navigation,
 }: MainTabScreenProps<"Log">): React.JSX.Element {
   const { logDose, logMetric, addToStack } = useTrackingStore();
-  const { getPeptideById } = usePeptideStore();
   const { log } = useLogger("QuickLog");
 
   const [activeTab, setActiveTab] = useState<LogTab>("dose");
@@ -152,7 +150,7 @@ export function QuickLogScreen({
     if (peptide) {
       setSelectedPeptideId(peptide.id);
       setDoseName(peptide.name);
-      setDosage(peptide.dosing.typicalDose);
+      setDosage("");
       setIsInjectable(peptide.administrationRoutes.includes(AdministrationRoute.INJECTABLE));
     } else {
       setSelectedPeptideId("custom");
@@ -181,7 +179,7 @@ export function QuickLogScreen({
           peptideId: selectedPeptideId,
           name: doseName.trim(),
           dosage: dosage.trim(),
-          frequency: "Once daily",
+          frequency: "Not specified",
         });
       }
 

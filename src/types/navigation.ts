@@ -84,6 +84,12 @@ export type MainStackParamList = {
   CreateProtocol: undefined;
   /** Health connections management */
   HealthConnections: undefined;
+  /** Nof1 Plus subscription status and management */
+  Subscription: undefined;
+  /** In-app legal and medical-safety document */
+  Legal: {
+    document: "privacy" | "terms" | "medical";
+  };
 };
 
 /**
@@ -124,6 +130,8 @@ export type MainStackScreenProps<T extends keyof MainStackParamList> =
  */
 declare global {
   namespace ReactNavigation {
+    // React Navigation requires declaration merging with an empty interface.
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface RootParamList extends RootStackParamList {}
   }
 }

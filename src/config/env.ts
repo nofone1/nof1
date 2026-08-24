@@ -9,6 +9,19 @@ interface EnvironmentConfig {
   apiBaseUrl: string;
   isDevelopment: boolean;
   skipAuth: boolean;
+  /** RevenueCat public SDK key for iOS. Never a secret key. */
+  revenueCatIosApiKey: string;
+  /** RevenueCat public SDK key for Android. Never a secret key. */
+  revenueCatAndroidApiKey: string;
+  /**
+   * RevenueCat Test Store key. When set it takes precedence over the store
+   * keys so dogfood and E2E runs purchase without real store accounts.
+   */
+  revenueCatTestApiKey: string;
+  /** Public Whop application ID used to start the OAuth flow. */
+  whopAppId: string;
+  /** Public Whop OAuth base URL. Override only for sandbox builds. */
+  whopOauthBaseUrl: string;
 }
 
 const isDevelopment = __DEV__;
@@ -19,10 +32,12 @@ const requestedSkipAuth = process.env.EXPO_PUBLIC_SKIP_AUTH === "true";
  * Resolved app environment.
  *
  * Release dogfood binaries previously crashed because skipAuth was gated on
- * __DEV__ and validateEnvironment threw on missing Clerk/Convex keys. This
- * dogfood branch forces skipAuth so ClerkProvider is omitted without keys.
- * Sessions still start signed-out; before_session + auth_bypass deep link
- * signs in as the Test User (see acceptRevylAuthBypass).
+ * __DEV__ and validateEnvironment threw on missing Clerk/Convex keys. Dogfood
+ * builds instead bake EXPO_PUBLIC_SKIP_AUTH=true at Metro embed time so
+ * ClerkProvider is omitted without keys. Sessions still start signed-out;
+ * before_session + auth_bypass deep link signs in as the Test User (see
+ * acceptRevylAuthBypass). Production/TestFlight builds omit the flag and
+ * therefore always require Clerk.
  */
 export const env: EnvironmentConfig = {
   clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || "",
@@ -30,8 +45,14 @@ export const env: EnvironmentConfig = {
   apiBaseUrl:
     process.env.EXPO_PUBLIC_API_BASE_URL || "https://api.nof1experiments.com",
   isDevelopment,
-  // Dogfood preview: omit Clerk; auth_bypass deep link performs sign-in.
-  skipAuth: true,
+  skipAuth: requestedSkipAuth,
+  revenueCatIosApiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || "",
+  revenueCatAndroidApiKey:
+    process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || "",
+  revenueCatTestApiKey: process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY || "",
+  whopAppId: process.env.EXPO_PUBLIC_WHOP_APP_ID || "",
+  whopOauthBaseUrl:
+    process.env.EXPO_PUBLIC_WHOP_OAUTH_BASE_URL || "https://api.whop.com/oauth",
 };
 
 /**

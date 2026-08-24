@@ -112,7 +112,7 @@ export function ExperimentsScreen({
         )}
       </View>
     ),
-    [experiments, handleCreateExperiment]
+    [experiments, handleCreateExperiment, navigation]
   );
 
   if (isLoading && experiments.length === 0) {

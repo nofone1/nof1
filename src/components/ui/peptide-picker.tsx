@@ -94,7 +94,7 @@ interface PeptideCardProps {
 
 /**
  * Individual peptide selection card.
- * Shows peptide name and typical dose with selection state.
+ * Shows peptide name and prompts for user-entered details.
  *
  * @param peptide - The peptide data to display
  * @param isSelected - Whether this card is currently selected
@@ -115,7 +115,7 @@ function PeptideCard({
         {peptide.name}
       </Text>
       <Text style={[styles.cardDose, isSelected && styles.cardDoseSelected]}>
-        {peptide.dosing.typicalDose}
+        Enter your own dose
       </Text>
     </AnimatedPressable>
   );

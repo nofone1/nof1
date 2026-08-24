@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Input, AnimatedPressable } from "@/components/ui";
-import { useLogger } from "@/hooks/use-logger";
 import { useSignUp, getAuthErrorMessage, logAuthEvent } from "@/services/auth";
 import { colors, spacing, typography } from "@/theme";
 import type { AuthStackScreenProps } from "@/types/navigation";
@@ -30,8 +29,6 @@ export function SignUpScreen({
   navigation,
 }: AuthStackScreenProps<"SignUp">): React.JSX.Element {
   const { signUp, setActive, isLoaded } = useSignUp();
-  const { log } = useLogger("SignUp");
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

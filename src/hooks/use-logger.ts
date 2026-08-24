@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useMemo } from "react";
-import { logger, LogLevel, type LogContext } from "@/services/logging";
+import { logger, type LogContext } from "@/services/logging";
 
 /**
  * Return type for the useLogger hook.
