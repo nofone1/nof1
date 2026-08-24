@@ -43,7 +43,10 @@
       [
         "./plugins/withAndroidMinSdk",
         {
-          "minSdkVersion": 28
+          "minSdkVersion": 28,
+          "architectures": "x86_64",
+          "ndkVersion": "27.1.12297006",
+          "newArchEnabled": false
         }
       ],
       "./plugins/launch-args-module"

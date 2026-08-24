@@ -37,7 +37,7 @@ build:
                 build_commands:
                     - npm ci
                     - npx --yes expo prebuild --platform android --non-interactive --clean
-                    - (cd android && GRADLE_USER_HOME="$PWD/../.gradle-home" ./gradlew assembleDebug)
+                    - (cd android && GRADLE_USER_HOME="$PWD/../.gradle-home" ./gradlew assembleDebug -PreactNativeArchitectures=x86_64)
                 output_path: android/app/build/outputs/apk/debug/*.apk
                 env:
                     EXPO_PUBLIC_SKIP_AUTH: "false"
@@ -67,7 +67,7 @@ build:
                 build_commands:
                     - npm ci
                     - npx --yes expo prebuild --platform android --non-interactive --clean
-                    - (cd android && GRADLE_USER_HOME="$PWD/../.gradle-home" ./gradlew assembleDebug)
+                    - (cd android && GRADLE_USER_HOME="$PWD/../.gradle-home" ./gradlew assembleDebug -PreactNativeArchitectures=x86_64)
                 output_path: android/app/build/outputs/apk/debug/*.apk
                 env:
                     EXPO_PUBLIC_SKIP_AUTH: "true"
@@ -91,7 +91,7 @@ build:
                 build_commands:
                     - npm ci
                     - npx --yes expo prebuild --platform android --non-interactive --clean
-                    - (cd android && GRADLE_USER_HOME="$PWD/../.gradle-home" ./gradlew assembleDebug)
+                    - (cd android && GRADLE_USER_HOME="$PWD/../.gradle-home" ./gradlew assembleDebug -PreactNativeArchitectures=x86_64)
                 output_path: android/app/build/outputs/apk/debug/*.apk
                 env:
                     EXPO_PUBLIC_SKIP_AUTH: "true"
