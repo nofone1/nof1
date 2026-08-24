@@ -105,8 +105,11 @@ Store these names as encrypted build secrets in the **Nof1 Revyl organization**:
 Then build with:
 
 ```sh
-revyl build --remote --platform ios-billing --no-cache
+revyl build --remote --platform ios-billing --no-cache --no-set-current
 ```
+
+`--no-set-current` keeps the standard bypassed `ios` artifact as the default
+for regular Revyl sessions and PR proofs.
 
 Sign in through Clerk with a dedicated QA account. Do not use the Revyl bypass
 deep link for this matrix: bypass access is local-only and does not produce the

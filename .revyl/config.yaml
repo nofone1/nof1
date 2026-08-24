@@ -39,6 +39,7 @@ hotreload:
 build:
     system: Expo
     platforms:
+        # Default iOS profile used by hot reload and PR preview builds.
         ios:
             app_id: e71fb604-d488-4d04-8cc4-81c81502f4b0
             commands:
@@ -55,7 +56,7 @@ build:
         # proof build above, this uses a genuine Clerk session so RevenueCat
         # and Whop entitlements can be written for the signed-in user.
         # Configure the named encrypted secrets in the Nof1 Revyl org, then run:
-        #   revyl build --remote --platform ios-billing --no-cache
+        #   revyl build --remote --platform ios-billing --no-cache --no-set-current
         ios-billing:
             app_id: e71fb604-d488-4d04-8cc4-81c81502f4b0
             commands:
