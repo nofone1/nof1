@@ -30,6 +30,14 @@ export {
   type CardVariant,
 } from "./card";
 
+export {
+  GlassChip,
+  GlassSurface,
+  LiquidGlassAtmosphere,
+  type GlassChipProps,
+  type GlassSurfaceProps,
+} from "./liquid-glass";
+
 // Feedback components
 export { Loading, type LoadingProps } from "./loading";
 export { Badge, type BadgeProps, type BadgeVariant, type BadgeSize } from "./badge";
