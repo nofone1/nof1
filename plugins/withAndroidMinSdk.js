@@ -14,12 +14,18 @@ function setGradleProperty(properties, key, value) {
 
 function withAndroidMinSdk(config, props) {
   const minSdkVersion = String((props && props.minSdkVersion) || 28);
+  const kotlinVersion = String((props && props.kotlinVersion) || '2.1.0');
 
   return withGradleProperties(config, (modConfig) => {
     modConfig.modResults = setGradleProperty(
       modConfig.modResults,
       'android.minSdkVersion',
       minSdkVersion
+    );
+    modConfig.modResults = setGradleProperty(
+      modConfig.modResults,
+      'android.kotlinVersion',
+      kotlinVersion
     );
     return modConfig;
   });

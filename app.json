@@ -43,7 +43,8 @@
       [
         "./plugins/withAndroidMinSdk",
         {
-          "minSdkVersion": 28
+          "minSdkVersion": 28,
+          "kotlinVersion": "2.1.0"
         }
       ],
       "./plugins/launch-args-module"
