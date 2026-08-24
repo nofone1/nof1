@@ -40,6 +40,16 @@
           "target": "18.5"
         }
       ],
+      [
+        "./plugins/withAndroidMinSdk",
+        {
+          "minSdkVersion": 28,
+          "architectures": "x86_64",
+          "ndkVersion": "27.1.12297006",
+          "agpVersion": "8.7.2",
+          "newArchEnabled": false
+        }
+      ],
       "./plugins/launch-args-module"
     ],
     "extra": {
