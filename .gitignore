@@ -83,3 +83,4 @@ watchman-*.log
 .revyl/dev-sessions/
 .revyl/.dev-status.json
 .revyl/.dev-push-manifest.json
+.revyl/config.yaml.bak*
