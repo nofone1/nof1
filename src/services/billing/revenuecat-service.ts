@@ -12,7 +12,6 @@ import Purchases, {
   type CustomerInfo,
   type PurchasesEntitlementInfo,
 } from "react-native-purchases";
-import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import { env } from "@/config/env";
 import { logger } from "@/services/logging";
 import {
@@ -20,6 +19,51 @@ import {
   PLUS_ENTITLEMENT,
   type PlusAccess,
 } from "./types";
+
+const PAYWALL_RESULT = {
+  NOT_PRESENTED: "NOT_PRESENTED",
+  ERROR: "ERROR",
+  CANCELLED: "CANCELLED",
+  PURCHASED: "PURCHASED",
+  RESTORED: "RESTORED",
+} as const;
+
+type PaywallResult = (typeof PAYWALL_RESULT)[keyof typeof PAYWALL_RESULT];
+
+interface PurchasesUiApi {
+  presentPaywallIfNeeded: (options: {
+    requiredEntitlementIdentifier: string;
+  }) => Promise<PaywallResult>;
+  presentCustomerCenter: () => Promise<void>;
+}
+
+/**
+ * Loads the RevenueCat UI native module when this binary linked it.
+ *
+ * Returns:
+ *   The UI API, or null when the Android skip-auth preview unlinked it
+ *   because Expo 52 cannot compile react-native-purchases-ui.
+ *
+ * Throws:
+ *   Never. A missing or broken native module is treated as unavailable.
+ */
+function loadPurchasesUi(): PurchasesUiApi | null {
+  if (Platform.OS === "android" && env.skipAuth) {
+    return null;
+  }
+
+  try {
+    const loaded = require("react-native-purchases-ui") as {
+      default?: PurchasesUiApi;
+    } & PurchasesUiApi;
+    return loaded.default ?? loaded;
+  } catch (error) {
+    logger.warn("RevenueCat UI is not linked in this build", {
+      extra: { error: error instanceof Error ? error.message : String(error) },
+    });
+    return null;
+  }
+}
 
 /** Result of presenting the RevenueCat paywall. */
 export type PaywallOutcome =
@@ -272,16 +316,22 @@ export async function readRevenueCatAccess(): Promise<PlusAccess> {
  *   A PaywallOutcome describing what the user did.
  *
  * Edge cases:
- *   Returns `unavailable` rather than throwing when the build has no SDK key,
- *   so the Subscription screen can show an explanation instead of crashing.
+ *   Returns `unavailable` rather than throwing when the build has no SDK key
+ *   or when Android skip-auth previews unlinked the UI module so Expo 52
+ *   can assembleDebug.
  */
 export async function presentPaywall(): Promise<PaywallOutcome> {
   if (!isRevenueCatConfigured() || configuredAppUserId === null) {
     return { kind: "unavailable", message: UNAVAILABLE_MESSAGE };
   }
 
+  const purchasesUi = loadPurchasesUi();
+  if (purchasesUi === null) {
+    return { kind: "unavailable", message: UNAVAILABLE_MESSAGE };
+  }
+
   try {
-    const result = await RevenueCatUI.presentPaywallIfNeeded({
+    const result = await purchasesUi.presentPaywallIfNeeded({
       requiredEntitlementIdentifier: PLUS_ENTITLEMENT,
     });
 
@@ -347,8 +397,13 @@ export async function presentCustomerCenter(): Promise<boolean> {
     return false;
   }
 
+  const purchasesUi = loadPurchasesUi();
+  if (purchasesUi === null) {
+    return false;
+  }
+
   try {
-    await RevenueCatUI.presentCustomerCenter();
+    await purchasesUi.presentCustomerCenter();
     return true;
   } catch (error) {
     logger.warn("RevenueCat customer center failed", {
