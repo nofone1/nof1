@@ -89,7 +89,7 @@ export function DailyLogScreen({
   }, [loadTrackingData]);
 
   const handleQuickLog = useCallback(() => {
-    navigation.navigate("Log");
+    navigation.navigate("Peptides");
   }, [navigation]);
 
   const handleLogDoseFromStack = useCallback(
