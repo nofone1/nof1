@@ -4,13 +4,13 @@
  */
 
 import React, { useCallback, useState } from "react";
-import { View, Text, ScrollView, Alert, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Alert, StyleSheet, Linking, Share } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, Icon, AnimatedPressable } from "@/components/ui";
 import { useLogger } from "@/hooks/use-logger";
 import {
   useAuth,
-  useLocalAuthMode,
   useUser,
   logAuthEvent,
 } from "@/services/auth";
@@ -26,6 +26,17 @@ interface MenuItemProps {
   isLast?: boolean;
   isWarning?: boolean;
 }
+
+const EXPORT_KEYS = [
+  "@nof1/experiments",
+  "@nof1/protocols",
+  "@nof1/doses",
+  "@nof1/metrics",
+  "@nof1/stack",
+  "@nof1/schedules",
+] as const;
+
+const SUPPORT_EMAIL = "anam@revyl.ai";
 
 /**
  * Menu item component for profile sections.
@@ -60,7 +71,6 @@ function MenuItem({ label, hint, onPress, isLast, isWarning }: MenuItemProps): R
 export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): React.JSX.Element {
   const { user } = useUser();
   const { signOut, deleteAccount } = useAuth();
-  const localAuthMode = useLocalAuthMode();
   const { access, isLoading: isAccessLoading } = useBilling();
   const { log } = useLogger("Profile");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -69,12 +79,6 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
     : access.hasPlus
       ? "Nof1 Plus"
       : "Free Plan";
-  const authHint =
-    localAuthMode === "dev-bypass"
-      ? "Revyl auth bypass"
-      : localAuthMode === "skip-auth"
-        ? "Skip auth"
-        : "Clerk";
 
   const handleSignOut = useCallback(() => {
     Alert.alert("Sign Out", "Are you sure?", [
@@ -93,8 +97,42 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
   }, [user, signOut, log]);
 
   const handleExportLogs = useCallback(async () => {
-    const logs = await logger.getStoredLogs();
-    Alert.alert("Logs", `${logs.length} log entries available.`);
+    try {
+      const logs = await logger.getStoredLogs();
+      await Share.share({
+        title: "Nof1 diagnostic logs",
+        message: JSON.stringify({ exportedAt: new Date().toISOString(), logs }, null, 2),
+      });
+    } catch (error) {
+      Alert.alert("Export failed", error instanceof Error ? error.message : "Please try again.");
+    }
+  }, []);
+
+  const handleExportData = useCallback(async () => {
+    try {
+      const pairs = await AsyncStorage.multiGet([...EXPORT_KEYS]);
+      const data = Object.fromEntries(
+        pairs.map(([key, value]) => {
+          if (!value) return [key, null];
+          try {
+            return [key, JSON.parse(value)];
+          } catch {
+            return [key, value];
+          }
+        })
+      );
+
+      await Share.share({
+        title: "Nof1 data export",
+        message: JSON.stringify(
+          { formatVersion: 1, exportedAt: new Date().toISOString(), data },
+          null,
+          2
+        ),
+      });
+    } catch (error) {
+      Alert.alert("Export failed", error instanceof Error ? error.message : "Please try again.");
+    }
   }, []);
 
   const handleClearLogs = useCallback(() => {
@@ -114,16 +152,20 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
   const handleDeleteAccount = useCallback(() => {
     Alert.alert(
       "Delete Account?",
-      "This permanently deletes your Nof1 account, synced experiments, protocols, tracking data, and billing-access links. It does not cancel an App Store, Google Play, or Whop subscription.",
+      "This permanently deletes your Nof1 account and app data. It does not cancel an App Store subscription.",
       [
         { text: "Cancel", style: "cancel" },
+        {
+          text: "Manage Subscription",
+          onPress: () => void Linking.openURL("https://apps.apple.com/account/subscriptions"),
+        },
         {
           text: "Continue",
           style: "destructive",
           onPress: () => {
             Alert.alert(
               "Final confirmation",
-              "This cannot be undone. Cancel active subscriptions separately in the store where you purchased them.",
+              "This cannot be undone. Cancel any active App Store subscription separately.",
               [
                 { text: "Keep Account", style: "cancel" },
                 {
@@ -181,8 +223,6 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
         {/* Account Section */}
         <Text style={styles.sectionHeader}>Account</Text>
         <Card style={styles.menuCard} animated animationDelay={80}>
-          <MenuItem label="Edit Profile" hint="Coming soon" />
-          <MenuItem label="Notifications" hint="Coming soon" />
           <MenuItem
             label="Subscription"
             hint={subscriptionHint}
@@ -200,15 +240,14 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
         {/* Features Section */}
         <Text style={styles.sectionHeader}>Features</Text>
         <Card style={styles.menuCard} animated animationDelay={160}>
-          <MenuItem label="My Experiments" hint="N-of-1 trials & analysis" onPress={() => navigation.navigate("Experiments")} />
-          <MenuItem label="Health Connections" hint="Apple Health, Google Fit" onPress={() => navigation.navigate("HealthConnections")} isLast />
+          <MenuItem label="My Experiments" hint="Plans & observations" onPress={() => navigation.navigate("Experiments")} isLast />
         </Card>
 
         {/* Data Section */}
         <Text style={styles.sectionHeader}>Data</Text>
         <Card style={styles.menuCard} animated animationDelay={240}>
-          <MenuItem label="Export Experiments" hint="Download your data" onPress={() => {}} />
-          <MenuItem label="Export Logs" hint="For debugging" onPress={handleExportLogs} />
+          <MenuItem label="Export My Data" hint="Share a JSON copy" onPress={handleExportData} />
+          <MenuItem label="Export Diagnostic Logs" hint="Share with support" onPress={handleExportLogs} />
           <MenuItem label="Clear Logs" hint="Remove stored logs" onPress={handleClearLogs} isLast isWarning />
         </Card>
 
@@ -216,7 +255,11 @@ export function ProfileScreen({ navigation }: MainTabScreenProps<"Profile">): Re
         <Text style={styles.sectionHeader}>About</Text>
         <Card style={styles.menuCard} animated animationDelay={320}>
           <MenuItem label="Version" hint="1.0.0" />
-          <MenuItem label="Auth" hint={authHint} />
+          <MenuItem
+            label="Support"
+            hint={SUPPORT_EMAIL}
+            onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+          />
           <MenuItem
             label="Privacy Policy"
             onPress={() => navigation.navigate("Legal", { document: "privacy" })}

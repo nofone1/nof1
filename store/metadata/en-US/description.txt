@@ -1,0 +1,21 @@
+Nof1 helps you run structured personal experiments around routines, habits, and other interventions you have independently chosen.
+
+PLAN A PERSONAL EXPERIMENT
+Write a hypothesis, choose what you want to observe, and set a simple on/off schedule.
+
+CHECK IN EACH DAY
+Record an intervention, add notes, and rate quick metrics such as mood, energy, sleep, focus, stress, and soreness.
+
+REVIEW YOUR OBSERVATIONS
+Keep experiment plans and recent entries together so you can review what you recorded in each phase. Nof1 focuses on your self-reported observations rather than generic recommendations.
+
+KEEP YOUR DATA PORTABLE
+Sync your records to your account, export a readable JSON copy from Profile, and permanently delete your account in the app.
+
+NOF1 PLUS
+Upgrade through the App Store to run multiple active experiments at the same time. Monthly and annual subscriptions renew automatically unless cancelled through your Apple account. The purchase sheet shows the final localized price, trial availability, and billing period before you confirm.
+
+Nof1 is a self-tracking tool, not a medical device or a substitute for professional medical advice. It does not diagnose, treat, prescribe, recommend interventions, or verify user-entered amounts and schedules. Consult a qualified healthcare professional before beginning or changing a health intervention.
+
+Privacy Policy: https://nofone1.github.io/nof1/privacy/
+Terms of Service: https://nofone1.github.io/nof1/terms/

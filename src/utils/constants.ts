@@ -101,39 +101,3 @@ export const METRIC_PRESETS = [
     unit: "hours",
   },
 ] as const;
-
-/**
- * Common intervention presets.
- */
-export const INTERVENTION_PRESETS = [
-  {
-    name: "Creatine",
-    type: "supplement" as const,
-    dosage: "5g",
-    frequency: "Once daily",
-  },
-  {
-    name: "Vitamin D3",
-    type: "supplement" as const,
-    dosage: "5000 IU",
-    frequency: "Once daily",
-  },
-  {
-    name: "Omega-3 Fish Oil",
-    type: "supplement" as const,
-    dosage: "2g",
-    frequency: "Once daily",
-  },
-  {
-    name: "Magnesium Glycinate",
-    type: "supplement" as const,
-    dosage: "400mg",
-    frequency: "Before bed",
-  },
-  {
-    name: "BPC-157",
-    type: "peptide" as const,
-    dosage: "250mcg",
-    frequency: "Twice daily",
-  },
-] as const;

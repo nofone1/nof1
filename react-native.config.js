@@ -1,33 +1,23 @@
 /**
  * Autolinking overrides for Expo / React Native.
  *
- * Revyl preview and skip-auth builds set EXPO_PUBLIC_SKIP_AUTH=true. Those
- * Release binaries must not link expo-dev-client, or they open the Expo
- * "Development servers" picker. Local `expo start` / `revyl dev` leave the
- * env unset so the dev client still links.
- *
- * Android skip-auth previews also drop react-native-purchases-ui: that
- * package needs Kotlin 2.1, which Expo 52 cannot compile.
+ * Android skip-auth previews drop react-native-purchases-ui because billing
+ * is outside the scope of those internal authentication-bypass builds. The
+ * iOS app always links RevenueCat UI so production purchases use StoreKit.
  */
 
 /**
  * Build the React Native CLI config used during `expo prebuild` autolinking.
  *
  * @returns {{dependencies: Record<string, {platforms: {android?: null, ios?: null}}|undefined>}}
- *   Autolinking overrides applied when EXPO_PUBLIC_SKIP_AUTH=true.
+ *   Android-only autolinking override for internal skip-auth builds.
  */
 function createReactNativeConfig() {
-  const stripDevClient = process.env.EXPO_PUBLIC_SKIP_AUTH === 'true';
+  const skipAuth = process.env.EXPO_PUBLIC_SKIP_AUTH === 'true';
 
   return {
-    dependencies: stripDevClient
+    dependencies: skipAuth
       ? {
-          'expo-dev-client': {
-            platforms: {
-              ios: null,
-              android: null,
-            },
-          },
           'react-native-purchases-ui': {
             platforms: {
               android: null,

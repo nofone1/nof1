@@ -9,7 +9,6 @@ if (process.env.EAS_BUILD_PROFILE !== "production") {
 const required = [
   "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
   "EXPO_PUBLIC_CONVEX_URL",
-  "EXPO_PUBLIC_WHOP_APP_ID",
 ];
 
 const platform = process.env.EAS_BUILD_PLATFORM;
@@ -34,12 +33,6 @@ if (process.env.EXPO_PUBLIC_SKIP_AUTH === "true") {
 
 if (process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY?.trim()) {
   failures.push("EXPO_PUBLIC_REVENUECAT_TEST_API_KEY must be unset");
-}
-
-if (
-  process.env.EXPO_PUBLIC_WHOP_OAUTH_BASE_URL?.includes("sandbox-api.whop.com")
-) {
-  failures.push("EXPO_PUBLIC_WHOP_OAUTH_BASE_URL must not use Whop sandbox");
 }
 
 if (failures.length > 0) {

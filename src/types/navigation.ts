@@ -27,6 +27,8 @@ export type AuthStackParamList = {
   SignIn: undefined;
   /** Sign up/registration screen */
   SignUp: undefined;
+  /** Password recovery screen */
+  ForgotPassword: undefined;
 };
 
 /**
@@ -36,8 +38,6 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   /** Daily log screen - main home screen */
   Daily: undefined;
-  /** Peptide database browse screen */
-  Peptides: undefined;
   /** Quick log entry screen */
   Log: undefined;
   /** Protocols list screen */
@@ -59,10 +59,7 @@ export type MainStackParamList = {
     params?: MainTabParamList[keyof MainTabParamList];
   } | undefined;
   /** Create new experiment screen */
-  CreateExperiment: {
-    /** Optional peptide ID to pre-fill intervention data */
-    peptideId?: string;
-  } | undefined;
+  CreateExperiment: undefined;
   /** Experiment detail screen */
   ExperimentDetail: {
     /** ID of the experiment to display */
@@ -73,17 +70,10 @@ export type MainStackParamList = {
     /** ID of the experiment to add entry to */
     experimentId: string;
   };
-  /** Peptide detail screen */
-  PeptideDetail: {
-    /** ID of the peptide to display */
-    peptideId: string;
-  };
   /** Experiments list screen */
   Experiments: undefined;
   /** Create protocol screen */
   CreateProtocol: undefined;
-  /** Health connections management */
-  HealthConnections: undefined;
   /** Nof1 Plus subscription status and management */
   Subscription: undefined;
   /** In-app legal and medical-safety document */

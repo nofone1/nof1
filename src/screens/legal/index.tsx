@@ -7,7 +7,7 @@ import { AnimatedPressable, Icon } from "@/components/ui";
 import { colors, spacing, typography } from "@/theme";
 import type { MainStackScreenProps } from "@/types/navigation";
 
-const LAST_UPDATED = "August 23, 2026";
+const LAST_UPDATED = "September 1, 2026";
 const SUPPORT_EMAIL = "anam@revyl.ai";
 
 interface LegalSection {
@@ -18,15 +18,15 @@ interface LegalSection {
 const PRIVACY_SECTIONS: LegalSection[] = [
   {
     heading: "Information we collect",
-    body: "We process account information such as your name, email address, and account identifier; content you choose to enter such as experiments, protocols, dose logs, metrics, notes, schedules, and stack items; subscription identifiers and entitlement status; and technical information needed to secure, operate, and troubleshoot the app. If you connect a health service, the app may process the health and activity information you authorize that service to provide.",
+    body: "We process account information such as your name, email address, and account identifier; content you choose to enter such as experiments, routines, intervention logs, metrics, notes, schedules, and saved items; subscription identifiers and entitlement status; and technical information needed to secure, operate, and troubleshoot the app.",
   },
   {
     heading: "How we use information",
-    body: "We use this information to provide account sync, tracking, analysis, reminders, subscription access, support, security, and product reliability. We do not sell personal information or use health information for advertising.",
+    body: "We use this information to provide account sync, self-tracking, organized records, reminders, subscription access, support, security, and product reliability. We do not sell personal information or use sensitive information for advertising.",
   },
   {
     heading: "Service providers",
-    body: "We use service providers to operate the app, including Clerk for authentication, Convex for synced application data, RevenueCat and Apple or Google for in-app subscriptions, Whop for connected web memberships, and Terra or the health platform you choose for optional health connections. Each provider processes information under its own terms and privacy commitments.",
+    body: "We use service providers to operate the app, including Clerk for authentication, Convex for synced application data, and RevenueCat and Apple for in-app subscriptions. Each provider processes information under its own terms and privacy commitments.",
   },
   {
     heading: "Storage and retention",
@@ -34,7 +34,7 @@ const PRIVACY_SECTIONS: LegalSection[] = [
   },
   {
     heading: "Your choices and deletion",
-    body: "You can disconnect optional health or Whop connections and delete individual records in the app. You can permanently delete your Nof1 account from Profile. Account deletion removes app-owned cloud records and local app data; payment processors and app stores may retain transaction records when legally required.",
+    body: "You can delete individual records in the app and permanently delete your Nof1 account from Profile. Account deletion removes app-owned cloud records and local app data; payment processors and app stores may retain transaction records when legally required.",
   },
   {
     heading: "Security and age",
@@ -57,11 +57,11 @@ const TERMS_SECTIONS: LegalSection[] = [
   },
   {
     heading: "Medical decisions",
-    body: "Consult a qualified healthcare professional before using any medication, supplement, peptide, research compound, protocol, calculation, or health intervention. Do not use app content to delay or replace medical care. For an emergency, contact local emergency services.",
+    body: "Consult a qualified healthcare professional before beginning or changing medication, supplements, routines, or other health interventions. Do not use app content to delay or replace medical care. For an emergency, contact local emergency services.",
   },
   {
     heading: "Subscriptions",
-    body: "Nof1 Plus is offered at a target U.S. price of $9.99 per month or $79.99 per year. Your store displays and confirms the final localized price before purchase. Subscriptions renew automatically unless cancelled through the store account that processed the purchase. Deleting the app or your Nof1 account does not automatically cancel a subscription.",
+    body: "Nof1 Plus is offered through monthly and annual App Store subscriptions. The App Store displays and confirms the final localized price, trial availability, and billing period before purchase. Subscriptions renew automatically unless cancelled through your Apple account. Deleting the app or your Nof1 account does not automatically cancel a subscription.",
   },
   {
     heading: "Your content and conduct",
@@ -69,7 +69,7 @@ const TERMS_SECTIONS: LegalSection[] = [
   },
   {
     heading: "Availability and disclaimers",
-    body: "The app and its content are provided on an as-available basis. Research summaries, estimates, calculations, and external-source information may be incomplete, outdated, or inaccurate. To the extent permitted by law, we disclaim implied warranties and liability for decisions made from app content.",
+    body: "The app and its records are provided on an as-available basis. Self-reported observations may be incomplete or inaccurate. To the extent permitted by law, we disclaim implied warranties and liability for decisions made from app content.",
   },
   {
     heading: "Changes and contact",
@@ -83,12 +83,12 @@ const MEDICAL_SECTIONS: LegalSection[] = [
     body: "Nof1 is an educational tracking application, not a medical device. It does not diagnose, treat, cure, prevent, monitor, or prescribe for any disease or condition. Information in the app is general and is not personalized medical advice.",
   },
   {
-    heading: "Research compounds",
-    body: "Some compounds described in the app may be investigational, unapproved for human use, prohibited in sport, or supported mainly by animal or early-stage research. Inclusion in the library is not a recommendation to obtain or use them.",
+    heading: "User-entered interventions",
+    body: "Nof1 does not recommend interventions. You are responsible for the names, amounts, schedules, and notes you enter and should verify them with a qualified healthcare professional when relevant.",
   },
   {
-    heading: "Doses and calculations",
-    body: "Any dose, timing, concentration, reconstitution, pharmacokinetic, or protocol information is an educational estimate and can be wrong. Never prepare, inject, ingest, stop, or change a substance based only on this app. Confirm the exact product, concentration, route, interactions, contraindications, and instructions with a licensed clinician and pharmacist.",
+    heading: "Amounts and schedules",
+    body: "The app records the amount, duration, frequency, and schedule you enter; it does not calculate, prescribe, or verify them. Never begin, stop, or change medication or another health intervention based only on this app.",
   },
   {
     heading: "Get professional help",

@@ -57,8 +57,8 @@ export function ExperimentsScreen({
         </View>
         <Text style={styles.emptyTitle}>No experiments yet</Text>
         <Text style={styles.emptySubtitle}>
-          N-of-1 experiments help you systematically test what works for you.
-          Track interventions with on/off phases to see real effects.
+          N-of-1 experiments help you compare your own observations across
+          planned on/off phases.
         </Text>
         <Button variant="primary" size="lg" onPress={handleCreateExperiment}>
           Start Your First Experiment
@@ -95,8 +95,8 @@ export function ExperimentsScreen({
           </View>
           <Text style={styles.infoText}>
             N-of-1 experiments are personal trials where you alternate between
-            taking an intervention and not taking it. By tracking metrics during
-            both phases, you can see if something actually works for you.
+            using an intervention and not using it. Tracking the same metrics in
+            both phases can make your self-reported patterns easier to review.
           </Text>
         </Card>
 

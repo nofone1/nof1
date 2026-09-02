@@ -15,7 +15,7 @@ build:
     profiles:
         billing:
             ios:
-                app_id: e71fb604-d488-4d04-8cc4-81c81502f4b0
+                app_id: 92bd5b49-1cb9-4ceb-aec9-66094fd8a1e7
                 build_commands:
                     - npm ci
                     - npx --yes expo prebuild --platform ios --non-interactive --clean
@@ -30,10 +30,8 @@ build:
                     - EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
                     - EXPO_PUBLIC_CONVEX_URL
                     - EXPO_PUBLIC_REVENUECAT_TEST_API_KEY
-                    - EXPO_PUBLIC_WHOP_APP_ID
-                    - EXPO_PUBLIC_WHOP_OAUTH_BASE_URL
             android:
-                app_id: c49c9da9-09ee-4db8-aead-304b109ad2c0
+                app_id: 91b8d0d3-423e-433b-90ee-21632bd9a71c
                 build_commands:
                     - npm ci
                     - npx --yes expo prebuild --platform android --non-interactive --clean
@@ -47,11 +45,9 @@ build:
                     - EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
                     - EXPO_PUBLIC_CONVEX_URL
                     - EXPO_PUBLIC_REVENUECAT_TEST_API_KEY
-                    - EXPO_PUBLIC_WHOP_APP_ID
-                    - EXPO_PUBLIC_WHOP_OAUTH_BASE_URL
         development:
             ios:
-                app_id: e71fb604-d488-4d04-8cc4-81c81502f4b0
+                app_id: 92bd5b49-1cb9-4ceb-aec9-66094fd8a1e7
                 build_commands:
                     - npm ci
                     - npx --yes expo prebuild --platform ios --non-interactive --clean
@@ -63,7 +59,7 @@ build:
                     NODE_ENV: production
                     REVYL_USE_FINGERPRINT: "1"
             android:
-                app_id: c49c9da9-09ee-4db8-aead-304b109ad2c0
+                app_id: 91b8d0d3-423e-433b-90ee-21632bd9a71c
                 build_commands:
                     - npm ci
                     - npx --yes expo prebuild --platform android --non-interactive --clean
@@ -75,7 +71,7 @@ build:
                     REVYL_USE_FINGERPRINT: "1"
         pr-review:
             ios:
-                app_id: e71fb604-d488-4d04-8cc4-81c81502f4b0
+                app_id: 92bd5b49-1cb9-4ceb-aec9-66094fd8a1e7
                 build_commands:
                     - npm ci
                     - npx --yes expo prebuild --platform ios --non-interactive --clean
@@ -87,7 +83,7 @@ build:
                     NODE_ENV: production
                     REVYL_USE_FINGERPRINT: "1"
             android:
-                app_id: c49c9da9-09ee-4db8-aead-304b109ad2c0
+                app_id: 91b8d0d3-423e-433b-90ee-21632bd9a71c
                 build_commands:
                     - npm ci
                     - npx --yes expo prebuild --platform android --non-interactive --clean

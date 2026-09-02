@@ -10,7 +10,6 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
-  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Badge, Button, Card, Icon, AnimatedPressable } from "@/components/ui";
@@ -18,10 +17,6 @@ import { describeProvider, useBilling } from "@/services/billing";
 import { colors, spacing, typography } from "@/theme";
 import type { AccessSource } from "@/services/billing";
 import type { MainStackScreenProps } from "@/types/navigation";
-
-const WHOP_MEMBERSHIPS_URL = "https://whop.com/orders";
-const MONTHLY_PRICE = "$9.99";
-const ANNUAL_PRICE = "$79.99";
 
 /**
  * Formats an ISO timestamp as a readable date.
@@ -85,21 +80,18 @@ export function SubscriptionScreen({
     isLoading,
     error,
     isPurchaseAvailable,
-    isWhopAvailable,
     upgrade,
     restore,
     refresh,
     openStoreManagement,
-    connectWhop,
-    disconnectWhop,
   } = useBilling();
   const [isBusy, setIsBusy] = useState(false);
 
   const hasStoreSource = access.sources.some(
     (source) => source.provider === "revenuecat"
   );
-  const hasWhopSource = access.sources.some(
-    (source) => source.provider === "whop"
+  const visibleSources = access.sources.filter(
+    (source) => source.provider === "revenuecat"
   );
 
   /**
@@ -157,48 +149,6 @@ export function SubscriptionScreen({
     [run, restore]
   );
 
-  const handleConnectWhop = useCallback(
-    () =>
-      run(async () => {
-        const outcome = await connectWhop();
-
-        switch (outcome.kind) {
-          case "connected":
-            Alert.alert("Whop connected", "Nof1 Plus is now active.");
-            return;
-          case "no_membership":
-            Alert.alert("No membership found", outcome.message);
-            return;
-          case "cancelled":
-            return;
-          case "error":
-          case "unavailable":
-            Alert.alert("Could not connect Whop", outcome.message);
-            return;
-          default: {
-            const exhaustive: never = outcome;
-            throw new Error(`Unhandled outcome: ${JSON.stringify(exhaustive)}`);
-          }
-        }
-      }),
-    [run, connectWhop]
-  );
-
-  const handleDisconnectWhop = useCallback(() => {
-    Alert.alert(
-      "Disconnect Whop?",
-      "This unlinks your Whop account from Nof1. It does not cancel your Whop membership.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Disconnect",
-          style: "destructive",
-          onPress: () => run(async () => void (await disconnectWhop())),
-        },
-      ]
-    );
-  }, [run, disconnectWhop]);
-
   const handleRefresh = useCallback(
     () => run(async () => void (await refresh())),
     [run, refresh]
@@ -243,8 +193,8 @@ export function SubscriptionScreen({
                 {isLoading
                   ? "Checking your access…"
                   : access.hasPlus
-                    ? `${describeProvider(access.primarySource)} · ${formatExpiry(access.expiresAt)}`
-                    : "Unlimited experiments, advanced analysis, and data export"}
+                    ? `${access.primarySource === "revenuecat" ? describeProvider(access.primarySource) : "Existing access"} · ${formatExpiry(access.expiresAt)}`
+                    : "Track one active experiment at a time"}
               </Text>
             </View>
             <Badge variant={access.hasPlus ? "success" : "default"} size="md">
@@ -293,28 +243,22 @@ export function SubscriptionScreen({
         {!access.hasPlus && (
           <Card style={styles.pricingCard}>
             <Text style={styles.pricingTitle}>Nof1 Plus plans</Text>
-            <View style={styles.priceRow}>
-              <View style={styles.priceOption}>
-                <Text style={styles.price}>{MONTHLY_PRICE}</Text>
-                <Text style={styles.pricePeriod}>per month</Text>
-              </View>
-              <View style={styles.priceOption}>
-                <Text style={styles.price}>{ANNUAL_PRICE}</Text>
-                <Text style={styles.pricePeriod}>per year</Text>
-              </View>
-            </View>
+            <Text style={styles.planBenefit}>
+              Plus lets you run multiple active experiments at the same time.
+            </Text>
             <Text style={styles.pricingDisclosure}>
-              Subscriptions renew automatically until cancelled. Your store
-              shows the final localized price and billing terms before purchase.
+              Monthly and annual subscriptions renew automatically until
+              cancelled. The App Store purchase sheet shows your localized price,
+              trial availability, and billing terms before purchase.
             </Text>
           </Card>
         )}
 
-        {access.sources.length > 0 && (
+        {visibleSources.length > 0 && (
           <>
             <Text style={styles.sectionHeader}>Access sources</Text>
             <Card style={styles.sourcesCard}>
-              {access.sources.map((source) => (
+              {visibleSources.map((source) => (
                 <SourceRow key={source.provider} source={source} />
               ))}
             </Card>
@@ -331,40 +275,6 @@ export function SubscriptionScreen({
               testID="subscription-manage-store"
             >
               Manage App Store subscription
-            </Button>
-          )}
-
-          {hasWhopSource && (
-            <Button
-              variant="secondary"
-              fullWidth
-              onPress={() => void Linking.openURL(WHOP_MEMBERSHIPS_URL)}
-              testID="subscription-manage-whop"
-            >
-              Manage Whop membership
-            </Button>
-          )}
-
-          {isWhopAvailable && !hasWhopSource && (
-            <Button
-              variant="secondary"
-              fullWidth
-              onPress={handleConnectWhop}
-              loading={isBusy}
-              testID="subscription-connect-whop"
-            >
-              Connect Whop
-            </Button>
-          )}
-
-          {hasWhopSource && (
-            <Button
-              variant="ghost"
-              fullWidth
-              onPress={handleDisconnectWhop}
-              testID="subscription-disconnect-whop"
-            >
-              Disconnect Whop
             </Button>
           )}
 
@@ -463,26 +373,10 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     marginBottom: spacing.base,
   },
-  priceRow: {
-    flexDirection: "row",
-    gap: spacing.md,
-    marginBottom: spacing.base,
-  },
-  priceOption: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: 12,
-    padding: spacing.base,
-  },
-  price: {
-    ...typography.heading2,
-    color: colors.primary[500],
-  },
-  pricePeriod: {
-    ...typography.small,
+  planBenefit: {
+    ...typography.body,
     color: colors.text.secondary,
-    marginTop: spacing.xs,
+    marginBottom: spacing.base,
   },
   pricingDisclosure: {
     ...typography.captionSmall,

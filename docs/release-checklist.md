@@ -1,130 +1,92 @@
-# Release checklist
+# App Store release checklist
 
-The codebase is configured for Nof1 Plus at **$9.99/month** and
-**$79.99/year**. Storefront-localized prices remain authoritative.
+The first release is iPhone-only and intentionally limited to user-entered,
+general self-tracking. It does not ship the peptide library, dosing calculators,
+injection UI, Terra/HealthKit integration, or an external membership connector.
 
-## Automated release gate
+## Automated gate
 
-Run `npm run release:check`. EAS also runs `scripts/validate-release-env.js`
-before every production build. A production build fails when authentication,
-Convex, the platform's RevenueCat SDK key, or the Whop app ID is missing; when
-skip-auth is enabled; or when a RevenueCat Test Store key or Whop sandbox OAuth
-URL leaks into production.
+Run `npm run release:check`. It validates the App Store package, lints and type
+checks the source, runs the test suite, and runs Expo Doctor. EAS separately runs
+`scripts/validate-release-env.js` before every production build.
 
-## EAS production environment
-
-Create these in the EAS `production` environment:
+## Required EAS production environment
 
 - `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `EXPO_PUBLIC_CONVEX_URL`
 - `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`
-- `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`
-- `EXPO_PUBLIC_WHOP_APP_ID`
 
-`EXPO_PUBLIC_REVENUECAT_TEST_API_KEY` and `EXPO_PUBLIC_SKIP_AUTH` must be
-unset. `EXPO_PUBLIC_WHOP_OAUTH_BASE_URL` should be omitted so the production
-default is used.
+`EXPO_PUBLIC_SKIP_AUTH` and `EXPO_PUBLIC_REVENUECAT_TEST_API_KEY` must be unset.
+The production profile excludes the test-only launch-arguments native module,
+uses the latest EAS image, and auto-increments the build number.
 
-## App Store Connect and Google Play
+## Apple and RevenueCat setup
 
-- Accept paid-app agreements and finish bank, tax, merchant, and payout setup.
-- Create monthly and annual auto-renewing subscriptions at $9.99 and $79.99.
-- Add localized names, descriptions, review screenshots, and availability.
-- Configure the subscription group/base plans and activate the products.
-- Submit the first Apple subscriptions with the app version.
-- Complete App Privacy, Google Data Safety, and Google Health Apps forms.
-- Add public support, privacy-policy, and account-deletion URLs to both listings.
-- Verify the Apple developer account is an Organization before submitting the
-  app's sensitive health functionality.
+- Accept Apple's Paid Applications agreement and finish banking and tax setup.
+- Create one auto-renewable subscription group with monthly and annual products.
+- Add localized product names, descriptions, prices, availability, and review
+  screenshots; submit the first subscriptions with the app version.
+- Import both Apple products into RevenueCat, attach them to the `nof1_plus`
+  entitlement, add monthly and annual packages to the current offering, and
+  publish a paywall with renewal terms plus Privacy and Terms links.
+- Configure RevenueCat Customer Center and its signed production webhook to the
+  Convex endpoint documented in `docs/billing-setup.md`.
+- Add the iOS public RevenueCat SDK key to the EAS production environment.
 
-## RevenueCat production
+## App Store Connect listing
 
-- Add the iOS and Android store apps and their credentials.
-- Import all four store products and attach them to `nof1_plus`.
-- Add monthly and annual packages to the default offering.
-- Publish a paywall that clearly shows renewal terms and links to Terms and
-  Privacy; enable Customer Center.
-- Configure the production webhook and signing secret described in
-  `docs/billing-setup.md`.
+Copy the reviewed files from `store/metadata/en-US`. The GitHub Pages workflow
+publishes `site/` after merge to main; confirm the privacy, terms, support, and
+deletion URLs return HTTP 200 before submission.
 
-## Whop production
+Complete these App Store Connect sections manually because they are account
+attestations rather than source code:
 
-- Create a production business product and $9.99/$79.99 plans; sandbox objects
-  do not transfer.
-- Create the production OAuth app and register `nof1://oauth/whop`.
-- Set `WHOP_API_KEY` to a **company API key** used for membership reads.
-- Set `WHOP_OAUTH_CLIENT_SECRET` to the **app API key** used for OAuth exchange.
-- Set the production app, product, and webhook values on the production Convex
-  deployment; remove both Whop sandbox base-URL overrides.
-- Keep Whop checkout outside the mobile app. The app only connects an existing
-  membership.
+- App Privacy answers for contact information, user content, identifiers,
+  purchases, and diagnostics, based on the final production configuration.
+- Age rating, content rights, export compliance, category, territories, and the
+  Digital Services Act trader declaration where applicable.
+- App Review contact details and a working review account if reviewers cannot
+  use self-service sign-up.
+- Subscription review screenshots and one to ten App Store screenshots showing
+  the signed-in product without keyboards, development menus, or test overlays.
+  Capture the final set at one of Apple's required 6.9-inch sizes (for example,
+  1260 x 2736 portrait) or an accepted 6.5-inch fallback; do not stretch the
+  1179 x 2556 Revyl proof images. Confirm dimensions against Apple's current
+  [screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/).
 
-## Legal and medical review
+## Legal review
 
-The app contains an in-app Privacy Policy, Terms, Medical Safety disclosure,
-and permanent account deletion. Before submission, counsel should approve the
-copy and the same Privacy Policy and deletion instructions must be hosted at
-public URLs.
+The app and `site/` contain matching Privacy, Terms, medical-safety, support,
+and account-deletion copy. The operator should have counsel approve the final
+text and confirm the support contact and legal entity details before it becomes
+public. Account deletion is available in Profile and warns that deleting an
+account does not cancel an App Store subscription.
 
-The first-release UI no longer shows the reconstitution calculator, protocol
-dose examples, peptide-library dose cards, automatic dose/frequency prefill, or
-"next dose" recommendations. It still contains health and research content, so
-medical/regulatory review and accurate store declarations remain mandatory.
+## Physical-device/TestFlight matrix
 
-## Physical-device acceptance matrix
+- Sign up, email verification, sign in, password reset, sign out, and account
+  deletion.
+- Create/edit/delete experiments and protocols, daily metric/intervention logs,
+  app relaunch, offline behavior, and sync on a second device.
+- Monthly and annual purchase, cancellation, renewal, expiration, grace period,
+  billing retry, refund, Restore Purchases, and Customer Center.
+- Entitlement behavior after relaunch, sign-out/sign-in, reinstall, and webhook
+  delay/retry/duplicate delivery.
+- JSON data export, diagnostic-log export, privacy/terms/support links, Dynamic
+  Type, VoiceOver, dark mode, interrupted network requests, and a small-screen
+  iPhone.
 
-Test both monthly and annual products on TestFlight and Google internal/closed
-tracks:
-
-- new purchase, cancellation, renewal, expiration, grace period, billing retry,
-  refund, and restore;
-- entitlement after relaunch, sign-out/sign-in, reinstall, and a second device;
-- RevenueCat webhook delay/retry and duplicate delivery;
-- Whop sandbox checkout, OAuth connection, cancellation, refund, and webhook;
-- account deletion with synced records and an active subscription warning;
-- production auth, sync, paywall, Customer Center, privacy/terms, and support
-  flows on physical iOS and Android devices.
-
-## Revyl billing acceptance build
-
-The default Revyl `ios` build is a UI-proof build. It bakes in
-`EXPO_PUBLIC_SKIP_AUTH=true`, deliberately omits provider configuration, and
-therefore cannot verify a provider-to-Convex entitlement. A disabled Upgrade
-button, an unavailable Restore message, and Free after Refresh are expected in
-that build rather than evidence of a billing regression.
-
-For end-to-end sandbox billing, use the separate `ios-billing` build profile.
-Store these names as encrypted build secrets in the **Nof1 Revyl organization**:
-
-- `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- `EXPO_PUBLIC_CONVEX_URL`
-- `EXPO_PUBLIC_REVENUECAT_TEST_API_KEY`
-- `EXPO_PUBLIC_WHOP_APP_ID`
-- `EXPO_PUBLIC_WHOP_OAUTH_BASE_URL`
-
-Then build with:
+## Release commands
 
 ```sh
-revyl build --remote --platform ios-billing --no-cache --no-set-current
+npm ci
+npm run release:check
+npx expo export --platform ios --output-dir .context/ios-export
+eas build --platform ios --profile production
+eas submit --platform ios --profile production --latest
 ```
 
-`--no-set-current` keeps the standard bypassed `ios` artifact as the default
-for regular Revyl sessions and PR proofs.
-
-Sign in through Clerk with a dedicated QA account. Do not use the Revyl bypass
-deep link for this matrix: bypass access is local-only and does not produce the
-Clerk identity required by Convex billing actions. RevenueCat Test Store can be
-verified on the simulator. Whop additionally requires the matching sandbox
-server variables in Convex, including a company API key in `WHOP_API_KEY`.
-
-This path does not use EAS, but it does intentionally keep Expo's native
-prebuild step because the application is an Expo project.
-
-## Planned SDK maintenance
-
-Expo Doctor is green on SDK 52. Clerk Core 2 is pinned to its Expo-52-compatible
-release; moving to the renamed Clerk Core 3 package requires Expo SDK 53 or
-newer. The remaining npm audit findings are in Expo/Metro build-tool dependency
-chains whose automated fix attempts a breaking Expo/React Native upgrade. Plan
-the Expo + Clerk migration as a tested release rather than forcing incompatible
-packages into this one.
+Do not run the final build until the production RevenueCat key is present. Do
+not submit until legal copy, privacy answers, products, screenshots, and the
+TestFlight device matrix have been approved.

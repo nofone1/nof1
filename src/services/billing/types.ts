@@ -85,7 +85,7 @@ export interface UseAccessResult {
  *   provider: Provider to describe, or null when the user is Free.
  *
  * Returns:
- *   Display label such as "App Store" or "Whop".
+ *   Display label such as "App Store" or "Existing access".
  *
  * Edge cases:
  *   RevenueCat is presented as the underlying store because that is what the
@@ -96,7 +96,7 @@ export function describeProvider(provider: BillingProviderId | null): string {
     case "revenuecat":
       return "App Store / Play Store";
     case "whop":
-      return "Whop";
+      return "Existing access";
     case "manual":
       return "Granted by Nof1";
     case null:

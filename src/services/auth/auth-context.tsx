@@ -8,10 +8,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   useAuth as useClerkAuth,
   useClerk,
+  useUser as useClerkUser,
+} from "@clerk/expo";
+import {
   useSignIn as useClerkSignIn,
   useSignUp as useClerkSignUp,
-  useUser as useClerkUser,
-} from "@clerk/clerk-expo";
+} from "@clerk/expo/legacy";
 import { env } from "@/config/env";
 import { logger } from "@/services/logging";
 import { setConvexTokenGetter } from "@/services/backend/convex-client";
@@ -42,7 +44,7 @@ const DEV_SKIP_USER: User = {
 
 const DEV_BYPASS_USER: User = {
   id: "dev-bypass-user",
-  email: "test@gmail.com",
+  email: "revyl-test@local.nof1",
   firstName: "Test",
   lastName: "User",
 };
@@ -50,9 +52,6 @@ const DEV_BYPASS_USER: User = {
 // Dev-only convenience bypass for local testing of auth flow.
 // Active in development builds only and intentionally hardcoded.
 const DEV_SKIP_SESSION_ID = "dev-skip-session";
-const DEV_BYPASS_SESSION_ID = "dev-bypass-session";
-const DEV_BYPASS_EMAIL = "test@gmail.com";
-const DEV_BYPASS_PASSWORD = "peptideking";
 
 type LocalAuthMode = "skip-auth" | "dev-bypass" | "none";
 
@@ -173,25 +172,6 @@ export function useLocalAuthMode(): LocalAuthMode {
 
 function useSkipAuthMode(): LocalAuthMode {
   return useLocalAuthMode();
-}
-
-/**
- * Returns whether the given credentials match the hardcoded dev bypass login.
- *
- * Params:
- *   identifier: Email/username entered by the user.
- *   password: Password entered by the user.
- *
- * Returns:
- *   True only in development builds with the exact bypass credentials.
- */
-function isDevBypassCredential(identifier: string, password: string): boolean {
-  return (
-    env.isDevelopment &&
-    // Keep this login shortcut explicit and intentionally scoped to dev only.
-    identifier === DEV_BYPASS_EMAIL &&
-    password === DEV_BYPASS_PASSWORD
-  );
 }
 
 /**
@@ -376,6 +356,11 @@ interface SignInControls {
     }) => Promise<{ status: string; createdSessionId: string | null }>;
   };
   setActive: (params: { session: string | null }) => Promise<void>;
+  requestPasswordReset: (identifier: string) => Promise<void>;
+  completePasswordReset: (params: {
+    code: string;
+    password: string;
+  }) => Promise<{ status: string; createdSessionId: string | null }>;
   isLoaded: boolean;
 }
 
@@ -394,6 +379,10 @@ function useSkipSignIn(): SignInControls {
     setActive: async ({ session }) => {
       setSkipAuthSignedInState(Boolean(session), "skip-auth");
     },
+    requestPasswordReset: async () => {
+      throw new Error("Password reset is unavailable in an internal test build.");
+    },
+    completePasswordReset: async () => ({ status: "", createdSessionId: null }),
     isLoaded: true,
   };
 }
@@ -405,14 +394,6 @@ function useClerkSignInControls(): SignInControls {
   return {
     signIn: {
       create: async ({ identifier, password }) => {
-        if (isDevBypassCredential(identifier.trim(), password)) {
-          logger.info("Dev auth bypass sign in used");
-          return {
-            status: "complete",
-            createdSessionId: DEV_BYPASS_SESSION_ID,
-          };
-        }
-
         if (!isLoaded || !signIn) {
           throw new Error("Authentication is still loading");
         }
@@ -429,12 +410,32 @@ function useClerkSignInControls(): SignInControls {
         return;
       }
 
-      if (session === DEV_BYPASS_SESSION_ID) {
-        setSkipAuthSignedInState(true, "dev-bypass");
-        return;
+      await setActive({ session: session ?? undefined });
+    },
+    requestPasswordReset: async (identifier) => {
+      if (!isLoaded || !signIn) {
+        throw new Error("Authentication is still loading");
       }
 
-      await setActive({ session: session ?? undefined });
+      await signIn.create({
+        strategy: "reset_password_email_code",
+        identifier,
+      });
+    },
+    completePasswordReset: async ({ code, password }) => {
+      if (!isLoaded || !signIn) {
+        throw new Error("Authentication is still loading");
+      }
+
+      const result = await signIn.attemptFirstFactor({
+        strategy: "reset_password_email_code",
+        code,
+        password,
+      });
+      return {
+        status: result.status ?? "",
+        createdSessionId: result.createdSessionId,
+      };
     },
     isLoaded,
   };

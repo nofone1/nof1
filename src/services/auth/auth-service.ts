@@ -45,7 +45,7 @@ export function getAuthErrorMessage(error: unknown): string {
       return "Please enter a valid email address.";
     }
     if (message.includes("password")) {
-      return "Password must be at least 6 characters.";
+      return "Password does not meet the account security requirements.";
     }
     if (message.includes("already exists") || message.includes("taken")) {
       return "An account with this email already exists.";

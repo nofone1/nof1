@@ -7,16 +7,12 @@ import React, { useCallback, useEffect } from "react";
 import { View, Text, ScrollView, StyleSheet, RefreshControl, Alert, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, Button, Icon, Loading } from "@/components/ui";
-import { ConcentrationDashboard } from "@/components/tracking/concentration-dashboard";
-import { usePeptideStore } from "@/stores/peptide-store";
-import { useHealthStore } from "@/stores/health-store";
-import type { Pharmacokinetics } from "@/types/peptide";
 import { useTrackingStore, useTodaysDoses, useTodaysMetrics, useActiveStack } from "@/stores/tracking-store";
 import { useLogger } from "@/hooks/use-logger";
 import { colors, spacing, typography } from "@/theme";
 import type { MainTabScreenProps } from "@/types/navigation";
 import type { DoseEntry, MetricEntry, StackItem } from "@/types/tracking";
-import { QUICK_METRIC_INFO, QuickMetricType, INJECTION_SITE_LABELS } from "@/types/tracking";
+import { QUICK_METRIC_INFO, QuickMetricType } from "@/types/tracking";
 
 /**
  * Formats a date for display.
@@ -53,36 +49,15 @@ function formatTime(date: Date): string {
 export function DailyLogScreen({
   navigation,
 }: MainTabScreenProps<"Daily">): React.JSX.Element {
-  const { loadTrackingData, isLoading, logDose, doses, deleteDose, deleteMetric } = useTrackingStore();
+  const { loadTrackingData, isLoading, logDose, deleteDose, deleteMetric } = useTrackingStore();
   const todaysDoses = useTodaysDoses();
   const todaysMetrics = useTodaysMetrics();
   const activeStack = useActiveStack();
-  const { allPeptides, loadPeptides } = usePeptideStore();
-  const { isConnected, todayActivity, todaySleep } = useHealthStore();
   const { log } = useLogger("DailyLog");
-
-  // Build pharmacokinetics map for concentration tracking
-  const pharmacokineticsMap = React.useMemo(() => {
-    const map = new Map<string, Pharmacokinetics>();
-    for (const peptide of allPeptides) {
-      if (peptide.pharmacokinetics) {
-        map.set(peptide.id, peptide.pharmacokinetics);
-      }
-    }
-    return map;
-  }, [allPeptides]);
-
-  // Get last 7 days of doses for concentration calculation
-  const recentDoses = React.useMemo(() => {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return doses.filter((d) => new Date(d.timestamp) >= sevenDaysAgo);
-  }, [doses]);
 
   useEffect(() => {
     loadTrackingData();
-    loadPeptides();
-  }, [loadTrackingData, loadPeptides]);
+  }, [loadTrackingData]);
 
   const handleRefresh = useCallback(() => {
     loadTrackingData();
@@ -109,7 +84,7 @@ export function DailyLogScreen({
   );
 
   const handleDeleteDose = useCallback((id: string) => {
-    Alert.alert("Delete Entry", "Delete this dose entry?", [
+    Alert.alert("Delete Entry", "Delete this intervention entry?", [
       { text: "Cancel", style: "cancel" },
       { text: "Delete", style: "destructive", onPress: () => deleteDose(id) },
     ]);
@@ -121,10 +96,6 @@ export function DailyLogScreen({
       { text: "Delete", style: "destructive", onPress: () => deleteMetric(id) },
     ]);
   }, [deleteMetric]);
-
-  const handleViewPeptides = useCallback(() => {
-    navigation.navigate("Peptides");
-  }, [navigation]);
 
   if (isLoading && todaysDoses.length === 0 && todaysMetrics.length === 0) {
     return (
@@ -151,9 +122,8 @@ export function DailyLogScreen({
         }
       >
         {/* Header */}
-        {/* dogfood: sao-paulo proof_of_changes retrigger 2026-08-24T23:41 */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Today · Daily Log · sao-paulo</Text>
+          <Text style={styles.greeting}>Today</Text>
           <Text style={styles.date}>{formatDisplayDate(today)}</Text>
         </View>
 
@@ -163,46 +133,6 @@ export function DailyLogScreen({
             Log Entry
           </Button>
         </View>
-
-        {/* Health Snapshot */}
-        {isConnected && (todayActivity || todaySleep) && (
-          <Card style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <Icon name="heart" size={18} color={colors.accent.error} />
-                <Text style={styles.sectionTitle}>Health Snapshot</Text>
-              </View>
-            </View>
-            <View style={styles.healthGrid}>
-              {todayActivity?.steps != null && (
-                <View style={styles.healthItem}>
-                  <Text style={styles.healthValue}>{todayActivity.steps.toLocaleString()}</Text>
-                  <Text style={styles.healthLabel}>Steps</Text>
-                </View>
-              )}
-              {todayActivity?.heartRateResting != null && (
-                <View style={styles.healthItem}>
-                  <Text style={styles.healthValue}>{todayActivity.heartRateResting}</Text>
-                  <Text style={styles.healthLabel}>Resting HR</Text>
-                </View>
-              )}
-              {todaySleep?.totalSleepMinutes != null && (
-                <View style={styles.healthItem}>
-                  <Text style={styles.healthValue}>
-                    {Math.floor(todaySleep.totalSleepMinutes / 60)}h {todaySleep.totalSleepMinutes % 60}m
-                  </Text>
-                  <Text style={styles.healthLabel}>Sleep</Text>
-                </View>
-              )}
-              {todaySleep?.hrv != null && (
-                <View style={styles.healthItem}>
-                  <Text style={styles.healthValue}>{Math.round(todaySleep.hrv)}</Text>
-                  <Text style={styles.healthLabel}>HRV</Text>
-                </View>
-              )}
-            </View>
-          </Card>
-        )}
 
         {/* My Stack Section */}
         <Card style={styles.section}>
@@ -219,11 +149,8 @@ export function DailyLogScreen({
           {activeStack.length === 0 ? (
             <View style={styles.emptySection}>
               <Text style={styles.emptySectionText}>
-                No peptides or supplements in your stack yet.
+                No saved interventions yet. Add one while logging an entry.
               </Text>
-              <Button variant="secondary" size="sm" onPress={handleViewPeptides}>
-                Browse Peptides
-              </Button>
             </View>
           ) : (
             <View style={styles.stackList}>
@@ -240,14 +167,6 @@ export function DailyLogScreen({
             </View>
           )}
         </Card>
-
-        {/* Concentration Dashboard */}
-        {recentDoses.length > 0 && pharmacokineticsMap.size > 0 && (
-          <ConcentrationDashboard
-            doses={recentDoses}
-            pharmacokineticsMap={pharmacokineticsMap}
-          />
-        )}
 
         {/* Today's Log Section */}
         <Card style={styles.section}>
@@ -324,16 +243,15 @@ interface DoseEntryRowProps {
 }
 
 function DoseEntryRow({ dose, onDelete }: DoseEntryRowProps): React.JSX.Element {
-  const siteLabel = dose.injectionSite ? INJECTION_SITE_LABELS[dose.injectionSite] : null;
   return (
     <Pressable onLongPress={onDelete} style={styles.logEntry}>
       <View style={styles.logEntryIcon}>
-        <Icon name="droplet" size={16} color={colors.primary[400]} />
+        <Icon name="check" size={16} color={colors.primary[400]} />
       </View>
       <View style={styles.logEntryInfo}>
         <Text style={styles.logEntryName}>{dose.name}</Text>
         <Text style={styles.logEntryDetail}>
-          {dose.dosage}{siteLabel ? ` · ${siteLabel}` : ""}
+          {dose.dosage}
         </Text>
       </View>
       <Text style={styles.logEntryTime}>{formatTime(dose.timestamp)}</Text>

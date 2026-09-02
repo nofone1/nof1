@@ -30,6 +30,4 @@ export {
   type RestoreOutcome,
 } from "./revenuecat-service";
 
-export { isWhopConfigured, type WhopConnectOutcome } from "./whop-service";
-
 export { BillingProvider, useBilling } from "./billing-context";

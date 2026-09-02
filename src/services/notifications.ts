@@ -1,6 +1,5 @@
 /**
- * Notification service for scheduling dose reminders.
- * Uses expo-notifications for local push notifications.
+ * Notification service for scheduling local routine reminders.
  */
 
 import * as Notifications from "expo-notifications";
@@ -9,7 +8,8 @@ import type { ScheduledDose } from "@/types/schedule";
 // Configure notification handler
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
@@ -28,8 +28,8 @@ export async function requestNotificationPermissions(): Promise<boolean> {
 }
 
 /**
- * Schedule a dose reminder notification.
- * @param dose - The scheduled dose to remind about
+ * Schedule a local reminder for a user-created routine.
+ * @param dose - The user-created routine schedule to remind about
  * @returns The notification identifier, or null if scheduling failed
  */
 export async function scheduleDoseReminder(
@@ -46,8 +46,8 @@ export async function scheduleDoseReminder(
 
     const identifier = await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Dose Reminder",
-        body: `Time to take ${dose.peptideName} (${dose.dosage})`,
+        title: "Routine Reminder",
+        body: `${dose.peptideName} · ${dose.dosage}`,
         data: { scheduleId: dose.id, protocolId: dose.protocolId },
       },
       trigger: {

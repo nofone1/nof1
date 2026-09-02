@@ -241,6 +241,8 @@ export function useAccess(): UseAccessResult {
       return;
     }
 
+    // Initial provider synchronization is the purpose of this effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh();
   }, [refresh]);
 

@@ -111,6 +111,13 @@ export function SignInScreen({
               onChangeText={setPassword}
               secureTextEntry
             />
+            <AnimatedPressable
+              onPress={() => navigation.navigate("ForgotPassword")}
+              haptic="light"
+              style={styles.forgotPassword}
+            >
+              <Text style={styles.link}>Forgot password?</Text>
+            </AnimatedPressable>
           </View>
 
           <Button
@@ -176,6 +183,10 @@ const styles = StyleSheet.create({
   },
   spacer: {
     height: spacing.lg,
+  },
+  forgotPassword: {
+    alignSelf: "flex-end",
+    marginTop: spacing.md,
   },
   footer: {
     flexDirection: "row",

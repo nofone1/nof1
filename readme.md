@@ -1,269 +1,49 @@
-# N-of-1 Experiments
+# Nof1
 
-A React Native mobile app for conducting personal N-of-1 experiments to discover what supplements, peptides, and interventions actually work for you.
+Nof1 is an Expo/React Native app for structured, private self-observation.
+People can create personal experiments around interventions they independently
+choose, log daily metrics and notes, compare phases, export their data, and
+delete their account in the app.
 
-## What is an N-of-1 Experiment?
+Nof1 is not a medical device and does not diagnose, prescribe, calculate doses,
+or recommend interventions. The first App Store release is iPhone-only and does
+not include HealthKit/Terra or external purchase connections.
 
-An N-of-1 experiment is a clinical trial where you are both the subject and the scientist. Instead of relying on population-level studies, you systematically test interventions on yourself using controlled on/off phases to determine what actually works for YOUR body.
+## Stack
 
-**Why it matters:**
-- Population studies show averages; your response may differ significantly
-- Personal data is more actionable than general recommendations
-- Systematic tracking eliminates confirmation bias
-- Build evidence-based confidence in your supplement stack
+- Expo 57 / React Native 0.86 / React 19
+- TypeScript and React Navigation
+- Clerk authentication with secure token storage
+- Convex sync and account-data deletion
+- RevenueCat App Store subscriptions
+- Zustand and AsyncStorage for client state/cache
 
-## Features
+## Local development
 
-- **Create Experiments** - Set up N-of-1 trials for any supplement or intervention
-- **Track Metrics** - Log daily observations with customizable metrics
-- **Structured Phases** - Alternating on/off periods for controlled testing
-- **Progress Tracking** - Visualize your experiment progress
-- **Authentication** - Clerk-based email auth
-- **Cloud Sync** - Convex-backed core data (experiments, protocols, daily logs)
-- **Observability** - Built-in logging for debugging and analytics
+Node 22.13 or newer is required by Expo 57.
 
-## Tech Stack
-
-| Category | Technology | Purpose |
-|----------|------------|---------|
-| Framework | [Expo](https://expo.dev) SDK 52+ | Cross-platform React Native development |
-| Language | TypeScript | Type safety and better developer experience |
-| Navigation | [React Navigation](https://reactnavigation.org) v7 | Type-safe navigation |
-| Authentication | [Clerk](https://clerk.com) | User authentication |
-| Backend / DB | [Convex](https://convex.dev) | Real-time backend + persistence |
-| State Management | [Zustand](https://zustand-demo.pmnd.rs) | Lightweight global state |
-| Storage | AsyncStorage | Persistent local storage |
-
-## Quick Start
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org) 18+ 
-- [npm](https://www.npmjs.com) or [yarn](https://yarnpkg.com)
-- [Expo CLI](https://docs.expo.dev/get-started/installation/)
-- iOS Simulator (Mac) or Android Emulator
-
-### Installation
-
-1. **Navigate to the project**
-   ```bash
-   cd hira-clapton
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install --legacy-peer-deps
-   ```
-
-3. **Configure environment**
-   ```bash
-   cp .env.example .env.local
-   ```
-
-4. **Run Convex backend (new terminal)**
-   ```bash
-   npm run convex:dev
-   ```
-
-5. **Start the development server**
-   ```bash
-   npx expo start
-   ```
-
-6. **Run on your device/simulator**
-   - Press `i` for iOS Simulator
-   - Press `a` for Android Emulator
-   - Scan QR code with Expo Go app for physical device
-
-## Project Structure
-
-```
-irvine/
-├── App.tsx                      # Entry point
-├── src/
-│   ├── providers/
-│   │   └── providers.tsx        # Context providers (Auth, SafeArea)
-│   ├── components/
-│   │   ├── ui/                  # Reusable UI primitives
-│   │   │   ├── button.tsx
-│   │   │   ├── card.tsx
-│   │   │   ├── input.tsx
-│   │   │   └── loading.tsx
-│   │   └── experiment/
-│   │       └── experiment-card.tsx
-│   ├── config/
-│   │   └── env.ts               # Environment configuration
-│   ├── hooks/
-│   │   ├── use-experiments.ts
-│   │   └── use-logger.ts
-│   ├── navigation/
-│   │   ├── index.tsx            # Root navigator
-│   │   ├── auth-navigator.tsx
-│   │   └── main-navigator.tsx
-│   ├── screens/
-│   │   ├── auth/
-│   │   │   ├── sign-in.tsx
-│   │   │   └── sign-up.tsx
-│   │   ├── home/
-│   │   │   └── index.tsx
-│   │   ├── experiment/
-│   │   │   ├── create.tsx
-│   │   │   └── detail.tsx
-│   │   └── profile/
-│   │       └── index.tsx
-│   ├── services/
-│   │   ├── auth/
-│   │   │   ├── auth-context.tsx # Clerk auth adapter
-│   │   │   └── auth-service.ts
-│   │   └── logging/
-│   │       ├── logger.ts
-│   │       └── types.ts
-│   ├── stores/
-│   │   └── experiment-store.ts  # Zustand store
-│   ├── theme/
-│   │   └── colors.ts            # Color definitions
-│   ├── types/
-│   │   ├── experiment.ts
-│   │   ├── navigation.ts
-│   │   └── user.ts
-│   └── utils/
-│       └── constants.ts
-└── assets/
-    └── images/
-```
-
-## Authentication
-
-The app uses **Clerk authentication** with secure token storage via `expo-secure-store`.
-
-### Development-only credential shortcut
-
-- In development builds, you can sign in with **`test@gmail.com`** and **`peptideking`** to bypass Clerk for local QA workflows.
-- This is intentionally limited to development mode and should not be treated as production authentication behavior.
-
-## Backend and Data
-
-Core product data is stored in **Convex** (experiments, protocols, dose logs, metrics, stack items).
-On first successful sign-in, existing local AsyncStorage data is imported into Convex via an idempotent migration.
-
-## Observability & Logging
-
-### Using the Logger
-
-```typescript
-import { logger } from '@/services/logging';
-
-// Basic logging
-logger.info('User created experiment', { experimentId: '123' });
-logger.warn('API response slow', { extra: { responseTime: 5000 } });
-logger.error('Failed to save', {}, error);
-
-// With screen context (in components)
-const { log } = useLogger('HomeScreen');
-log.info('Button pressed');
-```
-
-### Log Levels
-
-| Level | Use Case |
-|-------|----------|
-| `DEBUG` | Detailed diagnostic information |
-| `INFO` | General operational events |
-| `WARN` | Potentially problematic situations |
-| `ERROR` | Errors that affect functionality |
-
-## Development
-
-### Running the App
-
-```bash
-# Start development server
+```sh
+npm ci
+cp .env.example .env.local
 npx expo start
-
-# Clear cache and start
-npx expo start --clear
-
-# Run on specific platform
-npx expo start --ios
-npx expo start --android
 ```
 
-### Building
+Real signed-in development requires a Clerk publishable key and Convex URL.
+Internal Revyl builds use a launch-variable-gated bypass that is compiled only
+when `EXPO_PUBLIC_SKIP_AUTH=true`; the production app config excludes its native
+module and production EAS validation rejects that flag.
 
-```bash
-# Development build
-npx expo run:ios
-npx expo run:android
+## Quality and release checks
 
-# Production build (requires EAS)
-eas build --platform ios
-eas build --platform android
+```sh
+npm run release:check
+npx expo export --platform ios --output-dir .context/ios-export
 ```
 
-## Troubleshooting
+`release:check` validates the store structure, lints, type checks, runs tests,
+and requires all Expo Doctor checks to pass. See
+[`docs/release-checklist.md`](docs/release-checklist.md) for App Store Connect,
+RevenueCat, legal, TestFlight, and submission requirements.
 
-### Common Issues
-
-**Metro bundler issues**
-```bash
-npx expo start --clear
-```
-
-**Dependency conflicts**
-```bash
-rm -rf node_modules
-npm install --legacy-peer-deps
-```
-
-**iOS build fails**
-```bash
-cd ios && pod install && cd ..
-```
-
-**Android build fails**
-```bash
-cd android && ./gradlew clean && cd ..
-```
-
-## Data Models
-
-### Experiment
-
-```typescript
-interface Experiment {
-  id: string;
-  userId: string;
-  name: string;                    // "Testing Creatine for Energy"
-  hypothesis: string;              // What you expect to observe
-  intervention: {
-    name: string;                  // "Creatine Monohydrate"
-    type: InterventionType;        // supplement, peptide, etc.
-    dosage: string;                // "5g"
-    frequency: string;             // "Once daily"
-  };
-  metrics: Metric[];               // Energy, Sleep, Focus, etc.
-  schedule: {
-    startDate: Date;
-    phaseDurationDays: number;     // Days per on/off phase
-    totalPhases: number;           // Number of cycles
-  };
-  status: ExperimentStatus;        // draft, active, paused, completed
-  entries: ExperimentEntry[];      // Daily logs
-}
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License.
-
----
-
-Built with ❤️ for the quantified self community.
+Public legal/support page sources live in `site/`; App Store copy and submission
+guides live in `store/`.

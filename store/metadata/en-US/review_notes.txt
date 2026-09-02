@@ -1,0 +1,11 @@
+Nof1 is a self-tracking app for interventions selected and entered by the user. It does not contain a treatment library, calculate doses, recommend interventions, or connect to HealthKit in this release.
+
+Review path:
+1. Create an account with an email address available to the reviewer, or use the review account entered in App Store Connect.
+2. On Daily, record quick metrics or tap Log Entry to enter a user-chosen intervention.
+3. Open Profile > My Experiments > New Experiment to create a structured experiment.
+4. Open Profile > Subscription to view the RevenueCat paywall and Restore Purchases action.
+5. Open Profile > Delete Account to permanently delete the signed-in account and app-owned data.
+6. Privacy Policy, Terms of Service, support, JSON export, and diagnostic-log export are available in Profile.
+
+The App Store subscription must be tested with Apple's sandbox environment. No external purchasing link is shown in the iOS app.

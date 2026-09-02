@@ -74,10 +74,13 @@ export function AnimatedPressable({
   const scale = useSharedValue(1);
 
   const handlePressIn = useCallback(() => {
+    // Reanimated shared values are intentionally mutable from event handlers.
+    // eslint-disable-next-line react-hooks/immutability
     scale.value = withSpring(scaleValue, springConfig);
   }, [scale, scaleValue]);
 
   const handlePressOut = useCallback(() => {
+    // eslint-disable-next-line react-hooks/immutability
     scale.value = withSpring(1, springConfig);
   }, [scale]);
 

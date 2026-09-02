@@ -1,16 +1,15 @@
 /**
  * Create Protocol screen.
- * Form for creating a new dosing protocol.
+ * Form for creating a new recurring intervention routine.
  */
 
 import React, { useState, useCallback } from "react";
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Input, Card, Icon, AnimatedPressable, PeptidePicker } from "@/components/ui";
+import { Button, Input, Card, Icon, AnimatedPressable } from "@/components/ui";
 import { useProtocolStore } from "@/stores/protocol-store";
 import { colors, spacing, typography } from "@/theme";
 import type { MainStackScreenProps } from "@/types/navigation";
-import type { Peptide } from "@/types/peptide";
 
 /**
  * Create Protocol screen component.
@@ -21,8 +20,7 @@ export function CreateProtocolScreen({
   const { createProtocol } = useProtocolStore();
 
   const [name, setName] = useState("");
-  const [selectedPeptideId, setSelectedPeptideId] = useState<string | null>(null);
-  const [peptideName, setPeptideName] = useState("");
+  const [interventionName, setInterventionName] = useState("");
   const [dosage, setDosage] = useState("");
   const [frequency, setFrequency] = useState("");
   const [route, setRoute] = useState("");
@@ -31,27 +29,8 @@ export function CreateProtocolScreen({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handlePeptideSelect = useCallback((peptide: Peptide | null) => {
-    if (peptide) {
-      setSelectedPeptideId(peptide.id);
-      setPeptideName(peptide.name);
-      setDosage("");
-      setFrequency("");
-      setRoute("");
-      setCycleDuration("");
-      setName(`${peptide.name} Protocol`);
-    } else {
-      setSelectedPeptideId("custom");
-      setPeptideName("");
-      setDosage("");
-      setFrequency("");
-      setRoute("");
-      setCycleDuration("");
-    }
-  }, []);
-
   const handleCreate = useCallback(async () => {
-    if (!name.trim() || !peptideName.trim() || !dosage.trim()) {
+    if (!name.trim() || !interventionName.trim() || !dosage.trim() || !frequency.trim()) {
       setError("Please fill in the required fields.");
       return;
     }
@@ -63,12 +42,12 @@ export function CreateProtocolScreen({
       await createProtocol({
         userId: "current-user",
         name: name.trim(),
-        peptideId: selectedPeptideId === "custom" ? undefined : (selectedPeptideId ?? undefined),
-        peptideName: peptideName.trim(),
+        peptideId: undefined,
+        peptideName: interventionName.trim(),
         dosage: dosage.trim(),
-        frequency: frequency.trim() || "Once daily",
-        route: route.trim() || "Subcutaneous",
-        cycleDuration: cycleDuration.trim() || "4 weeks",
+        frequency: frequency.trim(),
+        route: route.trim(),
+        cycleDuration: cycleDuration.trim(),
         startDate: new Date(),
         notes: notes.trim() || undefined,
       });
@@ -79,7 +58,7 @@ export function CreateProtocolScreen({
     } finally {
       setIsLoading(false);
     }
-  }, [name, selectedPeptideId, peptideName, dosage, frequency, route, cycleDuration, notes, createProtocol, navigation]);
+  }, [name, interventionName, dosage, frequency, route, cycleDuration, notes, createProtocol, navigation]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -105,7 +84,7 @@ export function CreateProtocolScreen({
           <View style={styles.header}>
             <Text style={styles.title}>New Protocol</Text>
             <Text style={styles.subtitle}>
-              Create a structured dosing plan to track adherence
+              Save a routine you independently chose so you can track adherence
             </Text>
           </View>
 
@@ -117,48 +96,32 @@ export function CreateProtocolScreen({
 
           <Card style={styles.section} animated animationDelay={0}>
             <View style={styles.sectionHeader}>
-              <Icon name="package" size={18} color={colors.primary[500]} />
-              <Text style={styles.sectionTitle}>Peptide Selection</Text>
-            </View>
-            <View style={styles.spacer} />
-            <PeptidePicker
-              selectedPeptideId={selectedPeptideId}
-              onSelect={handlePeptideSelect}
-              showCustomOption={true}
-            />
-          </Card>
-
-          <Card style={styles.section} animated animationDelay={80}>
-            <View style={styles.sectionHeader}>
               <Icon name="edit-3" size={18} color={colors.primary[500]} />
               <Text style={styles.sectionTitle}>Protocol Details</Text>
             </View>
             <View style={styles.spacer} />
             <Input
               label="Protocol Name"
-              placeholder="e.g., BPC-157 Recovery Protocol"
+              placeholder="e.g., Morning movement routine"
               value={name}
               onChangeText={setName}
             />
-            {selectedPeptideId === "custom" && (
-              <>
-                <View style={styles.spacer} />
-                <Input
-                  label="Peptide/Supplement Name"
-                  placeholder="e.g., BPC-157"
-                  value={peptideName}
-                  onChangeText={setPeptideName}
-                />
-              </>
-            )}
             <View style={styles.spacer} />
-            <Input label="Dosage" placeholder="e.g., 250mcg" value={dosage} onChangeText={setDosage} />
+            <Input
+              label="Intervention Name"
+              placeholder="e.g., Morning walk"
+              value={interventionName}
+              onChangeText={setInterventionName}
+              hint="Enter only an intervention you independently decided to track"
+            />
             <View style={styles.spacer} />
-            <Input label="Frequency" placeholder="e.g., Twice daily" value={frequency} onChangeText={setFrequency} />
+            <Input label="Amount or Duration" placeholder="e.g., 20 minutes" value={dosage} onChangeText={setDosage} />
             <View style={styles.spacer} />
-            <Input label="Route" placeholder="e.g., Subcutaneous" value={route} onChangeText={setRoute} />
+            <Input label="Frequency" placeholder="e.g., Weekday mornings" value={frequency} onChangeText={setFrequency} />
             <View style={styles.spacer} />
-            <Input label="Cycle Duration" placeholder="e.g., 4-8 weeks" value={cycleDuration} onChangeText={setCycleDuration} />
+            <Input label="Method (optional)" placeholder="e.g., Outdoors" value={route} onChangeText={setRoute} />
+            <View style={styles.spacer} />
+            <Input label="Routine Duration (optional)" placeholder="e.g., 4 weeks" value={cycleDuration} onChangeText={setCycleDuration} />
             <View style={styles.spacer} />
             <Input
               label="Notes (optional)"
@@ -176,7 +139,7 @@ export function CreateProtocolScreen({
             fullWidth
             loading={isLoading}
             onPress={handleCreate}
-            disabled={!name.trim() || !peptideName.trim() || !dosage.trim()}
+            disabled={!name.trim() || !interventionName.trim() || !dosage.trim() || !frequency.trim()}
           >
             Start Protocol
           </Button>

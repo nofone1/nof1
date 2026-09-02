@@ -230,7 +230,13 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
         : experiment
     );
 
-    set({ experiments });
+    set({
+      experiments,
+      currentExperiment:
+        get().currentExperiment?.id === id
+          ? experiments.find((item) => item.id === id) ?? null
+          : get().currentExperiment,
+    });
     await persistLocalExperiments(experiments);
   },
 
@@ -298,7 +304,13 @@ export const useExperimentStore = create<ExperimentStore>((set, get) => ({
       };
     });
 
-    set({ experiments });
+    set({
+      experiments,
+      currentExperiment:
+        get().currentExperiment?.id === experimentId
+          ? experiments.find((item) => item.id === experimentId) ?? null
+          : get().currentExperiment,
+    });
     await persistLocalExperiments(experiments);
   },
 

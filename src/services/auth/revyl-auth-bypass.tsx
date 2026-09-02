@@ -229,6 +229,8 @@ export function RevylAuthBypassProvider({
       return;
     }
     handleAuthBypassURL(pendingUrl, launchConfig, setStatus);
+    // This clears a one-shot external event after it has been consumed.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPendingUrl(null);
   }, [launchConfig, pendingUrl]);
 

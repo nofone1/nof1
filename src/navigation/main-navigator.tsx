@@ -15,10 +15,9 @@ import { ProtocolsScreen } from "@/screens/protocol";
 import { ExperimentsScreen } from "@/screens/experiments";
 import { CreateExperimentScreen } from "@/screens/experiment/create";
 import { ExperimentDetailScreen } from "@/screens/experiment/detail";
-import { PeptideBrowseScreen, PeptideDetailScreen } from "@/screens/peptide";
+import { AddExperimentEntryScreen } from "@/screens/experiment/add-entry";
 import { CreateProtocolScreen } from "@/screens/protocol/create";
 import { ProfileScreen } from "@/screens/profile";
-import { HealthConnectionsScreen } from "@/screens/profile/health-connections";
 import { SubscriptionScreen } from "@/screens/subscription";
 import { LegalScreen } from "@/screens/legal";
 import { colors, spacing } from "@/theme";
@@ -77,14 +76,6 @@ function TabNavigator(): React.JSX.Element {
         }}
       />
       <Tab.Screen
-        name="Peptides"
-        component={PeptideBrowseScreen}
-        options={{
-          tabBarLabel: "Peptides",
-          tabBarIcon: ({ focused }) => <TabIcon name="book-open" focused={focused} />,
-        }}
-      />
-      <Tab.Screen
         name="Log"
         component={QuickLogScreen}
         options={{
@@ -129,10 +120,9 @@ export function MainNavigator(): React.JSX.Element {
       <Stack.Screen name="Tabs" component={TabNavigator} />
       <Stack.Screen name="CreateExperiment" component={CreateExperimentScreen} />
       <Stack.Screen name="ExperimentDetail" component={ExperimentDetailScreen} />
-      <Stack.Screen name="PeptideDetail" component={PeptideDetailScreen} />
+      <Stack.Screen name="AddEntry" component={AddExperimentEntryScreen} />
       <Stack.Screen name="Experiments" component={ExperimentsScreen} />
       <Stack.Screen name="CreateProtocol" component={CreateProtocolScreen} />
-      <Stack.Screen name="HealthConnections" component={HealthConnectionsScreen} />
       <Stack.Screen name="Subscription" component={SubscriptionScreen} />
       <Stack.Screen name="Legal" component={LegalScreen} />
     </Stack.Navigator>

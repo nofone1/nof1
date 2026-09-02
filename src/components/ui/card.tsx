@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect } from "react";
-import { View, StyleSheet, type ViewProps } from "react-native";
+import { View, StyleSheet, type ViewProps, type ViewStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -70,7 +70,11 @@ export function Card({
 
   if (onPress) {
     return (
-      <AnimatedPressable onPress={onPress} style={[cardStyles, animatedStyle]} haptic="light">
+      <AnimatedPressable
+        onPress={onPress}
+        style={[cardStyles, animatedStyle as unknown as ViewStyle]}
+        haptic="light"
+      >
         {children}
       </AnimatedPressable>
     );

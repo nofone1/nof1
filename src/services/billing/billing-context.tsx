@@ -21,11 +21,6 @@ import { useAuth, useUser } from "@/services/auth";
 import { convexMutation } from "@/services/backend/convex-client";
 import { setLocalAccess, useAccess } from "./access-service";
 import {
-  connectWhop as startWhopConnect,
-  isWhopConfigured,
-  type WhopConnectOutcome,
-} from "./whop-service";
-import {
   configureRevenueCat,
   getEphemeralAppUserId,
   isRevenueCatConfigured,
@@ -40,7 +35,6 @@ import {
 import { FREE_ACCESS, type PlusAccess } from "./types";
 
 const LINK_REVENUECAT_ACCOUNT = "billing:linkRevenueCatAccount" as const;
-const DISCONNECT_WHOP = "billing:disconnectWhop" as const;
 
 /** Everything the Subscription screen needs to render and act. */
 interface BillingContextValue {
@@ -49,14 +43,10 @@ interface BillingContextValue {
   error: string | null;
   /** True when a purchase can actually be started in this build. */
   isPurchaseAvailable: boolean;
-  /** True when the Whop OAuth flow can be started in this build. */
-  isWhopAvailable: boolean;
   upgrade: () => Promise<PaywallOutcome>;
   restore: () => Promise<RestoreOutcome>;
   refresh: () => Promise<PlusAccess>;
   openStoreManagement: () => Promise<boolean>;
-  connectWhop: () => Promise<WhopConnectOutcome>;
-  disconnectWhop: () => Promise<PlusAccess>;
 }
 
 const BillingContext = createContext<BillingContextValue | null>(null);
@@ -103,6 +93,8 @@ export function BillingProvider({
     }
 
     if (!isSignedIn || !userId) {
+      // Reset native billing state when the external auth session ends.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsConfigured(false);
       linkedUserRef.current = null;
       void logOutRevenueCat();
@@ -190,8 +182,7 @@ export function BillingProvider({
    * Edge cases:
    *   Returns the in-memory record in skip-auth builds without touching the
    *   network, which is what keeps dogfood runs deterministic. Builds with no
-   *   RevenueCat key fall back to re-deriving stored grants so a Whop-only
-   *   user is not reported as Free when RevenueCat is unreachable.
+   *   RevenueCat key falls back to re-deriving stored grants.
    */
   const refreshAccess = useCallback(async (): Promise<PlusAccess> => {
     if (env.skipAuth) {
@@ -221,45 +212,16 @@ export function BillingProvider({
     return outcome;
   }, [syncAfterPurchase]);
 
-  const connectWhop = useCallback(async (): Promise<WhopConnectOutcome> => {
-    if (env.skipAuth) {
-      return {
-        kind: "unavailable",
-        message: "Connecting Whop requires signing in.",
-      };
-    }
-
-    const outcome = await startWhopConnect();
-
-    if (outcome.kind === "connected") {
-      await refresh();
-    }
-
-    return outcome;
-  }, [refresh]);
-
-  const disconnectWhop = useCallback(async (): Promise<PlusAccess> => {
-    if (env.skipAuth) {
-      return access;
-    }
-
-    await convexMutation<PlusAccess>(DISCONNECT_WHOP);
-    return refresh();
-  }, [access, refresh]);
-
   const value = useMemo<BillingContextValue>(
     () => ({
       access,
       isLoading,
       error,
       isPurchaseAvailable: isConfigured && isRevenueCatConfigured(),
-      isWhopAvailable: !env.skipAuth && isWhopConfigured(),
       upgrade,
       restore,
       refresh: refreshAccess,
       openStoreManagement: presentCustomerCenter,
-      connectWhop,
-      disconnectWhop,
     }),
     [
       access,
@@ -269,8 +231,6 @@ export function BillingProvider({
       upgrade,
       restore,
       refreshAccess,
-      connectWhop,
-      disconnectWhop,
     ]
   );
 

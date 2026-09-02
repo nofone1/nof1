@@ -3,7 +3,7 @@
  * Features elegant typography, Feather icons, and refined card styling.
  */
 
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback } from "react";
 import { View, Text, ScrollView, Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, Loading, Badge, Icon, AnimatedPressable } from "@/components/ui";
@@ -34,7 +34,6 @@ export function ExperimentDetailScreen({
 }: MainStackScreenProps<"ExperimentDetail">): React.JSX.Element {
   const { experimentId } = route.params;
   const { select, currentExperiment, updateStatus, remove, isLoading } = useExperiments();
-  const [isLoggingEntry, setIsLoggingEntry] = useState(false);
 
   useEffect(() => {
     select(experimentId);
@@ -70,13 +69,9 @@ export function ExperimentDetailScreen({
     ]);
   }, [experimentId, remove, navigation]);
 
-  const handleQuickLog = useCallback(async () => {
-    setIsLoggingEntry(true);
-    setTimeout(() => {
-      setIsLoggingEntry(false);
-      Alert.alert("Entry Logged", "Your quick entry has been saved.");
-    }, 500);
-  }, []);
+  const handleQuickLog = useCallback(() => {
+    navigation.navigate("AddEntry", { experimentId });
+  }, [experimentId, navigation]);
 
   if (isLoading || !currentExperiment) {
     return (
@@ -90,6 +85,9 @@ export function ExperimentDetailScreen({
   const status = statusConfig[experiment.status];
   const isActive = experiment.status === ExperimentStatus.ACTIVE;
   const isPaused = experiment.status === ExperimentStatus.PAUSED;
+  const recentEntries = [...experiment.entries]
+    .sort((left, right) => right.date.getTime() - left.date.getTime())
+    .slice(0, 7);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -120,7 +118,7 @@ export function ExperimentDetailScreen({
             </View>
             <Text style={styles.sectionSubtitle}>Record today's observations</Text>
             <View style={styles.spacer} />
-            <Button variant="primary" fullWidth loading={isLoggingEntry} onPress={handleQuickLog}>
+            <Button variant="primary" fullWidth onPress={handleQuickLog}>
               Log Today's Entry
             </Button>
           </Card>
@@ -145,8 +143,44 @@ export function ExperimentDetailScreen({
           </Card>
         </View>
 
+        {/* Persisted observations */}
+        <Card style={styles.section} animated animationDelay={220}>
+          <View style={styles.sectionHeader}>
+            <Icon name="list" size={18} color={colors.primary[500]} />
+            <Text style={styles.sectionTitle}>Recent Observations</Text>
+          </View>
+          {recentEntries.length === 0 ? (
+            <Text style={styles.sectionSubtitle}>No observations recorded yet.</Text>
+          ) : (
+            recentEntries.map((entry, index) => (
+              <View
+                key={entry.id}
+                style={[styles.entryRow, index === recentEntries.length - 1 && styles.entryRowLast]}
+              >
+                <View style={styles.entryHeader}>
+                  <Text style={styles.entryDate}>
+                    {entry.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  </Text>
+                  <Badge variant={entry.isInterventionDay ? "primary" : "default"} size="sm">
+                    {entry.isInterventionDay ? "Intervention" : "Comparison"}
+                  </Badge>
+                </View>
+                {entry.metricValues.map((metricValue) => {
+                  const metric = experiment.metrics.find((item) => item.id === metricValue.metricId);
+                  return (
+                    <Text key={metricValue.metricId} style={styles.entryMetric}>
+                      {metric?.name ?? "Metric"}: {String(metricValue.value)}{metric?.unit ? ` ${metric.unit}` : ""}
+                    </Text>
+                  );
+                })}
+                {entry.notes && <Text style={styles.entryNotes}>{entry.notes}</Text>}
+              </View>
+            ))
+          )}
+        </Card>
+
         {/* Schedule */}
-        <Card style={styles.section} animated animationDelay={240}>
+        <Card style={styles.section} animated animationDelay={280}>
           <View style={styles.sectionHeader}>
             <Icon name="calendar" size={18} color={colors.primary[500]} />
             <Text style={styles.sectionTitle}>Schedule</Text>
@@ -245,6 +279,35 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     ...typography.small,
     color: colors.text.secondary,
+  },
+  entryRow: {
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.default,
+  },
+  entryRowLast: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+  },
+  entryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.sm,
+  },
+  entryDate: {
+    ...typography.bodyMedium,
+    color: colors.text.primary,
+  },
+  entryMetric: {
+    ...typography.small,
+    color: colors.text.secondary,
+    marginTop: spacing.xs,
+  },
+  entryNotes: {
+    ...typography.small,
+    color: colors.text.tertiary,
+    marginTop: spacing.sm,
   },
   label: {
     ...typography.caption,

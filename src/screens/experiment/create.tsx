@@ -3,10 +3,10 @@
  * Features Feather icons, elegant typography, and refined form styling.
  */
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Input, Card, Icon, AnimatedPressable, PeptidePicker } from "@/components/ui";
+import { Button, Input, Card, Icon, AnimatedPressable } from "@/components/ui";
 import { useExperiments, useLogger } from "@/hooks";
 import {
   ExperimentStatus,
@@ -16,81 +16,29 @@ import {
 } from "@/types/experiment";
 import { colors, spacing, typography } from "@/theme";
 import type { MainStackScreenProps } from "@/types/navigation";
-import type { Peptide } from "@/types/peptide";
 import { EXPERIMENT_DEFAULTS, METRIC_PRESETS } from "@/utils/constants";
-import { usePeptideStore } from "@/stores/peptide-store";
 
 /**
  * Create Experiment screen component.
  *
  * @param navigation - Navigation prop for screen transitions
- * @param route - Route params potentially containing peptideId
  * @returns The Create Experiment screen JSX element
  */
 export function CreateExperimentScreen({
   navigation,
-  route,
 }: MainStackScreenProps<"CreateExperiment">): React.JSX.Element {
   const { create } = useExperiments(false);
   const { log } = useLogger("CreateExperiment");
-  const { getPeptideById } = usePeptideStore();
-
-  // Get peptideId from route params if provided
-  const peptideId = route.params?.peptideId;
 
   const [name, setName] = useState("");
   const [hypothesis, setHypothesis] = useState("");
   const [interventionName, setInterventionName] = useState("");
   const [dosage, setDosage] = useState("");
-  const [frequency, setFrequency] = useState("Once daily");
+  const [frequency, setFrequency] = useState("");
   const [phaseDuration, setPhaseDuration] = useState(String(EXPERIMENT_DEFAULTS.PHASE_DURATION_DAYS));
   const [totalPhases, setTotalPhases] = useState(String(EXPERIMENT_DEFAULTS.TOTAL_PHASES));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPeptidePreFilled, setIsPeptidePreFilled] = useState(false);
-  const [selectedPeptideId, setSelectedPeptideId] = useState<string | null>(null);
-
-  // Pre-fill form with peptide data if peptideId is provided
-  useEffect(() => {
-    if (peptideId) {
-      const peptide = getPeptideById(peptideId);
-      if (peptide) {
-        setSelectedPeptideId(peptide.id);
-        setInterventionName(peptide.name);
-        setDosage("");
-        setFrequency("");
-        setName(`Testing ${peptide.name}`);
-        setHypothesis(`Testing the effects of ${peptide.name} on my health and wellbeing.`);
-        setIsPeptidePreFilled(true);
-        log.info("Pre-filled form with peptide data", { extra: { peptideId } });
-      }
-    }
-  }, [peptideId, getPeptideById, log]);
-
-  /**
-   * Handles peptide selection from the picker.
-   * Auto-fills form fields when a peptide is selected, clears them for custom entry.
-   *
-   * @param peptide - The selected peptide, or null for custom entry
-   */
-  const handlePeptideSelect = useCallback((peptide: Peptide | null) => {
-    if (peptide) {
-      setSelectedPeptideId(peptide.id);
-      setInterventionName(peptide.name);
-      setDosage("");
-      setFrequency("");
-      setIsPeptidePreFilled(true);
-      log.info("Selected peptide from picker", { extra: { peptideId: peptide.id } });
-    } else {
-      // Custom entry selected
-      setSelectedPeptideId("custom");
-      setInterventionName("");
-      setDosage("");
-      setFrequency("Once daily");
-      setIsPeptidePreFilled(false);
-      log.info("Selected custom entry");
-    }
-  }, [log]);
 
   const validateForm = useCallback((): boolean => {
     if (!name.trim()) {
@@ -106,11 +54,25 @@ export function CreateExperimentScreen({
       return false;
     }
     if (!dosage.trim()) {
-      setError("Please enter the dosage.");
+      setError("Please enter the amount or duration you chose.");
+      return false;
+    }
+    if (!frequency.trim()) {
+      setError("Please enter the frequency you chose.");
+      return false;
+    }
+    const parsedPhaseDuration = Number(phaseDuration);
+    if (!Number.isInteger(parsedPhaseDuration) || parsedPhaseDuration < 1 || parsedPhaseDuration > 30) {
+      setError("Phase duration must be a whole number from 1 to 30 days.");
+      return false;
+    }
+    const parsedCycles = Number(totalPhases);
+    if (!Number.isInteger(parsedCycles) || parsedCycles < 1 || parsedCycles > 12) {
+      setError("Total cycles must be a whole number from 1 to 12.");
       return false;
     }
     return true;
-  }, [name, hypothesis, interventionName, dosage]);
+  }, [name, hypothesis, interventionName, dosage, frequency, phaseDuration, totalPhases]);
 
   const handleCreate = useCallback(async () => {
     if (!validateForm()) return;
@@ -126,7 +88,7 @@ export function CreateExperimentScreen({
         intervention: {
           id: `int-${Date.now()}`,
           name: interventionName.trim(),
-          type: isPeptidePreFilled ? InterventionType.PEPTIDE : InterventionType.SUPPLEMENT,
+          type: InterventionType.OTHER,
           dosage: dosage.trim(),
           frequency: frequency.trim(),
         },
@@ -142,8 +104,8 @@ export function CreateExperimentScreen({
         ],
         schedule: {
           startDate: new Date(),
-          phaseDurationDays: parseInt(phaseDuration, 10) || EXPERIMENT_DEFAULTS.PHASE_DURATION_DAYS,
-          totalPhases: parseInt(totalPhases, 10) || EXPERIMENT_DEFAULTS.TOTAL_PHASES,
+          phaseDurationDays: Number(phaseDuration),
+          totalPhases: Number(totalPhases),
           reminderTime: EXPERIMENT_DEFAULTS.REMINDER_TIME,
         },
         status: ExperimentStatus.ACTIVE,
@@ -157,7 +119,7 @@ export function CreateExperimentScreen({
     } finally {
       setIsLoading(false);
     }
-  }, [validateForm, name, hypothesis, interventionName, dosage, frequency, phaseDuration, totalPhases, create, navigation, log, isPeptidePreFilled]);
+  }, [validateForm, name, hypothesis, interventionName, dosage, frequency, phaseDuration, totalPhases, create, navigation, log]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -179,22 +141,13 @@ export function CreateExperimentScreen({
           <View style={styles.header}>
             <Text style={styles.title}>New Experiment</Text>
             <Text style={styles.subtitle}>
-              Set up your N-of-1 experiment to test what works for you
+              Track an intervention you independently chose. Nof1 does not provide medical advice.
             </Text>
           </View>
 
           {error && (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
-
-          {isPeptidePreFilled && (
-            <View style={styles.peptideInfoBox}>
-              <Icon name="info" size={16} color={colors.primary[400]} style={styles.infoIcon} />
-              <Text style={styles.peptideInfoText}>
-                Pre-filled with peptide data from the database
-              </Text>
             </View>
           )}
 
@@ -219,7 +172,7 @@ export function CreateExperimentScreen({
               onChangeText={setHypothesis}
               multiline
               numberOfLines={3}
-              hint="e.g., Taking creatine daily will improve my afternoon energy levels"
+              hint="e.g., A morning walk may coincide with higher afternoon energy ratings"
             />
           </Card>
 
@@ -230,32 +183,24 @@ export function CreateExperimentScreen({
               <Text style={styles.sectionTitle}>What You're Testing</Text>
             </View>
             <View style={styles.spacer} />
-            <PeptidePicker
-              selectedPeptideId={selectedPeptideId}
-              onSelect={handlePeptideSelect}
-              showCustomOption={true}
-            />
-            {selectedPeptideId === "custom" && (
-              <>
-                <Input
-                  label="Supplement/Intervention Name"
-                  placeholder="e.g., Creatine Monohydrate"
-                  value={interventionName}
-                  onChangeText={setInterventionName}
-                />
-                <View style={styles.spacer} />
-              </>
-            )}
             <Input
-              label="Dosage"
-              placeholder="e.g., 5g"
+              label="Intervention Name"
+              placeholder="e.g., Morning walk"
+              value={interventionName}
+              onChangeText={setInterventionName}
+              hint="Enter only an intervention you independently decided to track"
+            />
+            <View style={styles.spacer} />
+            <Input
+              label="Amount or Duration"
+              placeholder="e.g., 20 minutes"
               value={dosage}
               onChangeText={setDosage}
             />
             <View style={styles.spacer} />
             <Input
               label="Frequency"
-              placeholder="e.g., Once daily"
+              placeholder="e.g., Weekday mornings"
               value={frequency}
               onChangeText={setFrequency}
             />
@@ -347,22 +292,6 @@ const styles = StyleSheet.create({
   errorText: {
     ...typography.small,
     color: colors.accent.error,
-  },
-  peptideInfoBox: {
-    backgroundColor: "rgba(91, 138, 114, 0.08)",
-    borderRadius: 12,
-    padding: spacing.base,
-    marginBottom: spacing.xl,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  infoIcon: {
-    marginRight: spacing.sm,
-  },
-  peptideInfoText: {
-    ...typography.small,
-    color: colors.primary[400],
-    flex: 1,
   },
   section: {
     marginBottom: spacing.xl,

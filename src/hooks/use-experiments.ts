@@ -16,7 +16,12 @@
 
 import { useEffect, useCallback } from "react";
 import { useExperimentStore } from "@/stores/experiment-store";
-import type { Experiment, CreateExperimentInput, ExperimentStatus } from "@/types";
+import type {
+  Experiment,
+  CreateEntryInput,
+  CreateExperimentInput,
+  ExperimentStatus,
+} from "@/types";
 
 /**
  * Return type for the useExperiments hook.
@@ -42,6 +47,8 @@ interface UseExperimentsReturn {
   select: (id: string | null) => void;
   /** Update experiment status */
   updateStatus: (id: string, status: ExperimentStatus) => Promise<void>;
+  /** Add a daily observation to an experiment */
+  addEntry: (experimentId: string, entry: CreateEntryInput) => Promise<void>;
   /** Clear error state */
   clearError: () => void;
 }
@@ -95,6 +102,7 @@ export function useExperiments(autoLoad = true): UseExperimentsReturn {
     deleteExperiment,
     setCurrentExperiment,
     updateStatus,
+    addEntry,
     clearError,
   } = useExperimentStore();
 
@@ -165,6 +173,7 @@ export function useExperiments(autoLoad = true): UseExperimentsReturn {
     remove,
     select,
     updateStatus,
+    addEntry,
     clearError,
   };
 }

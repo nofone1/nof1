@@ -50,8 +50,8 @@ export function SignUpScreen({
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
 
@@ -165,7 +165,7 @@ export function SignUpScreen({
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
-                  hint="At least 6 characters"
+                  hint="At least 8 characters"
                 />
                 <View style={styles.spacer} />
                 <Input

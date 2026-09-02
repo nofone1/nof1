@@ -3,118 +3,18 @@
  * Features tabbed interface for logging doses or metrics.
  */
 
-import React, { useState, useCallback, useRef } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, PanResponder, LayoutChangeEvent } from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
+import Slider from "@react-native-community/slider";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Card, Button, Input, Icon, PeptidePicker, BodyMap } from "@/components/ui";
+import { Card, Button, Input, Icon } from "@/components/ui";
 import { useTrackingStore } from "@/stores/tracking-store";
 import { useLogger } from "@/hooks/use-logger";
 import { colors, spacing, typography } from "@/theme";
 import type { MainTabScreenProps } from "@/types/navigation";
-import type { Peptide } from "@/types/peptide";
-import { QuickMetricType, QUICK_METRIC_INFO, type InjectionSite } from "@/types/tracking";
-import { AdministrationRoute } from "@/types/peptide";
+import { QuickMetricType, QUICK_METRIC_INFO } from "@/types/tracking";
 
 type LogTab = "dose" | "metric";
-
-interface SimpleSliderProps {
-  minimumValue: number;
-  maximumValue: number;
-  step: number;
-  value: number;
-  onValueChange: (value: number) => void;
-  minimumTrackTintColor: string;
-  maximumTrackTintColor: string;
-  thumbTintColor: string;
-  style?: any;
-}
-
-function SimpleSlider({
-  minimumValue,
-  maximumValue,
-  step,
-  value,
-  onValueChange,
-  minimumTrackTintColor,
-  maximumTrackTintColor,
-  thumbTintColor,
-  style,
-}: SimpleSliderProps): React.JSX.Element {
-  const trackWidth = useRef(0);
-  const trackX = useRef(0);
-  const onValueChangeRef = useRef(onValueChange);
-  onValueChangeRef.current = onValueChange;
-
-  const range = maximumValue - minimumValue;
-
-  const valueFromX = useCallback((x: number) => {
-    const ratio = Math.max(0, Math.min(1, x / trackWidth.current));
-    const raw = minimumValue + ratio * range;
-    return Math.round((raw - minimumValue) / step) * step + minimumValue;
-  }, [minimumValue, range, step]);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt) => {
-        onValueChangeRef.current(valueFromX(evt.nativeEvent.locationX));
-      },
-      onPanResponderMove: (evt) => {
-        onValueChangeRef.current(valueFromX(evt.nativeEvent.pageX - trackX.current));
-      },
-    })
-  ).current;
-
-  const handleLayout = (e: LayoutChangeEvent) => {
-    trackWidth.current = e.nativeEvent.layout.width;
-    (e.target as any)?.measureInWindow?.((x: number) => {
-      if (x != null) trackX.current = x;
-    });
-  };
-
-  const fraction = (value - minimumValue) / range;
-
-  return (
-    <View style={[sliderStyles.container, style]} onLayout={handleLayout} {...panResponder.panHandlers}>
-      <View style={sliderStyles.track}>
-        <View style={[sliderStyles.trackFill, { flex: fraction, backgroundColor: minimumTrackTintColor }]} />
-        <View style={[sliderStyles.trackEmpty, { flex: 1 - fraction, backgroundColor: maximumTrackTintColor }]} />
-      </View>
-      <View style={[sliderStyles.thumb, { left: `${fraction * 100}%`, backgroundColor: thumbTintColor }]} />
-    </View>
-  );
-}
-
-const THUMB_SIZE = 24;
-const TRACK_HEIGHT = 4;
-
-const sliderStyles = StyleSheet.create({
-  container: {
-    height: 40,
-    justifyContent: "center",
-  },
-  track: {
-    flexDirection: "row",
-    height: TRACK_HEIGHT,
-    borderRadius: TRACK_HEIGHT / 2,
-    overflow: "hidden",
-  },
-  trackFill: {
-    height: TRACK_HEIGHT,
-  },
-  trackEmpty: {
-    height: TRACK_HEIGHT,
-  },
-  thumb: {
-    position: "absolute",
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    borderRadius: THUMB_SIZE / 2,
-    marginLeft: -THUMB_SIZE / 2,
-    top: (40 - THUMB_SIZE) / 2,
-  },
-});
 
 /**
  * Quick Log screen component for adding entries.
@@ -133,33 +33,15 @@ export function QuickLogScreen({
   const [success, setSuccess] = useState(false);
 
   // Dose form state
-  const [selectedPeptideId, setSelectedPeptideId] = useState<string | null>(null);
   const [doseName, setDoseName] = useState("");
   const [dosage, setDosage] = useState("");
   const [doseNotes, setDoseNotes] = useState("");
   const [addToStackChecked, setAddToStackChecked] = useState(false);
-  const [injectionSite, setInjectionSite] = useState<InjectionSite | undefined>(undefined);
-  const [isInjectable, setIsInjectable] = useState(false);
 
   // Metric form state
   const [selectedMetricType, setSelectedMetricType] = useState<QuickMetricType>(QuickMetricType.ENERGY);
   const [metricValue, setMetricValue] = useState(5);
   const [metricNotes, setMetricNotes] = useState("");
-
-  const handlePeptideSelect = useCallback((peptide: Peptide | null) => {
-    if (peptide) {
-      setSelectedPeptideId(peptide.id);
-      setDoseName(peptide.name);
-      setDosage("");
-      setIsInjectable(peptide.administrationRoutes.includes(AdministrationRoute.INJECTABLE));
-    } else {
-      setSelectedPeptideId("custom");
-      setDoseName("");
-      setDosage("");
-      setIsInjectable(false);
-    }
-    setInjectionSite(undefined);
-  }, []);
 
   const handleLogDose = useCallback(async () => {
     if (!doseName.trim() || !dosage.trim()) return;
@@ -167,16 +49,15 @@ export function QuickLogScreen({
     setIsLoading(true);
     try {
       await logDose({
-        peptideId: selectedPeptideId === "custom" ? null : selectedPeptideId,
+        peptideId: null,
         name: doseName.trim(),
         dosage: dosage.trim(),
         notes: doseNotes.trim() || undefined,
-        injectionSite,
       });
 
-      if (addToStackChecked && selectedPeptideId !== "custom") {
+      if (addToStackChecked) {
         await addToStack({
-          peptideId: selectedPeptideId,
+          peptideId: null,
           name: doseName.trim(),
           dosage: dosage.trim(),
           frequency: "Not specified",
@@ -187,13 +68,10 @@ export function QuickLogScreen({
       setSuccess(true);
 
       // Reset form
-      setSelectedPeptideId(null);
       setDoseName("");
       setDosage("");
       setDoseNotes("");
       setAddToStackChecked(false);
-      setInjectionSite(undefined);
-      setIsInjectable(false);
 
       // Navigate to Daily tab after brief delay
       setTimeout(() => {
@@ -205,7 +83,7 @@ export function QuickLogScreen({
     } finally {
       setIsLoading(false);
     }
-  }, [doseName, dosage, doseNotes, selectedPeptideId, addToStackChecked, injectionSite, logDose, addToStack, log, navigation]);
+  }, [doseName, dosage, doseNotes, addToStackChecked, logDose, addToStack, log, navigation]);
 
   const handleLogMetric = useCallback(async () => {
     setIsLoading(true);
@@ -273,7 +151,7 @@ export function QuickLogScreen({
               color={activeTab === "dose" ? colors.primary[500] : colors.text.secondary}
             />
             <Text style={[styles.tabText, activeTab === "dose" && styles.tabTextActive]}>
-              Dose
+              Intervention
             </Text>
           </Pressable>
           <Pressable
@@ -294,28 +172,18 @@ export function QuickLogScreen({
         {/* Dose Form */}
         {activeTab === "dose" && (
           <Card style={styles.formCard}>
-            <PeptidePicker
-              selectedPeptideId={selectedPeptideId}
-              onSelect={handlePeptideSelect}
-              showCustomOption={true}
+            <Input
+              label="Intervention name"
+              placeholder="e.g., Creatine or morning walk"
+              value={doseName}
+              onChangeText={setDoseName}
+              hint="Enter only an intervention you have independently chosen."
             />
-
-            {selectedPeptideId === "custom" && (
-              <>
-                <View style={styles.spacer} />
-                <Input
-                  label="Name"
-                  placeholder="e.g., Vitamin D3"
-                  value={doseName}
-                  onChangeText={setDoseName}
-                />
-              </>
-            )}
 
             <View style={styles.spacer} />
             <Input
-              label="Dosage"
-              placeholder="e.g., 5mg"
+              label="Amount or duration"
+              placeholder="e.g., 5 g or 20 minutes"
               value={dosage}
               onChangeText={setDosage}
             />
@@ -323,34 +191,22 @@ export function QuickLogScreen({
             <View style={styles.spacer} />
             <Input
               label="Notes (optional)"
-              placeholder="Any notes about this dose..."
+              placeholder="Any notes about this entry..."
               value={doseNotes}
               onChangeText={setDoseNotes}
               multiline
               numberOfLines={2}
             />
 
-            {isInjectable && (
-              <>
-                <View style={styles.spacerLarge} />
-                <BodyMap
-                  selectedSite={injectionSite}
-                  onSelectSite={setInjectionSite}
-                />
-              </>
-            )}
-
-            {selectedPeptideId && selectedPeptideId !== "custom" && (
-              <Pressable
-                style={styles.checkboxRow}
-                onPress={() => setAddToStackChecked(!addToStackChecked)}
-              >
-                <View style={[styles.checkbox, addToStackChecked && styles.checkboxChecked]}>
-                  {addToStackChecked && <Icon name="check" size={14} color={colors.white} />}
-                </View>
-                <Text style={styles.checkboxLabel}>Add to my daily stack</Text>
-              </Pressable>
-            )}
+            <Pressable
+              style={styles.checkboxRow}
+              onPress={() => setAddToStackChecked(!addToStackChecked)}
+            >
+              <View style={[styles.checkbox, addToStackChecked && styles.checkboxChecked]}>
+                {addToStackChecked && <Icon name="check" size={14} color={colors.white} />}
+              </View>
+              <Text style={styles.checkboxLabel}>Save as a recurring intervention</Text>
+            </Pressable>
 
             <View style={styles.spacerLarge} />
             <Button
@@ -361,7 +217,7 @@ export function QuickLogScreen({
               onPress={handleLogDose}
               disabled={!doseName.trim() || !dosage.trim()}
             >
-              Log Dose
+              Log Intervention
             </Button>
           </Card>
         )}
@@ -408,7 +264,7 @@ export function QuickLogScreen({
                 {QUICK_METRIC_INFO[selectedMetricType].lowLabel}
               </Text>
               <View style={styles.sliderWrapper}>
-                <SimpleSlider
+              <Slider
                   style={styles.slider}
                   minimumValue={1}
                   maximumValue={10}

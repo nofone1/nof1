@@ -83,7 +83,7 @@ export function ProtocolsScreen({
                     size="sm"
                     onPress={() => handleLogAdherence(item.id, true)}
                   >
-                    Taken Today
+                    Completed Today
                   </Button>
                   <Button
                     variant="secondary"
@@ -140,7 +140,7 @@ export function ProtocolsScreen({
         </View>
         <Text style={styles.emptyTitle}>No protocols yet</Text>
         <Text style={styles.emptySubtitle}>
-          Create a protocol to track your dosing schedule and adherence.
+          Create a protocol to track a user-chosen routine and adherence.
         </Text>
       </View>
     ),

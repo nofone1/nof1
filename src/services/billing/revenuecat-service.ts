@@ -12,6 +12,7 @@ import Purchases, {
   type CustomerInfo,
   type PurchasesEntitlementInfo,
 } from "react-native-purchases";
+import RevenueCatUI from "react-native-purchases-ui";
 import { env } from "@/config/env";
 import { logger } from "@/services/logging";
 import {
@@ -41,8 +42,8 @@ interface PurchasesUiApi {
  * Loads the RevenueCat UI native module when this binary linked it.
  *
  * Returns:
- *   The UI API, or null when the Android skip-auth preview unlinked it
- *   because Expo 52 cannot compile react-native-purchases-ui.
+ *   The UI API, or null when an Android skip-auth preview intentionally
+ *   unlinked billing UI.
  *
  * Throws:
  *   Never. A missing or broken native module is treated as unavailable.
@@ -52,17 +53,7 @@ function loadPurchasesUi(): PurchasesUiApi | null {
     return null;
   }
 
-  try {
-    const loaded = require("react-native-purchases-ui") as {
-      default?: PurchasesUiApi;
-    } & PurchasesUiApi;
-    return loaded.default ?? loaded;
-  } catch (error) {
-    logger.warn("RevenueCat UI is not linked in this build", {
-      extra: { error: error instanceof Error ? error.message : String(error) },
-    });
-    return null;
-  }
+  return RevenueCatUI;
 }
 
 /** Result of presenting the RevenueCat paywall. */
@@ -389,8 +380,8 @@ export async function restorePurchases(): Promise<RestoreOutcome> {
  *   True when the Customer Center was presented.
  *
  * Edge cases:
- *   Only meaningful for Apple and Google purchases; Whop members manage their
- *   membership on Whop instead.
+ *   Only meaningful for Apple and Google purchases; other historical grants
+ *   are managed outside this native billing adapter.
  */
 export async function presentCustomerCenter(): Promise<boolean> {
   if (!isRevenueCatConfigured() || configuredAppUserId === null) {

@@ -4,7 +4,7 @@
 
 import React from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { ClerkProvider } from "@clerk/clerk-expo";
+import { ClerkProvider } from "@clerk/expo";
 import {
   AuthProvider,
   RevylAuthBypassProvider,

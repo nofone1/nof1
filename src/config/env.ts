@@ -6,7 +6,6 @@
 interface EnvironmentConfig {
   clerkPublishableKey: string;
   convexUrl: string;
-  apiBaseUrl: string;
   isDevelopment: boolean;
   skipAuth: boolean;
   /** RevenueCat public SDK key for iOS. Never a secret key. */
@@ -18,10 +17,6 @@ interface EnvironmentConfig {
    * keys so dogfood and E2E runs purchase without real store accounts.
    */
   revenueCatTestApiKey: string;
-  /** Public Whop application ID used to start the OAuth flow. */
-  whopAppId: string;
-  /** Public Whop OAuth base URL. Override only for sandbox builds. */
-  whopOauthBaseUrl: string;
 }
 
 const isDevelopment = __DEV__;
@@ -42,17 +37,12 @@ const requestedSkipAuth = process.env.EXPO_PUBLIC_SKIP_AUTH === "true";
 export const env: EnvironmentConfig = {
   clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || "",
   convexUrl: process.env.EXPO_PUBLIC_CONVEX_URL || "",
-  apiBaseUrl:
-    process.env.EXPO_PUBLIC_API_BASE_URL || "https://api.nof1experiments.com",
   isDevelopment,
   skipAuth: requestedSkipAuth,
   revenueCatIosApiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || "",
   revenueCatAndroidApiKey:
     process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || "",
   revenueCatTestApiKey: process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY || "",
-  whopAppId: process.env.EXPO_PUBLIC_WHOP_APP_ID || "",
-  whopOauthBaseUrl:
-    process.env.EXPO_PUBLIC_WHOP_OAUTH_BASE_URL || "https://api.whop.com/oauth",
 };
 
 /**
