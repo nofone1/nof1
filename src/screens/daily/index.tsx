@@ -151,9 +151,8 @@ export function DailyLogScreen({
         }
       >
         {/* Header */}
-        {/* dogfood: sao-paulo proof_of_changes retrigger 2026-08-24T23:41 */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Today · Daily Log · sao-paulo</Text>
+          <Text style={styles.greeting}>Today · Daily Log · staging-e2e</Text>
           <Text style={styles.date}>{formatDisplayDate(today)}</Text>
         </View>
 
