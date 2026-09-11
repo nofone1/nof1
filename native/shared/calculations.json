@@ -1,0 +1,45 @@
+{
+  "formatVersion": 1,
+  "decay": [
+    {
+      "halfLifeHours": 6,
+      "hoursElapsed": 0,
+      "expectedPercentage": 100
+    },
+    {
+      "halfLifeHours": 6,
+      "hoursElapsed": 3,
+      "expectedPercentage": 70.71067811865476
+    },
+    {
+      "halfLifeHours": 6,
+      "hoursElapsed": 6,
+      "expectedPercentage": 50
+    },
+    {
+      "halfLifeHours": 6,
+      "hoursElapsed": 12,
+      "expectedPercentage": 25
+    },
+    {
+      "halfLifeHours": 24,
+      "hoursElapsed": 72,
+      "expectedPercentage": 12.5
+    },
+    {
+      "halfLifeHours": 0,
+      "hoursElapsed": 1,
+      "expectedPercentage": 0
+    },
+    {
+      "halfLifeHours": -1,
+      "hoursElapsed": 1,
+      "expectedPercentage": 0
+    },
+    {
+      "halfLifeHours": 6,
+      "hoursElapsed": -1,
+      "expectedPercentage": 0
+    }
+  ]
+}

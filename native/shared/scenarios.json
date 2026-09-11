@@ -1,0 +1,61 @@
+{
+  "formatVersion": 1,
+  "dataPolicy": "Synthetic test data only; record local-demo and authenticated-cloud results separately.",
+  "scenarios": [
+    {
+      "id": "catalog-dose-persistence",
+      "title": "Browse a catalog item and persist a dose",
+      "steps": [
+        "Open Peptides, search for MOTS-c, and open its detail.",
+        "Verify the overview, medical notice, and available research sections.",
+        "Open Log and select MOTS-c; enter a synthetic dose with notes and an injection site.",
+        "Enable Add to Stack and save; await confirmed success.",
+        "Verify the dose and stack item appear on Today.",
+        "Restart the app and verify persistence in the same configured data lane.",
+        "Cancel dose deletion and verify the record remains; confirm deletion and verify removal."
+      ]
+    },
+    {
+      "id": "metric-and-custom-dose",
+      "title": "Log a metric and custom substance",
+      "steps": [
+        "Open Log, select a predefined metric, choose a value, and save.",
+        "Verify the metric appears on Today with its selected value.",
+        "Log a synthetic custom substance without a catalog ID.",
+        "Verify the custom name and dosage survive app restart."
+      ]
+    },
+    {
+      "id": "protocol-adherence",
+      "title": "Create a protocol and record adherence",
+      "steps": [
+        "Create a protocol named Native QA Protocol with a catalog item and explicit schedule values.",
+        "Verify it appears in Protocols and survives reload.",
+        "Record Taken Today and verify the displayed adherence reflects logged outcomes.",
+        "Verify the same date cannot accidentally create a duplicate adherence outcome."
+      ]
+    },
+    {
+      "id": "experiment-lifecycle",
+      "title": "Create and manage an experiment",
+      "steps": [
+        "From Profile, open Experiments and create Native QA Experiment.",
+        "Verify the stored hypothesis, intervention, and schedule in Detail.",
+        "Pause, resume, and complete the experiment; verify each confirmed state after reload.",
+        "Verify an entry action either persists a real entry or explicitly states that it is unavailable; it must not claim a save without a write."
+      ]
+    },
+    {
+      "id": "authenticated-isolation",
+      "title": "Verify real backend identity isolation",
+      "lane": "authenticated-cloud",
+      "steps": [
+        "Sign in using an approved Clerk test account and load the matching Convex data.",
+        "Persist a synthetic dose and verify it is returned by the backend after app restart.",
+        "Sign out and verify no previous account data remains visible.",
+        "Sign in using a second approved test account and verify the first account's records are not visible.",
+        "Simulate a network failure and verify an explicit error rather than local fallback or false success."
+      ]
+    }
+  ]
+}
