@@ -1,0 +1,298 @@
+{
+  "formatVersion": 1,
+  "sourceHashes": {
+    "src/data/peptides.ts": "3ff2dde92b95e6193bf63180475c68529972eb1345130734ce549dbc3d1e9b5c",
+    "src/types/peptide.ts": "b516de93a26366f1da68168d192ab3f7a2e3674fb27f47fb225e05dd4608b3c2",
+    "src/types/tracking.ts": "0fa17c387150e85e28029ba3894ae5afadcf284d6db31b48f6e7277a881e54d2",
+    "src/theme/colors.ts": "ac17dd1beacf98762728191fb35eb9d7b736798f765cda900a68c1cb3a7ced6a",
+    "src/utils/pharmacokinetics.ts": "0b47d5ec5ed8d443954665af47c09b6452d248880c7baea78eaaeefc97a756fb"
+  },
+  "categories": [
+    {
+      "id": "weight_loss",
+      "label": "Weight Loss"
+    },
+    {
+      "id": "metabolism",
+      "label": "Metabolism"
+    },
+    {
+      "id": "anti_aging",
+      "label": "Anti-Aging"
+    },
+    {
+      "id": "cognitive",
+      "label": "Cognitive"
+    },
+    {
+      "id": "neuroprotection",
+      "label": "Neuroprotection"
+    },
+    {
+      "id": "tissue_repair",
+      "label": "Tissue Repair"
+    },
+    {
+      "id": "muscle_growth",
+      "label": "Muscle Growth"
+    },
+    {
+      "id": "cardiovascular",
+      "label": "Cardiovascular"
+    },
+    {
+      "id": "diabetes",
+      "label": "Diabetes"
+    },
+    {
+      "id": "growth_hormone",
+      "label": "Growth Hormone"
+    },
+    {
+      "id": "exercise",
+      "label": "Exercise"
+    },
+    {
+      "id": "sexual_health",
+      "label": "Sexual Health"
+    },
+    {
+      "id": "immune_support",
+      "label": "Immune Support"
+    },
+    {
+      "id": "mood",
+      "label": "Mood"
+    },
+    {
+      "id": "social",
+      "label": "Social"
+    },
+    {
+      "id": "sleep",
+      "label": "Sleep"
+    },
+    {
+      "id": "hair_growth",
+      "label": "Hair Growth"
+    },
+    {
+      "id": "skin_health",
+      "label": "Skin Health"
+    },
+    {
+      "id": "gut_health",
+      "label": "Gut Health"
+    },
+    {
+      "id": "anti_inflammatory",
+      "label": "Anti-Inflammatory"
+    },
+    {
+      "id": "joint_health",
+      "label": "Joint Health"
+    },
+    {
+      "id": "hormonal",
+      "label": "Hormonal"
+    },
+    {
+      "id": "energy",
+      "label": "Energy"
+    }
+  ],
+  "researchLevels": [
+    {
+      "id": "limited_research",
+      "label": "Limited Research",
+      "color": "#6B7280"
+    },
+    {
+      "id": "emerging_research",
+      "label": "Emerging Research",
+      "color": "#F59E0B"
+    },
+    {
+      "id": "well_researched",
+      "label": "Well Researched",
+      "color": "#3B82F6"
+    },
+    {
+      "id": "extensively_studied",
+      "label": "Extensively Studied",
+      "color": "#8B5CF6"
+    },
+    {
+      "id": "fda_approved",
+      "label": "FDA Approved",
+      "color": "#10B981"
+    }
+  ],
+  "administrationRoutes": [
+    "injectable",
+    "oral",
+    "nasal",
+    "topical"
+  ],
+  "injectionSites": {
+    "abdomen_left": "Abdomen (L)",
+    "abdomen_right": "Abdomen (R)",
+    "thigh_left": "Thigh (L)",
+    "thigh_right": "Thigh (R)",
+    "arm_left": "Arm (L)",
+    "arm_right": "Arm (R)",
+    "glute_left": "Glute (L)",
+    "glute_right": "Glute (R)"
+  },
+  "metricTypes": {
+    "energy": {
+      "label": "Energy",
+      "icon": "zap",
+      "lowLabel": "Low",
+      "highLabel": "High"
+    },
+    "mood": {
+      "label": "Mood",
+      "icon": "smile",
+      "lowLabel": "Poor",
+      "highLabel": "Great"
+    },
+    "sleep": {
+      "label": "Sleep",
+      "icon": "moon",
+      "lowLabel": "Poor",
+      "highLabel": "Great"
+    },
+    "focus": {
+      "label": "Focus",
+      "icon": "target",
+      "lowLabel": "Scattered",
+      "highLabel": "Sharp"
+    },
+    "stress": {
+      "label": "Stress",
+      "icon": "activity",
+      "lowLabel": "Calm",
+      "highLabel": "Stressed"
+    },
+    "anxiety": {
+      "label": "Anxiety",
+      "icon": "heart",
+      "lowLabel": "Calm",
+      "highLabel": "Anxious"
+    },
+    "pain": {
+      "label": "Pain",
+      "icon": "alert-circle",
+      "lowLabel": "None",
+      "highLabel": "Severe"
+    },
+    "weight": {
+      "label": "Weight",
+      "icon": "trending-down",
+      "lowLabel": "",
+      "highLabel": ""
+    },
+    "headache": {
+      "label": "Headache",
+      "icon": "cloud",
+      "lowLabel": "None",
+      "highLabel": "Severe"
+    },
+    "nausea": {
+      "label": "Nausea",
+      "icon": "frown",
+      "lowLabel": "None",
+      "highLabel": "Severe"
+    },
+    "injection_site_pain": {
+      "label": "Inj. Site Pain",
+      "icon": "crosshair",
+      "lowLabel": "None",
+      "highLabel": "Severe"
+    },
+    "fatigue": {
+      "label": "Fatigue",
+      "icon": "battery",
+      "lowLabel": "None",
+      "highLabel": "Exhausted"
+    },
+    "appetite": {
+      "label": "Appetite",
+      "icon": "coffee",
+      "lowLabel": "None",
+      "highLabel": "Ravenous"
+    },
+    "libido": {
+      "label": "Libido",
+      "icon": "heart",
+      "lowLabel": "Low",
+      "highLabel": "High"
+    },
+    "custom": {
+      "label": "Custom",
+      "icon": "edit-3",
+      "lowLabel": "Low",
+      "highLabel": "High"
+    }
+  },
+  "theme": {
+    "primary": {
+      "50": "#EDF5F1",
+      "100": "#D4E8DE",
+      "200": "#B0D4C3",
+      "300": "#8BBFA7",
+      "400": "#6B9A82",
+      "500": "#5B8A72",
+      "600": "#4A7A62",
+      "700": "#3A6A52",
+      "800": "#2A5A42",
+      "900": "#1A4A32",
+      "950": "#0A3A22"
+    },
+    "purple": {
+      "50": "#F5F3FF",
+      "100": "#EDE9FE",
+      "200": "#DDD6FE",
+      "300": "#C4B5FD",
+      "400": "#A78BFA",
+      "500": "#8B5CF6",
+      "600": "#7C3AED",
+      "700": "#6D28D9",
+      "800": "#5B21B6",
+      "900": "#4C1D95",
+      "950": "#2E1065"
+    },
+    "background": {
+      "primary": "#0A0B0F",
+      "secondary": "#111218",
+      "tertiary": "#1A1B22"
+    },
+    "surface": {
+      "default": "#14151A",
+      "elevated": "#1A1B22",
+      "overlay": "#22232A"
+    },
+    "accent": {
+      "success": "#5B8A72",
+      "warning": "#D4A04A",
+      "error": "#C45B5B",
+      "info": "#6B8CAE",
+      "purple": "#8B5CF6"
+    },
+    "text": {
+      "primary": "#EAEAEA",
+      "secondary": "#8A8A8A",
+      "tertiary": "#5A5A5A",
+      "muted": "#3A3A3A"
+    },
+    "border": {
+      "default": "rgba(255, 255, 255, 0.06)",
+      "light": "rgba(255, 255, 255, 0.03)",
+      "focus": "rgba(91, 138, 114, 0.5)"
+    },
+    "white": "#FFFFFF",
+    "black": "#0A0B0F",
+    "transparent": "transparent"
+  }
+}
