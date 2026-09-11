@@ -1,0 +1,2 @@
+-keep class dev.convex.android.** { *; }
+-keep class com.sun.jna.** { *; }

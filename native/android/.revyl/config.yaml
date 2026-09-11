@@ -1,0 +1,14 @@
+project:
+  id: 6210e6c4-38fa-5522-8480-7fc742f99c2c
+session:
+  idle_timeout_seconds: 600
+build:
+  framework: android
+  profiles:
+    local-demo:
+      android:
+        app_id: a3afbafb-8682-4062-8e41-c8068fb27eaa
+        build_commands:
+          - ./gradlew :app:lintLocalDemoDebug :app:assembleLocalDemoDebug --no-daemon --console=plain
+        output_path: app/build/outputs/apk/localDemo/debug/app-localDemo-debug.apk
+        timeout_seconds: 2400
