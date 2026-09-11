@@ -2,6 +2,12 @@
 
 A React Native mobile app for conducting personal N-of-1 experiments to discover what supplements, peptides, and interventions actually work for you.
 
+Independent SwiftUI iOS and Kotlin/Jetpack Compose Android clients are being
+developed alongside this Expo app. See [the native migration guide](native/README.md)
+for their shared API contract, build requirements, and verification lanes. The
+existing Expo client and Convex backend remain in place; native local-demo
+results do not establish authenticated backend parity.
+
 ## What is an N-of-1 Experiment?
 
 An N-of-1 experiment is a clinical trial where you are both the subject and the scientist. Instead of relying on population-level studies, you systematically test interventions on yourself using controlled on/off phases to determine what actually works for YOUR body.
