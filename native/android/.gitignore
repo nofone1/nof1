@@ -1,0 +1,13 @@
+.gradle/
+.kotlin/
+**/build/
+local.properties
+native.properties
+.tooling/
+.wrapper-generator/
+*.jks
+*.keystore
+*.apk
+*.aab
+.revyl/*
+!.revyl/config.yaml
