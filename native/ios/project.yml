@@ -1,0 +1,69 @@
+name: Nof1Native
+options:
+  minimumXcodeGenVersion: 2.44.1
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+packages:
+  Clerk:
+    url: https://github.com/clerk/clerk-ios.git
+    exactVersion: 1.5.4
+  Convex:
+    url: https://github.com/get-convex/convex-swift
+    exactVersion: 0.8.1
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+targets:
+  Nof1Native:
+    type: application
+    platform: iOS
+    configFiles:
+      Debug: Config.generated/Config.xcconfig
+      Release: Config.generated/Config.xcconfig
+    sources:
+      - path: Sources
+      - path: ../shared/catalog.json
+        buildPhase: resources
+    dependencies:
+      - package: Clerk
+        product: ClerkKit
+      - package: Clerk
+        product: ClerkKitUI
+      - package: Convex
+        product: ConvexMobile
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nof1.experiments.native
+        PRODUCT_NAME: Nof1Native
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_FILE: Config.generated/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Config.generated/Nof1Native.entitlements
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_STYLE: Automatic
+  Nof1NativeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: Nof1Native
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nof1.experiments.native.tests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Nof1Native:
+    build:
+      targets:
+        Nof1Native: all
+        Nof1NativeTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets: [Nof1NativeTests]
