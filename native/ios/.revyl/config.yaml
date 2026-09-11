@@ -1,0 +1,12 @@
+project:
+  id: 6210e6c4-38fa-5522-8480-7fc742f99c2c
+build:
+  framework: ios
+  profiles:
+    local-demo:
+      ios:
+        app_id: af8d2012-5ee0-4f05-8172-06c509340ebf
+        build_commands:
+          - bash scripts/remote-build.sh local-demo
+        output_path: build/DerivedData/Build/Products/Debug-iphonesimulator/Nof1Native.app
+        timeout_seconds: 2400

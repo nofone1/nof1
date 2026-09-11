@@ -1,0 +1,9 @@
+Config.generated/
+build/
+DerivedData/
+*.xcodeproj/
+.build/
+.swiftpm/
+__pycache__/
+.revyl/*
+!.revyl/config.yaml
